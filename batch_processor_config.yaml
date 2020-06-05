@@ -1,0 +1,37 @@
+# all paths need to be specified relative to file run_1st_level_search
+
+# Logging
+log_to_file: True
+log_file_dir: solutions/logs
+log_file_name: route_planner_result
+add_timestamp_to_log_file: True
+
+# input directory of your intended CommonRoad scenarios
+# do NOT put a slash at the end
+input_path: scenarios/exercise
+# output directory for CommonRoad solution files
+output_path: solutions/figs
+# overwrite solution file if it already exists
+overwrite: True
+# timeout time for trajectory planner [s]
+# timeout: 120
+
+# the list of scenarios in form "- scenario_id"
+# if it is empty then run all scenarios
+scenarios_to_run:
+#  - DEU_Muc-1_2_T-1
+#  - CHN_Sha-10_1_T-1
+#  - CHN_Sha-13_1_T-1
+#  - USA_US101-13_1_T-1
+#  - USA_Lanker-1_2_T-15
+#  - USA_Lanker-2_18_T-1
+#  - DEU_Gar-3_2_T-1
+#  - USA_US101-13_1_T-1
+#  - DEU_Hhr-1_1
+
+scenarios_to_skip:
+#  - DEU_Muc-29_1_T-1
+#  - USA_US101-13_1_T-1
+#  - USA_Peach-4_2_T-1
+#  - USA_US101-12_2_T-1
+#  - USA_Peach-4_7_T-1
