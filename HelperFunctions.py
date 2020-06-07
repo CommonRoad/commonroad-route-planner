@@ -109,7 +109,7 @@ def load_scenarios(root_dir, scenario_ids):
 
 
 def execute_search(scenario, planning_problem):
-    route_planner = RoutePlanner(scenario.benchmark_id, scenario.lanelet_network, planning_problem)
+    route_planner = RoutePlanner(scenario.benchmark_id, scenario.lanelet_network, planning_problem, backend="priority_queue")
 
     return route_planner.search_alg()
 
