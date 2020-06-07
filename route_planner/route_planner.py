@@ -1,11 +1,30 @@
 import logging
 import os
+import queue
+import numpy as np
 from datetime import datetime
 from typing import List
 
 import networkx as nx
 from commonroad.planning.planning_problem import PlanningProblem
-from commonroad.scenario.lanelet import LaneletNetwork
+from commonroad.scenario.lanelet import LaneletNetwork, Lanelet
+from route_planner.priority_queue import PriorityQueue
+
+
+class LaneletNode:
+    def __init__(self, laneletID: int, lanelet: Lanelet, cost: float, current_length: int):
+        # it must be id because of the implementation of the priority queue
+        self.id = laneletID
+        self.lanelet = lanelet
+        self.parent_node = None
+        self.cost = cost
+        self.count = current_length
+
+    def __lt__(self, other):
+        if self.id != other.id:
+            print("oops")
+
+        return self.cost < other.cost
 
 
 # ================================================= #
@@ -22,7 +41,7 @@ class RoutePlanner:
         """
 
     def __init__(self, scenario_id: int, laneletNetwork: LaneletNetwork, planningProblem: PlanningProblem,
-                 allow_diagonal=False):
+                 allow_diagonal=False, backend="networkx"):
 
         # ============================== #
         #       Binding variables        #
@@ -31,7 +50,8 @@ class RoutePlanner:
         self.lanelet_network = laneletNetwork
         self.planningProblem = planningProblem
         # self.priority_queue = PriorityQueue()
-
+        self.allow_diagonal = allow_diagonal
+        self.backend = backend
         # ============================== #
         #        Create Logger           #
         # ============================== #
@@ -58,18 +78,24 @@ class RoutePlanner:
         if self.goal_lanelet_ids is None:
             self.logger.info("SURVIVAL Scenario: There is no goal position or lanelet given")
         else:
-            if allow_diagonal:
-                self.logger.warning("diagonal search not tested")
-                self.digraph = self.create_graph_from_lanelet_network_lane_change()
+            if self.backend == "networkx":
+                if self.allow_diagonal:
+                    self.logger.warning("diagonal search not tested")
+                    self.digraph = self.create_graph_from_lanelet_network_lane_change()
+                else:
+                    self.digraph = self.create_graph_from_lanelet_network()
             else:
-                self.digraph = self.create_graph_from_lanelet_network()
+                if self.allow_diagonal:
+                    self.logger.critical("diagonal search with custom backend is not implemented")
+                self.frontier = PriorityQueue()
+                self.explored = set()
 
     # =============== end of constructor ============== #
 
     def init_logger(self, log_to_console=True, log_to_file=True, add_timestamp_to_log_file=True):
         # path relative to the running script
         log_file_dir = "solutions/logs/scenario_logs"
-        log_file_name = "route_planner_result"
+        log_file_name = "route_planner_result_with_priority_queue_backend"
         # release_logger(self.logger)
         self.logger.setLevel(logging.DEBUG)
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -102,10 +128,13 @@ class RoutePlanner:
             file_handler.setFormatter(file_formatter)
             self.logger.addHandler(file_handler)
 
+        self.logger.info("Using backend: {}".format(self.backend))
+
     def check_initial_state(self):
         if hasattr(self.planningProblem.initial_state, 'position'):
             start_position = self.planningProblem.initial_state.position
             # TODO: convert start_position : List[str] to List[ndarray]
+            #   actually in debugger I see a numpy array...
             self.startLanelet_ids = self.lanelet_network.find_lanelet_by_position([start_position])[0]
             if len(self.startLanelet_ids) > 1:
                 self.logger.info("More start lanelet ids - some of it can results in an unsuccessful search")
@@ -284,6 +313,113 @@ class RoutePlanner:
                                                                                                     source_lanelet_id))
         return found_paths
 
+    @staticmethod
+    def calc_cost(current: Lanelet) -> float:
+        return current.distance[-1]
+
+    @staticmethod
+    def calc_heuristic(current: Lanelet, target: Lanelet) -> float:
+        diff = target.center_vertices[0] - current.center_vertices[-1]
+        return np.sqrt(np.dot(diff, diff))
+
+    def add_child(self, parent_node: LaneletNode, next_lanelet_id: int, target: Lanelet, extra_cost: float = 0.0):
+        next_lanelet = self.lanelet_network.find_lanelet_by_id(next_lanelet_id)
+
+        frontier_lanelet_ids = self.frontier.get_item_ids()
+        cost = extra_cost + parent_node.cost + self.calc_cost(next_lanelet) + self.calc_heuristic(next_lanelet, target)
+
+        node = LaneletNode(next_lanelet_id, next_lanelet, cost, parent_node.count + 1)
+        node.parent_node = parent_node
+
+        # TODO: check speed
+        if (next_lanelet_id not in self.explored) and (next_lanelet_id not in frontier_lanelet_ids):
+            self.frontier.put(next_lanelet_id, node, cost)
+        elif next_lanelet_id in frontier_lanelet_ids:
+            self.frontier.update_item_if_exists(next_lanelet_id, node, cost)
+
+    def find_astar_path(self, source_lanelet_id, target_lanelet_id: int) -> List:
+
+        self.frontier = PriorityQueue()
+        self.explored = set()
+
+        target_lanelet = self.lanelet_network.find_lanelet_by_id(target_lanelet_id)
+
+        lanelet = self.lanelet_network.find_lanelet_by_id(source_lanelet_id)
+        node = LaneletNode(source_lanelet_id, lanelet,
+                           self.calc_cost(lanelet) + self.calc_heuristic(lanelet, target_lanelet), 1)
+
+        self.frontier.put(node.id, node, node.cost)
+        while not self.frontier.is_empty():
+
+            node: LaneletNode = self.frontier.pop()
+
+            # maybe the frontier is not empty but only contains invalid elements
+            if node is None:
+                continue
+
+            if node.id == target_lanelet_id:
+                break
+
+            self.explored.add(node.id)
+
+            # ================= #
+            #    expand node    #
+            # ================= #
+            lanelet = node.lanelet
+            # add successors
+            for successor_id in lanelet.successor:
+                self.add_child(node, successor_id, target_lanelet, node.cost)
+
+            # if we are changing lanelets then remove the lanelet lengths because it would be added twice
+            lanelet_length = self.calc_cost(lanelet)
+
+            # add left lanelet
+            adj_left_id = lanelet.adj_left
+            if lanelet.adj_left_same_direction and adj_left_id:
+                self.add_child(node, adj_left_id, target_lanelet, 1.0 - lanelet_length)
+
+                if self.allow_diagonal:
+                    left_lanelet_successor_ids = self.lanelet_network.find_lanelet_by_id(adj_left_id).successor
+                    for left_lanelet_successor_id in left_lanelet_successor_ids:
+                        self.add_child(node, left_lanelet_successor_id, target_lanelet, 0.9)
+
+            # add right lanelet
+            adj_right_id = lanelet.adj_right
+            if lanelet.adj_right_same_direction and adj_right_id:
+                self.add_child(node, adj_right_id, target_lanelet, 1.0 - lanelet_length)
+
+                if self.allow_diagonal:
+                    right_lanelet_successor_ids = self.lanelet_network.find_lanelet_by_id(adj_right_id).successor
+                    for right_lanelet_successor_id in right_lanelet_successor_ids:
+                        self.add_child(node, right_lanelet_successor_id, target_lanelet, 0.9)
+        else:
+            raise NoPathFound("The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
+                                                                                                     source_lanelet_id))
+
+        reverse_path = list()
+
+        while node is not None:
+            reverse_path.append(node.id)
+            node = node.parent_node
+
+        return reverse_path[::-1]
+
+    def find_path(self, source_lanelet_id: int, target_lanelet_id: int = None) -> List[List]:
+        if source_lanelet_id is None:
+            raise NoSourceLaneletId("There is no start position given")
+        if target_lanelet_id is None:
+            self.logger.info("SURVIVAL SCENARIO")
+            return self.find_survival_route(source_lanelet_id)
+
+        found_paths = list()
+        try:
+            found_paths.append(self.find_astar_path(source_lanelet_id, target_lanelet_id))
+        except NoPathFound:
+            # it is a normal behaviour because of the overlapping lanelets in a road network
+            self.logger.info("The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
+                                                                                                    source_lanelet_id))
+        return found_paths
+
     def search_alg(self) -> List[List]:
         """
         Find all paths to all of the goal lanelet IDs from all the start lanelet IDs using networkx module.
@@ -294,7 +430,10 @@ class RoutePlanner:
         for start_lanelet_id in self.startLanelet_ids:
             if self.goal_lanelet_ids:
                 for goal_lanelet_id in self.goal_lanelet_ids:
-                    results = self.find_all_shortest_paths(start_lanelet_id, goal_lanelet_id)
+                    if self.backend == "networkx":
+                        results = self.find_all_shortest_paths(start_lanelet_id, goal_lanelet_id)
+                    else:
+                        results = self.find_path(start_lanelet_id, goal_lanelet_id)
                     for res in results:
                         routes.append(res)
             else:
@@ -306,5 +445,10 @@ class RoutePlanner:
 #                 Custom Exceptions                 #
 # ================================================= #
 class NoSourceLaneletId(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
+class NoPathFound(Exception):
     def __init__(self, message):
         self.message = message
