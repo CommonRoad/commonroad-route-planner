@@ -1,0 +1,743 @@
+Batch processor	DEBUG	Config file loaded and logger created
+Batch processor	INFO	Run on all scenarios
+Batch processor	DEBUG	  1/297	[CHN_Sha-10_1_T-1    ]	 	search took	    2.5422	ms	path FOUND to goal lanelet: [1504]
+Batch processor	DEBUG	  2/297	[CHN_Sha-10_2_T-1    ]	 	search took	    8.1194	ms	path FOUND to goal lanelet: [1504]
+Batch processor	DEBUG	  3/297	[CHN_Sha-11_1_T-1    ]	 	search took	   12.0523	ms	path FOUND to goal lanelet: [627]
+Batch processor	DEBUG	  4/297	[CHN_Sha-11_2_T-1    ]	 	search took	   19.6244	ms	path FOUND to goal lanelet: [648]
+Batch processor	INFO	  5/297	[CHN_Sha-11_3_T-1    ]	 	search took	   19.6018	ms	MORE path FOUND
+Batch processor	DEBUG	  5/297	[CHN_Sha-11_3_T-1    ]	 path FOUND to goal lanelet: [648]
+Batch processor	DEBUG	  5/297	[CHN_Sha-11_3_T-1    ]	 path FOUND to goal lanelet: [627]
+Batch processor	DEBUG	  5/297	[CHN_Sha-11_3_T-1    ]	 path FOUND to goal lanelet: [668]
+Batch processor	DEBUG	  5/297	[CHN_Sha-11_3_T-1    ]	 path FOUND to goal lanelet: [701]
+Batch processor	INFO	  6/297	[CHN_Sha-11_4_T-1    ]	 	search took	   20.1509	ms	MORE path FOUND
+Batch processor	DEBUG	  6/297	[CHN_Sha-11_4_T-1    ]	 path FOUND to goal lanelet: [683]
+Batch processor	DEBUG	  6/297	[CHN_Sha-11_4_T-1    ]	 path FOUND to goal lanelet: [627]
+Batch processor	DEBUG	  6/297	[CHN_Sha-11_4_T-1    ]	 path FOUND to goal lanelet: [651]
+Batch processor	DEBUG	  6/297	[CHN_Sha-11_4_T-1    ]	 path FOUND to goal lanelet: [701]
+Batch processor	DEBUG	  7/297	[CHN_Sha-12_1_T-1    ]	 	search took	   17.1003	ms	path FOUND to goal lanelet: [10]
+Batch processor	DEBUG	  8/297	[CHN_Sha-12_2_T-1    ]	 	search took	    4.2160	ms	path FOUND to goal lanelet: [10]
+Batch processor	DEBUG	  9/297	[CHN_Sha-13_1_T-1    ]	 	search took	    3.6036	ms	path FOUND to goal lanelet: [1424]
+Batch processor	DEBUG	 10/297	[CHN_Sha-13_2_T-1    ]	 	search took	    3.5118	ms	path FOUND to goal lanelet: [1424]
+Batch processor	DEBUG	 11/297	[CHN_Sha-14_1_T-1    ]	 	search took	   19.7871	ms	path FOUND to goal lanelet: [882]
+Batch processor	DEBUG	 12/297	[CHN_Sha-14_2_T-1    ]	 	search took	   27.0946	ms	path FOUND to goal lanelet: [882]
+Batch processor	DEBUG	 13/297	[CHN_Sha-15_1_T-1    ]	 	search took	   17.5481	ms	path FOUND to goal lanelet: [7501]
+Batch processor	DEBUG	 14/297	[CHN_Sha-15_2_T-1    ]	 	search took	   15.5290	ms	path FOUND to goal lanelet: [7491]
+Batch processor	DEBUG	 15/297	[CHN_Sha-15_3_T-1    ]	 	search took	    4.7419	ms	path FOUND to goal lanelet: [7501]
+Batch processor	DEBUG	 16/297	[CHN_Sha-15_4_T-1    ]	 	search took	   14.5039	ms	path FOUND to goal lanelet: [7491]
+Batch processor	DEBUG	 17/297	[CHN_Sha-16_1_T-1    ]	 	search took	    2.6939	ms	path FOUND to goal lanelet: [559]
+Batch processor	INFO	 18/297	[CHN_Sha-16_2_T-1    ]	 	search took	    4.2710	ms	MORE path FOUND
+Batch processor	DEBUG	 18/297	[CHN_Sha-16_2_T-1    ]	 path FOUND to goal lanelet: [560]
+Batch processor	DEBUG	 18/297	[CHN_Sha-16_2_T-1    ]	 path FOUND to goal lanelet: [562]
+Batch processor	DEBUG	 18/297	[CHN_Sha-16_2_T-1    ]	 path FOUND to goal lanelet: [559]
+Batch processor	DEBUG	 19/297	[CHN_Sha-17_1_T-1    ]	 	search took	   15.0318	ms	path FOUND to goal lanelet: [1455]
+Batch processor	DEBUG	 20/297	[CHN_Sha-17_2_T-1    ]	 	search took	   13.4782	ms	path FOUND to goal lanelet: [1455]
+Batch processor	DEBUG	 21/297	[CHN_Sha-1_1_T-1     ]	 	search took	   16.8813	ms	path FOUND to goal lanelet: [1424]
+Batch processor	DEBUG	 22/297	[CHN_Sha-1_2_T-1     ]	 	search took	    4.9158	ms	path FOUND to goal lanelet: [1424]
+Batch processor	DEBUG	 23/297	[CHN_Sha-1_3_T-1     ]	 	search took	    5.2716	ms	path FOUND to goal lanelet: [1440]
+Batch processor	DEBUG	 24/297	[CHN_Sha-1_4_T-1     ]	 	search took	    5.1536	ms	path FOUND to goal lanelet: [1427]
+Batch processor	DEBUG	 25/297	[CHN_Sha-1_5_T-1     ]	 	search took	    3.4178	ms	path FOUND to goal lanelet: [1424]
+Batch processor	DEBUG	 26/297	[CHN_Sha-1_6_T-1     ]	 	search took	    4.2241	ms	path FOUND to goal lanelet: [1427]
+Batch processor	DEBUG	 27/297	[CHN_Sha-1_7_T-1     ]	 	search took	    2.7991	ms	path FOUND to goal lanelet: [1424]
+Batch processor	INFO	 28/297	[CHN_Sha-1_8_T-1     ]	 	search took	    3.9814	ms	MORE path FOUND
+Batch processor	DEBUG	 28/297	[CHN_Sha-1_8_T-1     ]	 path FOUND to goal lanelet: [1440]
+Batch processor	DEBUG	 28/297	[CHN_Sha-1_8_T-1     ]	 path FOUND to goal lanelet: [1425]
+Batch processor	DEBUG	 29/297	[CHN_Sha-2_1_T-1     ]	 	search took	   18.0081	ms	path FOUND to goal lanelet: [882]
+Batch processor	DEBUG	 30/297	[CHN_Sha-2_2_T-1     ]	 	search took	   32.8871	ms	path FOUND to goal lanelet: [838]
+Batch processor	DEBUG	 31/297	[CHN_Sha-2_3_T-1     ]	 	search took	   34.9033	ms	path FOUND to goal lanelet: [894]
+Batch processor	DEBUG	 32/297	[CHN_Sha-2_4_T-1     ]	 	search took	   17.3951	ms	path FOUND to goal lanelet: [895]
+Batch processor	DEBUG	 33/297	[CHN_Sha-2_5_T-1     ]	 	search took	   30.3691	ms	path FOUND to goal lanelet: [838]
+Batch processor	INFO	 34/297	[CHN_Sha-2_6_T-1     ]	 	search took	   13.9389	ms	MORE path FOUND
+Batch processor	DEBUG	 34/297	[CHN_Sha-2_6_T-1     ]	 path FOUND to goal lanelet: [1008]
+Batch processor	DEBUG	 34/297	[CHN_Sha-2_6_T-1     ]	 path FOUND to goal lanelet: [905]
+Batch processor	DEBUG	 34/297	[CHN_Sha-2_6_T-1     ]	 path FOUND to goal lanelet: [895]
+Batch processor	DEBUG	 35/297	[CHN_Sha-2_7_T-1     ]	 	search took	   30.0756	ms	path FOUND to goal lanelet: [894]
+Batch processor	DEBUG	 36/297	[CHN_Sha-2_8_T-1     ]	 	search took	   30.4045	ms	path FOUND to goal lanelet: [882]
+Batch processor	DEBUG	 37/297	[CHN_Sha-3_1_T-1     ]	 	search took	   24.7441	ms	path FOUND to goal lanelet: [7501]
+Batch processor	DEBUG	 38/297	[CHN_Sha-3_2_T-1     ]	 	search took	   16.1581	ms	path FOUND to goal lanelet: [7491]
+Batch processor	DEBUG	 39/297	[CHN_Sha-3_3_T-1     ]	 	search took	   16.9199	ms	path FOUND to goal lanelet: [7491]
+Batch processor	DEBUG	 40/297	[CHN_Sha-3_4_T-1     ]	 	search took	   14.0789	ms	path FOUND to goal lanelet: [7501]
+Batch processor	DEBUG	 41/297	[CHN_Sha-4_1_T-1     ]	 	search took	   12.6700	ms	path FOUND to goal lanelet: [559]
+Batch processor	DEBUG	 42/297	[CHN_Sha-4_2_T-1     ]	 	search took	    2.0327	ms	path FOUND to goal lanelet: [560]
+Batch processor	DEBUG	 43/297	[CHN_Sha-4_3_T-1     ]	 	search took	    1.5641	ms	path FOUND to goal lanelet: [558]
+Batch processor	DEBUG	 44/297	[CHN_Sha-4_4_T-1     ]	 	search took	    1.8914	ms	path FOUND to goal lanelet: [560]
+Batch processor	DEBUG	 45/297	[CHN_Sha-4_5_T-1     ]	 	search took	    3.1924	ms	path FOUND to goal lanelet: [558]
+Batch processor	DEBUG	 46/297	[CHN_Sha-4_6_T-1     ]	 	search took	    1.8059	ms	path FOUND to goal lanelet: [560]
+Batch processor	DEBUG	 47/297	[CHN_Sha-4_7_T-1     ]	 	search took	    9.5511	ms	path FOUND to goal lanelet: [560]
+Batch processor	INFO	 48/297	[CHN_Sha-4_8_T-1     ]	 	search took	    2.3000	ms	MORE path FOUND
+Batch processor	DEBUG	 48/297	[CHN_Sha-4_8_T-1     ]	 path FOUND to goal lanelet: [560]
+Batch processor	DEBUG	 48/297	[CHN_Sha-4_8_T-1     ]	 path FOUND to goal lanelet: [562]
+Batch processor	DEBUG	 48/297	[CHN_Sha-4_8_T-1     ]	 path FOUND to goal lanelet: [559]
+Batch processor	DEBUG	 49/297	[CHN_Sha-5_1_T-1     ]	 	search took	   12.0446	ms	path FOUND to goal lanelet: [1455]
+Batch processor	DEBUG	 50/297	[CHN_Sha-5_2_T-1     ]	 	search took	   19.5338	ms	path FOUND to goal lanelet: [1455]
+Batch processor	DEBUG	 51/297	[CHN_Sha-6_10_T-1    ]	 	search took	   18.8487	ms	path FOUND to goal lanelet: [468]
+Batch processor	DEBUG	 52/297	[CHN_Sha-6_1_T-1     ]	 	search took	   13.2545	ms	path FOUND to goal lanelet: [468]
+Batch processor	DEBUG	 53/297	[CHN_Sha-6_2_T-1     ]	 	search took	    5.5423	ms	path FOUND to goal lanelet: [468]
+Batch processor	DEBUG	 54/297	[CHN_Sha-6_3_T-1     ]	 	search took	    9.6429	ms	path FOUND to goal lanelet: [468]
+Batch processor	DEBUG	 55/297	[CHN_Sha-6_4_T-1     ]	 	search took	    7.8333	ms	path FOUND to goal lanelet: [468]
+Batch processor	DEBUG	 56/297	[CHN_Sha-6_5_T-1     ]	 	search took	    5.5083	ms	path FOUND to goal lanelet: [468]
+Batch processor	DEBUG	 57/297	[CHN_Sha-6_6_T-1     ]	 	search took	    3.3638	ms	path FOUND to goal lanelet: [468]
+Batch processor	DEBUG	 58/297	[CHN_Sha-6_7_T-1     ]	 	search took	    3.6378	ms	path FOUND to goal lanelet: [468]
+Batch processor	DEBUG	 59/297	[CHN_Sha-6_8_T-1     ]	 	search took	    3.8913	ms	path FOUND to goal lanelet: [468]
+Batch processor	DEBUG	 60/297	[CHN_Sha-6_9_T-1     ]	 	search took	    3.5202	ms	path FOUND to goal lanelet: [468]
+Batch processor	DEBUG	 61/297	[CHN_Sha-7_1_T-1     ]	 	search took	    3.1957	ms	path FOUND to goal lanelet: [6119]
+Batch processor	DEBUG	 62/297	[CHN_Sha-7_2_T-1     ]	 	search took	    3.0713	ms	path FOUND to goal lanelet: [6119]
+Batch processor	DEBUG	 63/297	[CHN_Sha-8_1_T-1     ]	 	search took	   10.3216	ms	path FOUND to goal lanelet: [4145]
+Batch processor	DEBUG	 64/297	[CHN_Sha-8_2_T-1     ]	 	search took	   26.2752	ms	path FOUND to goal lanelet: [4145]
+Batch processor	DEBUG	 65/297	[CHN_Sha-9_1_T-1     ]	 	search took	   22.5580	ms	path FOUND to goal lanelet: [89]
+Batch processor	DEBUG	 66/297	[CHN_Sha-9_2_T-1     ]	 	search took	    7.9083	ms	path FOUND to goal lanelet: [89]
+Batch processor	DEBUG	 67/297	[DEU_A9-1_1_T-1      ]	 	search took	    4.2184	ms	path FOUND to goal lanelet: [48969]
+Batch processor	DEBUG	 68/297	[DEU_A9-1_2_T-1      ]	 	search took	    2.4017	ms	path FOUND to goal lanelet: [48987]
+Batch processor	DEBUG	 69/297	[DEU_A9-2_1_T-1      ]	 	search took	    1.1050	ms	path FOUND to goal lanelet: [30622]
+Batch processor	DEBUG	 70/297	[DEU_A99-1_1_T-1     ]	 	search took	    1.2765	ms	path FOUND to goal lanelet: [47629]
+Batch processor	DEBUG	 71/297	[DEU_A99-1_2_T-1     ]	 	search took	    0.9863	ms	path FOUND to goal lanelet: [47629]
+Batch processor	DEBUG	 72/297	[DEU_B471-1_1_T-1    ]	 	search took	    1.3239	ms	path FOUND to goal lanelet: [38807]
+Batch processor	DEBUG	 73/297	[DEU_Ffb-1_1_T-1     ]	 	search took	    2.7206	ms	path FOUND to goal lanelet: [49602]
+Batch processor	DEBUG	 74/297	[DEU_Ffb-1_3_T-1     ]	 	search took	    2.2634	ms	path FOUND to goal lanelet: [49576]
+Batch processor	DEBUG	 75/297	[DEU_Ffb-1_6_T-1     ]	 	search took	    1.4474	ms	path FOUND to goal lanelet: [49594]
+Batch processor	DEBUG	 76/297	[DEU_Ffb-1_7_T-1     ]	 	search took	    2.3186	ms	path FOUND to goal lanelet: [49576]
+Batch processor	DEBUG	 77/297	[DEU_Ffb-2_1_T-1     ]	 	search took	    1.8222	ms	path FOUND to goal lanelet: [50203]
+Batch processor	DEBUG	 78/297	[DEU_Ffb-2_2_T-1     ]	 	search took	    1.2510	ms	path FOUND to goal lanelet: [50203]
+Batch processor	DEBUG	 79/297	[DEU_Gar-1_1_T-1     ]	 	search took	    1.4280	ms	path FOUND to goal lanelet: [47240]
+Batch processor	DEBUG	 80/297	[DEU_Gar-1_2_T-1     ]	 	search took	    1.0777	ms	path FOUND to goal lanelet: [47246]
+Batch processor	DEBUG	 81/297	[DEU_Gar-3_1_T-1     ]	 	search took	   15.7547	ms	path FOUND to goal lanelet: [54479]
+Batch processor	DEBUG	 82/297	[DEU_Gar-3_2_T-1     ]	 	search took	   20.7828	ms	path FOUND to goal lanelet: [54502]
+Batch processor	DEBUG	 83/297	[DEU_Gar-3_3_T-1     ]	 	search took	   17.1463	ms	path FOUND to goal lanelet: [54502]
+Batch processor	INFO	 84/297	[DEU_Gar-3_4_T-1     ]	 	search took	   19.8583	ms	MORE path FOUND
+Batch processor	DEBUG	 84/297	[DEU_Gar-3_4_T-1     ]	 path FOUND to goal lanelet: [54477]
+Batch processor	DEBUG	 84/297	[DEU_Gar-3_4_T-1     ]	 path FOUND to goal lanelet: [54590]
+Batch processor	DEBUG	 84/297	[DEU_Gar-3_4_T-1     ]	 path FOUND to goal lanelet: [54479]
+Batch processor	DEBUG	 85/297	[DEU_Hhr-1_1         ]	 	search took	   39.9863	ms	path FOUND to goal lanelet: [41072]
+Batch processor	DEBUG	 86/297	[DEU_Muc-10_1_T-1    ]	 	search took	    5.8975	ms	path FOUND to goal lanelet: [389]
+Batch processor	DEBUG	 87/297	[DEU_Muc-11_1_T-1    ]	 	search took	   10.8206	ms	path FOUND to goal lanelet: [38]
+Batch processor	DEBUG	 88/297	[DEU_Muc-12_1_T-1    ]	 	search took	    6.1593	ms	path FOUND to goal lanelet: [3573]
+Batch processor	DEBUG	 89/297	[DEU_Muc-12_2_T-1    ]	 	search took	    5.5206	ms	path FOUND to goal lanelet: [3573]
+Batch processor	DEBUG	 90/297	[DEU_Muc-13_1_T-1    ]	 	search took	    5.5938	ms	path FOUND to goal lanelet: [244]
+Batch processor	DEBUG	 91/297	[DEU_Muc-13_2_T-1    ]	 	search took	    4.5601	ms	path FOUND to goal lanelet: [244]
+Batch processor	DEBUG	 92/297	[DEU_Muc-14_1_T-1    ]	 	search took	    5.2372	ms	path FOUND to goal lanelet: [640]
+Batch processor	DEBUG	 93/297	[DEU_Muc-15_1_T-1    ]	 	search took	    2.7638	ms	path FOUND to goal lanelet: [228]
+Batch processor	DEBUG	 94/297	[DEU_Muc-16_1_T-1    ]	 	search took	    8.8630	ms	path FOUND to goal lanelet: [140]
+Batch processor	DEBUG	 95/297	[DEU_Muc-16_2_T-1    ]	 	search took	    4.1080	ms	path FOUND to goal lanelet: [140]
+Batch processor	DEBUG	 96/297	[DEU_Muc-17_1_T-1    ]	 	search took	    3.3907	ms	path FOUND to goal lanelet: [618]
+Batch processor	DEBUG	 97/297	[DEU_Muc-17_2_T-1    ]	 	search took	    2.0830	ms	path FOUND to goal lanelet: [618]
+Batch processor	DEBUG	 98/297	[DEU_Muc-18_1_T-1    ]	 	search took	    2.8547	ms	path FOUND to goal lanelet: [55]
+Batch processor	DEBUG	 99/297	[DEU_Muc-18_2_T-1    ]	 	search took	    3.6789	ms	path FOUND to goal lanelet: [55]
+Batch processor	DEBUG	100/297	[DEU_Muc-19_1_T-1    ]	 	search took	    4.6652	ms	path FOUND to goal lanelet: [852]
+Batch processor	DEBUG	101/297	[DEU_Muc-1_1_T-1     ]	 	search took	   12.3659	ms	path FOUND to goal lanelet: [3490]
+Batch processor	DEBUG	102/297	[DEU_Muc-1_2_T-1     ]	 	search took	    4.7243	ms	path FOUND to goal lanelet: [3394]
+Batch processor	DEBUG	103/297	[DEU_Muc-20_1_T-1    ]	 	search took	    1.9151	ms	path FOUND to goal lanelet: [28]
+Batch processor	DEBUG	104/297	[DEU_Muc-20_2_T-1    ]	 	search took	    2.6429	ms	path FOUND to goal lanelet: [28]
+Batch processor	INFO	105/297	[DEU_Muc-21_1_T-1    ]	 	search took	    3.5571	ms	MORE path FOUND
+Batch processor	DEBUG	105/297	[DEU_Muc-21_1_T-1    ]	 path FOUND to goal lanelet: [1314]
+Batch processor	DEBUG	105/297	[DEU_Muc-21_1_T-1    ]	 path FOUND to goal lanelet: [1314]
+Batch processor	INFO	106/297	[DEU_Muc-21_2_T-1    ]	 	search took	    2.8160	ms	MORE path FOUND
+Batch processor	DEBUG	106/297	[DEU_Muc-21_2_T-1    ]	 path FOUND to goal lanelet: [1314]
+Batch processor	DEBUG	106/297	[DEU_Muc-21_2_T-1    ]	 path FOUND to goal lanelet: [1314]
+Batch processor	DEBUG	107/297	[DEU_Muc-22_1_T-1    ]	 	search took	    2.6879	ms	path FOUND to goal lanelet: [711]
+Batch processor	DEBUG	108/297	[DEU_Muc-23_1_T-1    ]	 	search took	    4.1722	ms	path FOUND to goal lanelet: [1348]
+Batch processor	INFO	109/297	[DEU_Muc-23_2_T-1    ]	 	search took	    2.4399	ms	MORE path FOUND
+Batch processor	DEBUG	109/297	[DEU_Muc-23_2_T-1    ]	 path FOUND to goal lanelet: [1346]
+Batch processor	DEBUG	109/297	[DEU_Muc-23_2_T-1    ]	 path FOUND to goal lanelet: [1348]
+Batch processor	DEBUG	109/297	[DEU_Muc-23_2_T-1    ]	 path FOUND to goal lanelet: [1351]
+Batch processor	DEBUG	110/297	[DEU_Muc-24_1_T-1    ]	 	search took	    2.1526	ms	path FOUND to goal lanelet: [1015]
+Batch processor	DEBUG	111/297	[DEU_Muc-25_1_T-1    ]	 	search took	   12.3255	ms	path FOUND to goal lanelet: [332]
+Batch processor	DEBUG	112/297	[DEU_Muc-25_2_T-1    ]	 	search took	   19.7534	ms	path FOUND to goal lanelet: [332]
+Batch processor	DEBUG	113/297	[DEU_Muc-26_1_T-1    ]	 	search took	   20.6609	ms	path FOUND to goal lanelet: [57]
+Batch processor	DEBUG	114/297	[DEU_Muc-26_2_T-1    ]	 	search took	    8.5686	ms	path FOUND to goal lanelet: [57]
+Batch processor	DEBUG	115/297	[DEU_Muc-27_1_T-1    ]	 	search took	    3.1564	ms	path FOUND to goal lanelet: [90]
+Batch processor	DEBUG	116/297	[DEU_Muc-27_2_T-1    ]	 	search took	    6.3927	ms	path FOUND to goal lanelet: [90]
+Batch processor	DEBUG	117/297	[DEU_Muc-28_1_T-1    ]	 	search took	    4.4689	ms	path FOUND to goal lanelet: [47]
+Batch processor	DEBUG	118/297	[DEU_Muc-28_2_T-1    ]	 	search took	    2.2479	ms	path FOUND to goal lanelet: [47]
+Batch processor	DEBUG	119/297	[DEU_Muc-29_1_T-1    ]	 	search took	    4.7319	ms	path FOUND to goal lanelet: [1022]
+Batch processor	DEBUG	120/297	[DEU_Muc-29_2_T-1    ]	 	search took	    3.5039	ms	path FOUND to goal lanelet: [1022]
+Batch processor	DEBUG	122/297	[DEU_Muc-2_2_T-1     ]	 	search took	    1.2365	ms	path FOUND to goal lanelet: [34782]
+Batch processor	DEBUG	123/297	[DEU_Muc-3_1_T-1     ]	 	search took	    1.8691	ms	path FOUND to goal lanelet: [504]
+Batch processor	DEBUG	124/297	[DEU_Muc-4_1_T-1     ]	 	search took	    1.2140	ms	path FOUND to goal lanelet: [34784]
+Batch processor	DEBUG	125/297	[DEU_Muc-4_2_T-1     ]	 	search took	    0.9075	ms	path FOUND to goal lanelet: [34784]
+Batch processor	DEBUG	126/297	[DEU_Muc-7_1_T-1     ]	 	search took	    1.9584	ms	path FOUND to goal lanelet: [26]
+Batch processor	DEBUG	127/297	[DEU_Muc-8_1_T-1     ]	 	search took	    8.4267	ms	path FOUND to goal lanelet: [28]
+Batch processor	DEBUG	128/297	[DEU_Muc-8_2_T-1     ]	 	search took	    2.2884	ms	path FOUND to goal lanelet: [28]
+Batch processor	DEBUG	129/297	[DEU_Muc-9_1_T-1     ]	 	search took	    6.3517	ms	path FOUND to goal lanelet: [101]
+Batch processor	DEBUG	130/297	[DEU_Muc-9_2_T-1     ]	 	search took	   11.9067	ms	path FOUND to goal lanelet: [101]
+Batch processor	DEBUG	131/297	[RUS_Bicycle-10_1_T-1]	 	search took	    9.3861	ms	path FOUND to goal lanelet: [10]
+Batch processor	DEBUG	132/297	[RUS_Bicycle-11_1_T-1]	 	search took	    1.7543	ms	path FOUND to goal lanelet: [3]
+Batch processor	DEBUG	134/297	[RUS_Bicycle-13_1_T-1]	 	search took	    1.3751	ms	path FOUND to goal lanelet: [8]
+Batch processor	DEBUG	135/297	[RUS_Bicycle-14_1_T-1]	 	search took	    1.2612	ms	path FOUND to goal lanelet: [3]
+Batch processor	DEBUG	136/297	[RUS_Bicycle-1_1_T-1 ]	 	search took	    1.2988	ms	path FOUND to goal lanelet: [11]
+Batch processor	DEBUG	137/297	[RUS_Bicycle-1_2_T-1 ]	 	search took	    1.3544	ms	path FOUND to goal lanelet: [11]
+Batch processor	DEBUG	138/297	[RUS_Bicycle-2_1_T-1 ]	 	search took	    2.3984	ms	path FOUND to goal lanelet: [9]
+Batch processor	DEBUG	139/297	[RUS_Bicycle-2_2_T-1 ]	 	search took	    2.0633	ms	path FOUND to goal lanelet: [9]
+Batch processor	DEBUG	140/297	[RUS_Bicycle-3_1_T-1 ]	 	search took	    1.3249	ms	path FOUND to goal lanelet: [6]
+Batch processor	DEBUG	142/297	[RUS_Bicycle-3_3_T-1 ]	 	search took	    1.1789	ms	path FOUND to goal lanelet: [6]
+Batch processor	DEBUG	143/297	[RUS_Bicycle-4_1_T-1 ]	 	search took	    1.3889	ms	path FOUND to goal lanelet: [9]
+Batch processor	DEBUG	144/297	[RUS_Bicycle-4_2_T-1 ]	 	search took	    1.8317	ms	path FOUND to goal lanelet: [9]
+Batch processor	DEBUG	145/297	[RUS_Bicycle-5_1_T-1 ]	 	search took	    1.5991	ms	path FOUND to goal lanelet: [4]
+Batch processor	DEBUG	146/297	[RUS_Bicycle-5_2_T-1 ]	 	search took	    1.2828	ms	path FOUND to goal lanelet: [4]
+Batch processor	DEBUG	147/297	[RUS_Bicycle-6_1_T-1 ]	 	search took	    1.3566	ms	path FOUND to goal lanelet: [6]
+Batch processor	DEBUG	148/297	[RUS_Bicycle-6_2_T-1 ]	 	search took	    1.2938	ms	path FOUND to goal lanelet: [6]
+Batch processor	DEBUG	149/297	[RUS_Bicycle-7_1_T-1 ]	 	search took	    1.2614	ms	path FOUND to goal lanelet: [6]
+Batch processor	DEBUG	150/297	[RUS_Bicycle-7_2_T-1 ]	 	search took	    1.3783	ms	path FOUND to goal lanelet: [6]
+Batch processor	DEBUG	151/297	[RUS_Bicycle-8_1_T-1 ]	 	search took	    1.5011	ms	path FOUND to goal lanelet: [7]
+Batch processor	DEBUG	152/297	[RUS_Bicycle-8_2_T-1 ]	 	search took	    1.3407	ms	path FOUND to goal lanelet: [7]
+Batch processor	DEBUG	153/297	[RUS_Bicycle-9_1_T-1 ]	 	search took	    1.6732	ms	path FOUND to goal lanelet: [8]
+Batch processor	DEBUG	154/297	[USA_Lanker-1_10_T-1 ]	 	search took	    7.0255	ms	path FOUND to goal lanelet: [3666]
+Batch processor	DEBUG	155/297	[USA_Lanker-1_11_T-1 ]	 	search took	    6.5697	ms	path FOUND to goal lanelet: [3614]
+Batch processor	INFO	156/297	[USA_Lanker-1_12_T-1 ]	 	search took	   13.6273	ms	MORE path FOUND
+Batch processor	DEBUG	156/297	[USA_Lanker-1_12_T-1 ]	 path FOUND to goal lanelet: [3658]
+Batch processor	DEBUG	156/297	[USA_Lanker-1_12_T-1 ]	 path FOUND to goal lanelet: [3668]
+Batch processor	DEBUG	157/297	[USA_Lanker-1_13_T-1 ]	 	search took	    6.9717	ms	path FOUND to goal lanelet: [3448]
+Batch processor	INFO	158/297	[USA_Lanker-1_15_T-1 ]	 	search took	    5.1836	ms	MORE path FOUND
+Batch processor	DEBUG	158/297	[USA_Lanker-1_15_T-1 ]	 path FOUND to goal lanelet: [3454]
+Batch processor	DEBUG	158/297	[USA_Lanker-1_15_T-1 ]	 path FOUND to goal lanelet: [3467]
+Batch processor	DEBUG	158/297	[USA_Lanker-1_15_T-1 ]	 path FOUND to goal lanelet: [3460]
+Batch processor	DEBUG	158/297	[USA_Lanker-1_15_T-1 ]	 path FOUND to goal lanelet: [3614]
+Batch processor	INFO	159/297	[USA_Lanker-1_16_T-1 ]	 	search took	    4.2385	ms	MORE path FOUND
+Batch processor	DEBUG	159/297	[USA_Lanker-1_16_T-1 ]	 path FOUND to goal lanelet: [3604]
+Batch processor	DEBUG	159/297	[USA_Lanker-1_16_T-1 ]	 path FOUND to goal lanelet: [3487]
+Batch processor	INFO	160/297	[USA_Lanker-1_17_T-1 ]	 	search took	    4.0396	ms	MORE path FOUND
+Batch processor	DEBUG	160/297	[USA_Lanker-1_17_T-1 ]	 path FOUND to goal lanelet: [3624]
+Batch processor	DEBUG	160/297	[USA_Lanker-1_17_T-1 ]	 path FOUND to goal lanelet: [3539]
+Batch processor	INFO	161/297	[USA_Lanker-1_18_T-1 ]	 	search took	    6.9555	ms	MORE path FOUND
+Batch processor	DEBUG	161/297	[USA_Lanker-1_18_T-1 ]	 path FOUND to goal lanelet: [3448]
+Batch processor	DEBUG	161/297	[USA_Lanker-1_18_T-1 ]	 path FOUND to goal lanelet: [3610]
+Batch processor	DEBUG	161/297	[USA_Lanker-1_18_T-1 ]	 path FOUND to goal lanelet: [3626]
+Batch processor	DEBUG	161/297	[USA_Lanker-1_18_T-1 ]	 path FOUND to goal lanelet: [3646]
+Batch processor	DEBUG	162/297	[USA_Lanker-1_1_T-1  ]	 	search took	   13.0831	ms	path FOUND to goal lanelet: [3614]
+Batch processor	DEBUG	163/297	[USA_Lanker-1_2_T-1  ]	 	search took	    7.5310	ms	path FOUND to goal lanelet: [3664]
+Batch processor	DEBUG	164/297	[USA_Lanker-1_3_T-1  ]	 	search took	   10.2883	ms	path FOUND to goal lanelet: [3624]
+Batch processor	INFO	165/297	[USA_Lanker-1_4_T-1  ]	 	search took	    7.6004	ms	MORE path FOUND
+Batch processor	DEBUG	165/297	[USA_Lanker-1_4_T-1  ]	 path FOUND to goal lanelet: [3602]
+Batch processor	DEBUG	165/297	[USA_Lanker-1_4_T-1  ]	 path FOUND to goal lanelet: [3616]
+Batch processor	DEBUG	166/297	[USA_Lanker-1_5_T-1  ]	 	search took	    6.8884	ms	path FOUND to goal lanelet: [3604]
+Batch processor	INFO	167/297	[USA_Lanker-1_6_T-1  ]	 	search took	    6.6974	ms	MORE path FOUND
+Batch processor	DEBUG	167/297	[USA_Lanker-1_6_T-1  ]	 path FOUND to goal lanelet: [3664]
+Batch processor	DEBUG	167/297	[USA_Lanker-1_6_T-1  ]	 path FOUND to goal lanelet: [3676]
+Batch processor	DEBUG	168/297	[USA_Lanker-1_7_T-1  ]	 	search took	    7.0035	ms	path FOUND to goal lanelet: [3650]
+Batch processor	INFO	169/297	[USA_Lanker-1_8_T-1  ]	 	search took	   10.1967	ms	MORE path FOUND
+Batch processor	DEBUG	169/297	[USA_Lanker-1_8_T-1  ]	 path FOUND to goal lanelet: [3656]
+Batch processor	DEBUG	169/297	[USA_Lanker-1_8_T-1  ]	 path FOUND to goal lanelet: [3670]
+Batch processor	DEBUG	170/297	[USA_Lanker-1_9_T-1  ]	 	search took	    8.1765	ms	path FOUND to goal lanelet: [3664]
+Batch processor	DEBUG	171/297	[USA_Lanker-2_10_T-1 ]	 	search took	    8.0700	ms	path FOUND to goal lanelet: [3542]
+Batch processor	DEBUG	172/297	[USA_Lanker-2_11_T-1 ]	 	search took	   14.6222	ms	path FOUND to goal lanelet: [3440]
+Batch processor	DEBUG	173/297	[USA_Lanker-2_12_T-1 ]	 	search took	    9.7089	ms	path FOUND to goal lanelet: [3456]
+Batch processor	DEBUG	174/297	[USA_Lanker-2_13_T-1 ]	 	search took	   13.5557	ms	path FOUND to goal lanelet: [3626]
+Batch processor	DEBUG	175/297	[USA_Lanker-2_14_T-1 ]	 	search took	   13.6310	ms	path FOUND to goal lanelet: [3664]
+Batch processor	DEBUG	176/297	[USA_Lanker-2_15_T-1 ]	 	search took	   13.8098	ms	path FOUND to goal lanelet: [3468]
+Batch processor	INFO	177/297	[USA_Lanker-2_16_T-1 ]	 	search took	    9.1645	ms	MORE path FOUND
+Batch processor	DEBUG	177/297	[USA_Lanker-2_16_T-1 ]	 path FOUND to goal lanelet: [3466]
+Batch processor	DEBUG	177/297	[USA_Lanker-2_16_T-1 ]	 path FOUND to goal lanelet: [3460]
+Batch processor	DEBUG	177/297	[USA_Lanker-2_16_T-1 ]	 path FOUND to goal lanelet: [3454]
+Batch processor	DEBUG	177/297	[USA_Lanker-2_16_T-1 ]	 path FOUND to goal lanelet: [3710]
+Batch processor	INFO	178/297	[USA_Lanker-2_17_T-1 ]	 	search took	    5.7306	ms	MORE path FOUND
+Batch processor	DEBUG	178/297	[USA_Lanker-2_17_T-1 ]	 path FOUND to goal lanelet: [3680]
+Batch processor	DEBUG	178/297	[USA_Lanker-2_17_T-1 ]	 path FOUND to goal lanelet: [3525]
+Batch processor	INFO	179/297	[USA_Lanker-2_18_T-1 ]	 	search took	   12.5169	ms	MORE path FOUND
+Batch processor	DEBUG	179/297	[USA_Lanker-2_18_T-1 ]	 path FOUND to goal lanelet: [3456]
+Batch processor	DEBUG	179/297	[USA_Lanker-2_18_T-1 ]	 path FOUND to goal lanelet: [3468]
+Batch processor	DEBUG	179/297	[USA_Lanker-2_18_T-1 ]	 path FOUND to goal lanelet: [3462]
+Batch processor	DEBUG	180/297	[USA_Lanker-2_19_T-1 ]	 	search took	    5.6569	ms	path FOUND to goal lanelet: [3537]
+Batch processor	DEBUG	181/297	[USA_Lanker-2_1_T-1  ]	 	search took	   10.2407	ms	path FOUND to goal lanelet: [3454]
+Batch processor	INFO	182/297	[USA_Lanker-2_20_T-1 ]	 	search took	    8.2655	ms	MORE path FOUND
+Batch processor	DEBUG	182/297	[USA_Lanker-2_20_T-1 ]	 path FOUND to goal lanelet: [3624]
+Batch processor	DEBUG	182/297	[USA_Lanker-2_20_T-1 ]	 path FOUND to goal lanelet: [3539]
+Batch processor	INFO	183/297	[USA_Lanker-2_21_T-1 ]	 	search took	    5.8200	ms	MORE path FOUND
+Batch processor	DEBUG	183/297	[USA_Lanker-2_21_T-1 ]	 path FOUND to goal lanelet: [3456]
+Batch processor	DEBUG	183/297	[USA_Lanker-2_21_T-1 ]	 path FOUND to goal lanelet: [3468]
+Batch processor	DEBUG	183/297	[USA_Lanker-2_21_T-1 ]	 path FOUND to goal lanelet: [3462]
+Batch processor	DEBUG	184/297	[USA_Lanker-2_22_T-1 ]	 	search took	    7.0025	ms	path FOUND to goal lanelet: [3542]
+Batch processor	DEBUG	185/297	[USA_Lanker-2_23_T-1 ]	 	search took	    6.0688	ms	path FOUND to goal lanelet: [3468]
+Batch processor	INFO	186/297	[USA_Lanker-2_24_T-1 ]	 	search took	    6.6543	ms	MORE path FOUND
+Batch processor	DEBUG	186/297	[USA_Lanker-2_24_T-1 ]	 path FOUND to goal lanelet: [3456]
+Batch processor	DEBUG	186/297	[USA_Lanker-2_24_T-1 ]	 path FOUND to goal lanelet: [3468]
+Batch processor	DEBUG	186/297	[USA_Lanker-2_24_T-1 ]	 path FOUND to goal lanelet: [3462]
+Batch processor	INFO	187/297	[USA_Lanker-2_25_T-1 ]	 	search took	    6.9990	ms	MORE path FOUND
+Batch processor	DEBUG	187/297	[USA_Lanker-2_25_T-1 ]	 path FOUND to goal lanelet: [3466]
+Batch processor	DEBUG	187/297	[USA_Lanker-2_25_T-1 ]	 path FOUND to goal lanelet: [3460]
+Batch processor	DEBUG	187/297	[USA_Lanker-2_25_T-1 ]	 path FOUND to goal lanelet: [3710]
+Batch processor	INFO	188/297	[USA_Lanker-2_26_T-1 ]	 	search took	    9.7428	ms	MORE path FOUND
+Batch processor	DEBUG	188/297	[USA_Lanker-2_26_T-1 ]	 path FOUND to goal lanelet: [3440]
+Batch processor	DEBUG	188/297	[USA_Lanker-2_26_T-1 ]	 path FOUND to goal lanelet: [3666]
+Batch processor	DEBUG	188/297	[USA_Lanker-2_26_T-1 ]	 path FOUND to goal lanelet: [3519]
+Batch processor	DEBUG	189/297	[USA_Lanker-2_2_T-1  ]	 	search took	    9.1087	ms	path FOUND to goal lanelet: [3537]
+Batch processor	DEBUG	190/297	[USA_Lanker-2_3_T-1  ]	 	search took	   13.2908	ms	path FOUND to goal lanelet: [3456]
+Batch processor	DEBUG	191/297	[USA_Lanker-2_4_T-1  ]	 	search took	    8.8523	ms	path FOUND to goal lanelet: [3666]
+Batch processor	DEBUG	192/297	[USA_Lanker-2_5_T-1  ]	 	search took	   10.6716	ms	path FOUND to goal lanelet: [3456]
+Batch processor	DEBUG	193/297	[USA_Lanker-2_6_T-1  ]	 	search took	   10.1182	ms	path FOUND to goal lanelet: [3664]
+Batch processor	DEBUG	194/297	[USA_Lanker-2_7_T-1  ]	 	search took	   11.1053	ms	path FOUND to goal lanelet: [3624]
+Batch processor	DEBUG	195/297	[USA_Lanker-2_8_T-1  ]	 	search took	   12.0817	ms	path FOUND to goal lanelet: [3460]
+Batch processor	DEBUG	196/297	[USA_Lanker-2_9_T-1  ]	 	search took	   10.6035	ms	path FOUND to goal lanelet: [3680]
+Batch processor	DEBUG	197/297	[USA_Peach-1_1_T-1   ]	 	search took	    5.5252	ms	path FOUND to goal lanelet: [52756]
+Batch processor	DEBUG	198/297	[USA_Peach-2_1_T-1   ]	 	search took	    5.1899	ms	path FOUND to goal lanelet: [53902]
+Batch processor	DEBUG	199/297	[USA_Peach-3_1_T-1   ]	 	search took	    6.3442	ms	path FOUND to goal lanelet: [43201]
+Batch processor	DEBUG	200/297	[USA_Peach-3_2_T-1   ]	 	search took	    4.7731	ms	path FOUND to goal lanelet: [43201]
+Batch processor	INFO	201/297	[USA_Peach-3_3_T-1   ]	 	search took	    3.7906	ms	MORE path FOUND
+Batch processor	DEBUG	201/297	[USA_Peach-3_3_T-1   ]	 path FOUND to goal lanelet: [43201]
+Batch processor	DEBUG	201/297	[USA_Peach-3_3_T-1   ]	 path FOUND to goal lanelet: [43205]
+Batch processor	INFO	202/297	[USA_Peach-3_4_T-1   ]	 	search took	    3.9184	ms	MORE path FOUND
+Batch processor	DEBUG	202/297	[USA_Peach-3_4_T-1   ]	 path FOUND to goal lanelet: [43201]
+Batch processor	DEBUG	202/297	[USA_Peach-3_4_T-1   ]	 path FOUND to goal lanelet: [43205]
+Batch processor	DEBUG	203/297	[USA_Peach-4_1_T-1   ]	 	search took	    5.3609	ms	path FOUND to goal lanelet: [43208]
+Batch processor	DEBUG	204/297	[USA_Peach-4_2_T-1   ]	 	search took	   11.4035	ms	path FOUND to goal lanelet: [43476]
+Batch processor	DEBUG	205/297	[USA_Peach-4_3_T-1   ]	 	search took	    6.5886	ms	path FOUND to goal lanelet: [43616]
+Batch processor	DEBUG	206/297	[USA_Peach-4_4_T-1   ]	 	search took	    9.3075	ms	path FOUND to goal lanelet: [43616]
+Batch processor	INFO	207/297	[USA_Peach-4_5_T-1   ]	 	search took	    4.9685	ms	MORE path FOUND
+Batch processor	DEBUG	207/297	[USA_Peach-4_5_T-1   ]	 path FOUND to goal lanelet: [43208]
+Batch processor	DEBUG	207/297	[USA_Peach-4_5_T-1   ]	 path FOUND to goal lanelet: [43830]
+Batch processor	DEBUG	207/297	[USA_Peach-4_5_T-1   ]	 path FOUND to goal lanelet: [43592]
+Batch processor	DEBUG	207/297	[USA_Peach-4_5_T-1   ]	 path FOUND to goal lanelet: [43630]
+Batch processor	INFO	208/297	[USA_Peach-4_6_T-1   ]	 	search took	    4.3490	ms	MORE path FOUND
+Batch processor	DEBUG	208/297	[USA_Peach-4_6_T-1   ]	 path FOUND to goal lanelet: [43616]
+Batch processor	DEBUG	208/297	[USA_Peach-4_6_T-1   ]	 path FOUND to goal lanelet: [43482]
+Batch processor	DEBUG	208/297	[USA_Peach-4_6_T-1   ]	 path FOUND to goal lanelet: [43474]
+Batch processor	DEBUG	208/297	[USA_Peach-4_6_T-1   ]	 path FOUND to goal lanelet: [43478]
+Batch processor	INFO	209/297	[USA_Peach-4_7_T-1   ]	 	search took	    3.7216	ms	MORE path FOUND
+Batch processor	DEBUG	209/297	[USA_Peach-4_7_T-1   ]	 path FOUND to goal lanelet: [43480]
+Batch processor	DEBUG	209/297	[USA_Peach-4_7_T-1   ]	 path FOUND to goal lanelet: [43484]
+Batch processor	DEBUG	209/297	[USA_Peach-4_7_T-1   ]	 path FOUND to goal lanelet: [43476]
+Batch processor	INFO	210/297	[USA_Peach-4_8_T-1   ]	 	search took	    5.4409	ms	MORE path FOUND
+Batch processor	DEBUG	210/297	[USA_Peach-4_8_T-1   ]	 path FOUND to goal lanelet: [43616]
+Batch processor	DEBUG	210/297	[USA_Peach-4_8_T-1   ]	 path FOUND to goal lanelet: [43482]
+Batch processor	DEBUG	210/297	[USA_Peach-4_8_T-1   ]	 path FOUND to goal lanelet: [43474]
+Batch processor	DEBUG	210/297	[USA_Peach-4_8_T-1   ]	 path FOUND to goal lanelet: [43478]
+Batch processor	DEBUG	211/297	[USA_US101-10_1_T-1  ]	 	search took	    2.6348	ms	path FOUND to goal lanelet: [42]
+Batch processor	DEBUG	212/297	[USA_US101-10_2_T-1  ]	 	search took	    9.7973	ms	path FOUND to goal lanelet: [14]
+Batch processor	DEBUG	213/297	[USA_US101-10_3_T-1  ]	 	search took	    1.6023	ms	path FOUND to goal lanelet: [30]
+Batch processor	DEBUG	214/297	[USA_US101-11_1_T-1  ]	 	search took	    4.7039	ms	path FOUND to goal lanelet: [17]
+Batch processor	DEBUG	215/297	[USA_US101-11_2_T-1  ]	 	search took	    2.2728	ms	path FOUND to goal lanelet: [17]
+Batch processor	DEBUG	216/297	[USA_US101-11_3_T-1  ]	 	search took	    1.7635	ms	path FOUND to goal lanelet: [14]
+Batch processor	DEBUG	217/297	[USA_US101-12_1_T-1  ]	 	search took	    3.7285	ms	path FOUND to goal lanelet: [14]
+Batch processor	DEBUG	218/297	[USA_US101-12_2_T-1  ]	 	search took	    3.0903	ms	path FOUND to goal lanelet: [12]
+Batch processor	DEBUG	219/297	[USA_US101-12_3_T-1  ]	 	search took	    1.7417	ms	path FOUND to goal lanelet: [8]
+Batch processor	DEBUG	220/297	[USA_US101-13_1_T-1  ]	 	search took	    4.0838	ms	path FOUND to goal lanelet: [40]
+Batch processor	DEBUG	221/297	[USA_US101-13_2_T-1  ]	 	search took	    4.2687	ms	path FOUND to goal lanelet: [23]
+Batch processor	DEBUG	222/297	[USA_US101-13_3_T-1  ]	 	search took	    1.7637	ms	path FOUND to goal lanelet: [23]
+Batch processor	DEBUG	223/297	[USA_US101-13_4_T-1  ]	 	search took	    1.6347	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	224/297	[USA_US101-14_1_T-1  ]	 	search took	    5.6617	ms	path FOUND to goal lanelet: [68]
+Batch processor	DEBUG	225/297	[USA_US101-14_2_T-1  ]	 	search took	    2.7607	ms	path FOUND to goal lanelet: [68]
+Batch processor	DEBUG	226/297	[USA_US101-14_3_T-1  ]	 	search took	    1.8279	ms	path FOUND to goal lanelet: [68]
+Batch processor	DEBUG	227/297	[USA_US101-14_4_T-1  ]	 	search took	    1.7714	ms	path FOUND to goal lanelet: [70]
+Batch processor	DEBUG	228/297	[USA_US101-14_5_T-1  ]	 	search took	    7.5275	ms	path FOUND to goal lanelet: [24]
+Batch processor	DEBUG	229/297	[USA_US101-15_1_T-1  ]	 	search took	    4.3746	ms	path FOUND to goal lanelet: [19]
+Batch processor	DEBUG	230/297	[USA_US101-15_2_T-1  ]	 	search took	    3.4274	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	231/297	[USA_US101-16_1_T-1  ]	 	search took	    3.6534	ms	path FOUND to goal lanelet: [17]
+Batch processor	DEBUG	232/297	[USA_US101-16_2_T-1  ]	 	search took	    2.6558	ms	path FOUND to goal lanelet: [14]
+Batch processor	DEBUG	233/297	[USA_US101-17_1_T-1  ]	 	search took	    3.8442	ms	path FOUND to goal lanelet: [8]
+Batch processor	DEBUG	234/297	[USA_US101-17_2_T-1  ]	 	search took	    4.3471	ms	path FOUND to goal lanelet: [8]
+Batch processor	DEBUG	235/297	[USA_US101-18_1_T-1  ]	 	search took	    5.0025	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	236/297	[USA_US101-18_2_T-1  ]	 	search took	    5.0121	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	237/297	[USA_US101-19_1_T-1  ]	 	search took	    5.0936	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	238/297	[USA_US101-19_2_T-1  ]	 	search took	    3.5358	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	239/297	[USA_US101-1_1_S-1   ]	 	search took	    9.2504	ms	path FOUND to goal lanelet: [534]
+Batch processor	DEBUG	240/297	[USA_US101-1_1_T-1   ]	 	search took	    1.1126	ms	path FOUND to goal lanelet: [534]
+Batch processor	DEBUG	241/297	[USA_US101-1_2_T-1   ]	 	search took	    1.4844	ms	path FOUND to goal lanelet: [544]
+Batch processor	DEBUG	242/297	[USA_US101-20_1_T-1  ]	 	search took	    2.4218	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	243/297	[USA_US101-20_2_T-1  ]	 	search took	    4.6651	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	244/297	[USA_US101-21_1_T-1  ]	 	search took	    4.3274	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	245/297	[USA_US101-21_2_T-1  ]	 	search took	    3.9663	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	246/297	[USA_US101-22_1_T-1  ]	 	search took	    4.6168	ms	path FOUND to goal lanelet: [28]
+Batch processor	DEBUG	247/297	[USA_US101-22_2_T-1  ]	 	search took	    7.9619	ms	path FOUND to goal lanelet: [20]
+Batch processor	DEBUG	248/297	[USA_US101-22_3_T-1  ]	 	search took	    1.8974	ms	path FOUND to goal lanelet: [19]
+Batch processor	DEBUG	249/297	[USA_US101-23_1_T-1  ]	 	search took	    8.0435	ms	path FOUND to goal lanelet: [11]
+Batch processor	DEBUG	250/297	[USA_US101-23_2_T-1  ]	 	search took	    2.7202	ms	path FOUND to goal lanelet: [29]
+Batch processor	DEBUG	251/297	[USA_US101-24_1_T-1  ]	 	search took	   10.2576	ms	path FOUND to goal lanelet: [50]
+Batch processor	DEBUG	252/297	[USA_US101-24_2_T-1  ]	 	search took	   11.7261	ms	path FOUND to goal lanelet: [29]
+Batch processor	DEBUG	253/297	[USA_US101-25_1_T-1  ]	 	search took	    7.3300	ms	path FOUND to goal lanelet: [17]
+Batch processor	DEBUG	254/297	[USA_US101-25_2_T-1  ]	 	search took	    3.5411	ms	path FOUND to goal lanelet: [11]
+Batch processor	DEBUG	255/297	[USA_US101-26_1_T-1  ]	 	search took	    3.9339	ms	path FOUND to goal lanelet: [19]
+Batch processor	DEBUG	256/297	[USA_US101-26_2_T-1  ]	 	search took	    2.3799	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	257/297	[USA_US101-27_1_T-1  ]	 	search took	    3.6345	ms	path FOUND to goal lanelet: [19]
+Batch processor	DEBUG	258/297	[USA_US101-27_2_T-1  ]	 	search took	    4.1112	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	259/297	[USA_US101-27_3_T-1  ]	 	search took	    2.0093	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	260/297	[USA_US101-28_1_T-1  ]	 	search took	    7.2487	ms	path FOUND to goal lanelet: [39]
+Batch processor	DEBUG	261/297	[USA_US101-28_2_T-1  ]	 	search took	    3.0050	ms	path FOUND to goal lanelet: [22]
+Batch processor	DEBUG	262/297	[USA_US101-29_1_T-1  ]	 	search took	    4.8826	ms	path FOUND to goal lanelet: [7]
+Batch processor	DEBUG	263/297	[USA_US101-29_2_T-1  ]	 	search took	    2.3900	ms	path FOUND to goal lanelet: [4]
+Batch processor	DEBUG	264/297	[USA_US101-2_1_T-1   ]	 	search took	    3.8329	ms	path FOUND to goal lanelet: [26]
+Batch processor	DEBUG	265/297	[USA_US101-2_2_T-1   ]	 	search took	    4.2029	ms	path FOUND to goal lanelet: [24]
+Batch processor	DEBUG	266/297	[USA_US101-30_1_T-1  ]	 	search took	    3.7927	ms	path FOUND to goal lanelet: [29]
+Batch processor	DEBUG	267/297	[USA_US101-31_1_T-1  ]	 	search took	    1.6130	ms	path FOUND to goal lanelet: [23]
+Batch processor	DEBUG	268/297	[USA_US101-32_1_T-1  ]	 	search took	    1.6288	ms	path FOUND to goal lanelet: [20]
+Batch processor	DEBUG	269/297	[USA_US101-33_1_T-1  ]	 	search took	    2.0243	ms	path FOUND to goal lanelet: [124]
+Batch processor	DEBUG	270/297	[USA_US101-3_1_T-1   ]	 	search took	    2.8834	ms	path FOUND to goal lanelet: [33]
+Batch processor	DEBUG	271/297	[USA_US101-3_3_T-1   ]	 	search took	    3.4113	ms	path FOUND to goal lanelet: [31]
+Batch processor	DEBUG	272/297	[USA_US101-3_4_T-1   ]	 	search took	    1.7604	ms	path FOUND to goal lanelet: [24]
+Batch processor	DEBUG	273/297	[USA_US101-4_1_T-1   ]	 	search took	    3.7586	ms	path FOUND to goal lanelet: [2]
+Batch processor	DEBUG	274/297	[USA_US101-4_2_T-1   ]	 	search took	    3.3155	ms	path FOUND to goal lanelet: [2]
+Batch processor	DEBUG	275/297	[USA_US101-4_3_T-1   ]	 	search took	    1.9616	ms	path FOUND to goal lanelet: [16]
+Batch processor	DEBUG	276/297	[USA_US101-5_1_T-1   ]	 	search took	    2.7753	ms	path FOUND to goal lanelet: [31]
+Batch processor	DEBUG	277/297	[USA_US101-5_2_T-1   ]	 	search took	    3.2919	ms	path FOUND to goal lanelet: [25]
+Batch processor	DEBUG	278/297	[USA_US101-6_1_T-1   ]	 	search took	    3.8633	ms	path FOUND to goal lanelet: [26]
+Batch processor	DEBUG	279/297	[USA_US101-6_2_T-1   ]	 	search took	    2.7180	ms	path FOUND to goal lanelet: [26]
+Batch processor	DEBUG	280/297	[USA_US101-6_3_T-1   ]	 	search took	    2.1103	ms	path FOUND to goal lanelet: [14]
+Batch processor	DEBUG	281/297	[USA_US101-7_1_T-1   ]	 	search took	    4.0023	ms	path FOUND to goal lanelet: [29]
+Batch processor	DEBUG	282/297	[USA_US101-7_2_T-1   ]	 	search took	    3.3890	ms	path FOUND to goal lanelet: [31]
+Batch processor	DEBUG	283/297	[USA_US101-7_3_T-1   ]	 	search took	    1.9534	ms	path FOUND to goal lanelet: [24]
+Batch processor	DEBUG	284/297	[USA_US101-8_1_T-1   ]	 	search took	    3.8078	ms	path FOUND to goal lanelet: [62]
+Batch processor	DEBUG	285/297	[USA_US101-8_2_T-1   ]	 	search took	    2.3319	ms	path FOUND to goal lanelet: [63]
+Batch processor	DEBUG	286/297	[USA_US101-8_3_T-1   ]	 	search took	    1.3878	ms	path FOUND to goal lanelet: [29]
+Batch processor	DEBUG	287/297	[USA_US101-8_4_T-1   ]	 	search took	    2.4420	ms	path FOUND to goal lanelet: [64]
+Batch processor	DEBUG	288/297	[USA_US101-9_1_T-1   ]	 	search took	    4.6136	ms	path FOUND to goal lanelet: [33]
+Batch processor	DEBUG	289/297	[USA_US101-9_2_T-1   ]	 	search took	    2.6617	ms	path FOUND to goal lanelet: [35]
+Batch processor	DEBUG	290/297	[USA_US101-9_3_T-1   ]	 	search took	    1.8632	ms	path FOUND to goal lanelet: [24]
+Batch processor	DEBUG	291/297	[ZAM_ACC-1_1_T-1     ]	 	search took	    2.4997	ms	path FOUND to goal lanelet: [2]
+Batch processor	DEBUG	292/297	[ZAM_ACC-1_2_T-1     ]	 	search took	    1.5870	ms	path FOUND to goal lanelet: [2]
+Batch processor	DEBUG	293/297	[ZAM_ACC-1_3_T-1     ]	 	search took	    1.9909	ms	path FOUND to goal lanelet: [2]
+Batch processor	DEBUG	294/297	[ZAM_Merge-1_1_T-1   ]	 	search took	    1.2613	ms	path FOUND to goal lanelet: [718]
+Batch processor	DEBUG	295/297	[ZAM_Over-1_1        ]	 	search took	    1.2151	ms	path FOUND to goal lanelet: [1000]
+Batch processor	DEBUG	296/297	[ZAM_Urban-2_1       ]	 	search took	    1.3463	ms	path FOUND to goal lanelet: [1]
+Batch processor	DEBUG	297/297	[ZAM_Urban-3_1       ]	 	search took	    0.8607	ms	path FOUND to goal lanelet: [1]
+Batch processor	DEBUG	Successfully SOLVED scenarios 353/297:
+Batch processor	DEBUG		CHN_Sha-10_1_T-1
+Batch processor	DEBUG		CHN_Sha-10_2_T-1
+Batch processor	DEBUG		CHN_Sha-11_1_T-1
+Batch processor	DEBUG		CHN_Sha-11_2_T-1
+Batch processor	DEBUG		CHN_Sha-11_3_T-1
+Batch processor	DEBUG		CHN_Sha-11_3_T-1
+Batch processor	DEBUG		CHN_Sha-11_3_T-1
+Batch processor	DEBUG		CHN_Sha-11_3_T-1
+Batch processor	DEBUG		CHN_Sha-11_4_T-1
+Batch processor	DEBUG		CHN_Sha-11_4_T-1
+Batch processor	DEBUG		CHN_Sha-11_4_T-1
+Batch processor	DEBUG		CHN_Sha-11_4_T-1
+Batch processor	DEBUG		CHN_Sha-12_1_T-1
+Batch processor	DEBUG		CHN_Sha-12_2_T-1
+Batch processor	DEBUG		CHN_Sha-13_1_T-1
+Batch processor	DEBUG		CHN_Sha-13_2_T-1
+Batch processor	DEBUG		CHN_Sha-14_1_T-1
+Batch processor	DEBUG		CHN_Sha-14_2_T-1
+Batch processor	DEBUG		CHN_Sha-15_1_T-1
+Batch processor	DEBUG		CHN_Sha-15_2_T-1
+Batch processor	DEBUG		CHN_Sha-15_3_T-1
+Batch processor	DEBUG		CHN_Sha-15_4_T-1
+Batch processor	DEBUG		CHN_Sha-16_1_T-1
+Batch processor	DEBUG		CHN_Sha-16_2_T-1
+Batch processor	DEBUG		CHN_Sha-16_2_T-1
+Batch processor	DEBUG		CHN_Sha-16_2_T-1
+Batch processor	DEBUG		CHN_Sha-17_1_T-1
+Batch processor	DEBUG		CHN_Sha-17_2_T-1
+Batch processor	DEBUG		CHN_Sha-1_1_T-1
+Batch processor	DEBUG		CHN_Sha-1_2_T-1
+Batch processor	DEBUG		CHN_Sha-1_3_T-1
+Batch processor	DEBUG		CHN_Sha-1_4_T-1
+Batch processor	DEBUG		CHN_Sha-1_5_T-1
+Batch processor	DEBUG		CHN_Sha-1_6_T-1
+Batch processor	DEBUG		CHN_Sha-1_7_T-1
+Batch processor	DEBUG		CHN_Sha-1_8_T-1
+Batch processor	DEBUG		CHN_Sha-1_8_T-1
+Batch processor	DEBUG		CHN_Sha-2_1_T-1
+Batch processor	DEBUG		CHN_Sha-2_2_T-1
+Batch processor	DEBUG		CHN_Sha-2_3_T-1
+Batch processor	DEBUG		CHN_Sha-2_4_T-1
+Batch processor	DEBUG		CHN_Sha-2_5_T-1
+Batch processor	DEBUG		CHN_Sha-2_6_T-1
+Batch processor	DEBUG		CHN_Sha-2_6_T-1
+Batch processor	DEBUG		CHN_Sha-2_6_T-1
+Batch processor	DEBUG		CHN_Sha-2_7_T-1
+Batch processor	DEBUG		CHN_Sha-2_8_T-1
+Batch processor	DEBUG		CHN_Sha-3_1_T-1
+Batch processor	DEBUG		CHN_Sha-3_2_T-1
+Batch processor	DEBUG		CHN_Sha-3_3_T-1
+Batch processor	DEBUG		CHN_Sha-3_4_T-1
+Batch processor	DEBUG		CHN_Sha-4_1_T-1
+Batch processor	DEBUG		CHN_Sha-4_2_T-1
+Batch processor	DEBUG		CHN_Sha-4_3_T-1
+Batch processor	DEBUG		CHN_Sha-4_4_T-1
+Batch processor	DEBUG		CHN_Sha-4_5_T-1
+Batch processor	DEBUG		CHN_Sha-4_6_T-1
+Batch processor	DEBUG		CHN_Sha-4_7_T-1
+Batch processor	DEBUG		CHN_Sha-4_8_T-1
+Batch processor	DEBUG		CHN_Sha-4_8_T-1
+Batch processor	DEBUG		CHN_Sha-4_8_T-1
+Batch processor	DEBUG		CHN_Sha-5_1_T-1
+Batch processor	DEBUG		CHN_Sha-5_2_T-1
+Batch processor	DEBUG		CHN_Sha-6_10_T-1
+Batch processor	DEBUG		CHN_Sha-6_1_T-1
+Batch processor	DEBUG		CHN_Sha-6_2_T-1
+Batch processor	DEBUG		CHN_Sha-6_3_T-1
+Batch processor	DEBUG		CHN_Sha-6_4_T-1
+Batch processor	DEBUG		CHN_Sha-6_5_T-1
+Batch processor	DEBUG		CHN_Sha-6_6_T-1
+Batch processor	DEBUG		CHN_Sha-6_7_T-1
+Batch processor	DEBUG		CHN_Sha-6_8_T-1
+Batch processor	DEBUG		CHN_Sha-6_9_T-1
+Batch processor	DEBUG		CHN_Sha-7_1_T-1
+Batch processor	DEBUG		CHN_Sha-7_2_T-1
+Batch processor	DEBUG		CHN_Sha-8_1_T-1
+Batch processor	DEBUG		CHN_Sha-8_2_T-1
+Batch processor	DEBUG		CHN_Sha-9_1_T-1
+Batch processor	DEBUG		CHN_Sha-9_2_T-1
+Batch processor	DEBUG		DEU_A9-1_1_T-1
+Batch processor	DEBUG		DEU_A9-1_2_T-1
+Batch processor	DEBUG		DEU_A9-2_1_T-1
+Batch processor	DEBUG		DEU_A99-1_1_T-1
+Batch processor	DEBUG		DEU_A99-1_2_T-1
+Batch processor	DEBUG		DEU_B471-1_1_T-1
+Batch processor	DEBUG		DEU_Ffb-1_1_T-1
+Batch processor	DEBUG		DEU_Ffb-1_3_T-1
+Batch processor	DEBUG		DEU_Ffb-1_6_T-1
+Batch processor	DEBUG		DEU_Ffb-1_7_T-1
+Batch processor	DEBUG		DEU_Ffb-2_1_T-1
+Batch processor	DEBUG		DEU_Ffb-2_2_T-1
+Batch processor	DEBUG		DEU_Gar-1_1_T-1
+Batch processor	DEBUG		DEU_Gar-1_2_T-1
+Batch processor	DEBUG		DEU_Gar-3_1_T-1
+Batch processor	DEBUG		DEU_Gar-3_2_T-1
+Batch processor	DEBUG		DEU_Gar-3_3_T-1
+Batch processor	DEBUG		DEU_Gar-3_4_T-1
+Batch processor	DEBUG		DEU_Gar-3_4_T-1
+Batch processor	DEBUG		DEU_Gar-3_4_T-1
+Batch processor	DEBUG		DEU_Hhr-1_1
+Batch processor	DEBUG		DEU_Muc-10_1_T-1
+Batch processor	DEBUG		DEU_Muc-11_1_T-1
+Batch processor	DEBUG		DEU_Muc-12_1_T-1
+Batch processor	DEBUG		DEU_Muc-12_2_T-1
+Batch processor	DEBUG		DEU_Muc-13_1_T-1
+Batch processor	DEBUG		DEU_Muc-13_2_T-1
+Batch processor	DEBUG		DEU_Muc-14_1_T-1
+Batch processor	DEBUG		DEU_Muc-15_1_T-1
+Batch processor	DEBUG		DEU_Muc-16_1_T-1
+Batch processor	DEBUG		DEU_Muc-16_2_T-1
+Batch processor	DEBUG		DEU_Muc-17_1_T-1
+Batch processor	DEBUG		DEU_Muc-17_2_T-1
+Batch processor	DEBUG		DEU_Muc-18_1_T-1
+Batch processor	DEBUG		DEU_Muc-18_2_T-1
+Batch processor	DEBUG		DEU_Muc-19_1_T-1
+Batch processor	DEBUG		DEU_Muc-1_1_T-1
+Batch processor	DEBUG		DEU_Muc-1_2_T-1
+Batch processor	DEBUG		DEU_Muc-20_1_T-1
+Batch processor	DEBUG		DEU_Muc-20_2_T-1
+Batch processor	DEBUG		DEU_Muc-21_1_T-1
+Batch processor	DEBUG		DEU_Muc-21_1_T-1
+Batch processor	DEBUG		DEU_Muc-21_2_T-1
+Batch processor	DEBUG		DEU_Muc-21_2_T-1
+Batch processor	DEBUG		DEU_Muc-22_1_T-1
+Batch processor	DEBUG		DEU_Muc-23_1_T-1
+Batch processor	DEBUG		DEU_Muc-23_2_T-1
+Batch processor	DEBUG		DEU_Muc-23_2_T-1
+Batch processor	DEBUG		DEU_Muc-23_2_T-1
+Batch processor	DEBUG		DEU_Muc-24_1_T-1
+Batch processor	DEBUG		DEU_Muc-25_1_T-1
+Batch processor	DEBUG		DEU_Muc-25_2_T-1
+Batch processor	DEBUG		DEU_Muc-26_1_T-1
+Batch processor	DEBUG		DEU_Muc-26_2_T-1
+Batch processor	DEBUG		DEU_Muc-27_1_T-1
+Batch processor	DEBUG		DEU_Muc-27_2_T-1
+Batch processor	DEBUG		DEU_Muc-28_1_T-1
+Batch processor	DEBUG		DEU_Muc-28_2_T-1
+Batch processor	DEBUG		DEU_Muc-29_1_T-1
+Batch processor	DEBUG		DEU_Muc-29_2_T-1
+Batch processor	DEBUG		DEU_Muc-2_2_T-1
+Batch processor	DEBUG		DEU_Muc-3_1_T-1
+Batch processor	DEBUG		DEU_Muc-4_1_T-1
+Batch processor	DEBUG		DEU_Muc-4_2_T-1
+Batch processor	DEBUG		DEU_Muc-7_1_T-1
+Batch processor	DEBUG		DEU_Muc-8_1_T-1
+Batch processor	DEBUG		DEU_Muc-8_2_T-1
+Batch processor	DEBUG		DEU_Muc-9_1_T-1
+Batch processor	DEBUG		DEU_Muc-9_2_T-1
+Batch processor	DEBUG		RUS_Bicycle-10_1_T-1
+Batch processor	DEBUG		RUS_Bicycle-11_1_T-1
+Batch processor	DEBUG		RUS_Bicycle-13_1_T-1
+Batch processor	DEBUG		RUS_Bicycle-14_1_T-1
+Batch processor	DEBUG		RUS_Bicycle-1_1_T-1
+Batch processor	DEBUG		RUS_Bicycle-1_2_T-1
+Batch processor	DEBUG		RUS_Bicycle-2_1_T-1
+Batch processor	DEBUG		RUS_Bicycle-2_2_T-1
+Batch processor	DEBUG		RUS_Bicycle-3_1_T-1
+Batch processor	DEBUG		RUS_Bicycle-3_3_T-1
+Batch processor	DEBUG		RUS_Bicycle-4_1_T-1
+Batch processor	DEBUG		RUS_Bicycle-4_2_T-1
+Batch processor	DEBUG		RUS_Bicycle-5_1_T-1
+Batch processor	DEBUG		RUS_Bicycle-5_2_T-1
+Batch processor	DEBUG		RUS_Bicycle-6_1_T-1
+Batch processor	DEBUG		RUS_Bicycle-6_2_T-1
+Batch processor	DEBUG		RUS_Bicycle-7_1_T-1
+Batch processor	DEBUG		RUS_Bicycle-7_2_T-1
+Batch processor	DEBUG		RUS_Bicycle-8_1_T-1
+Batch processor	DEBUG		RUS_Bicycle-8_2_T-1
+Batch processor	DEBUG		RUS_Bicycle-9_1_T-1
+Batch processor	DEBUG		USA_Lanker-1_10_T-1
+Batch processor	DEBUG		USA_Lanker-1_11_T-1
+Batch processor	DEBUG		USA_Lanker-1_12_T-1
+Batch processor	DEBUG		USA_Lanker-1_12_T-1
+Batch processor	DEBUG		USA_Lanker-1_13_T-1
+Batch processor	DEBUG		USA_Lanker-1_15_T-1
+Batch processor	DEBUG		USA_Lanker-1_15_T-1
+Batch processor	DEBUG		USA_Lanker-1_15_T-1
+Batch processor	DEBUG		USA_Lanker-1_15_T-1
+Batch processor	DEBUG		USA_Lanker-1_16_T-1
+Batch processor	DEBUG		USA_Lanker-1_16_T-1
+Batch processor	DEBUG		USA_Lanker-1_17_T-1
+Batch processor	DEBUG		USA_Lanker-1_17_T-1
+Batch processor	DEBUG		USA_Lanker-1_18_T-1
+Batch processor	DEBUG		USA_Lanker-1_18_T-1
+Batch processor	DEBUG		USA_Lanker-1_18_T-1
+Batch processor	DEBUG		USA_Lanker-1_18_T-1
+Batch processor	DEBUG		USA_Lanker-1_1_T-1
+Batch processor	DEBUG		USA_Lanker-1_2_T-1
+Batch processor	DEBUG		USA_Lanker-1_3_T-1
+Batch processor	DEBUG		USA_Lanker-1_4_T-1
+Batch processor	DEBUG		USA_Lanker-1_4_T-1
+Batch processor	DEBUG		USA_Lanker-1_5_T-1
+Batch processor	DEBUG		USA_Lanker-1_6_T-1
+Batch processor	DEBUG		USA_Lanker-1_6_T-1
+Batch processor	DEBUG		USA_Lanker-1_7_T-1
+Batch processor	DEBUG		USA_Lanker-1_8_T-1
+Batch processor	DEBUG		USA_Lanker-1_8_T-1
+Batch processor	DEBUG		USA_Lanker-1_9_T-1
+Batch processor	DEBUG		USA_Lanker-2_10_T-1
+Batch processor	DEBUG		USA_Lanker-2_11_T-1
+Batch processor	DEBUG		USA_Lanker-2_12_T-1
+Batch processor	DEBUG		USA_Lanker-2_13_T-1
+Batch processor	DEBUG		USA_Lanker-2_14_T-1
+Batch processor	DEBUG		USA_Lanker-2_15_T-1
+Batch processor	DEBUG		USA_Lanker-2_16_T-1
+Batch processor	DEBUG		USA_Lanker-2_16_T-1
+Batch processor	DEBUG		USA_Lanker-2_16_T-1
+Batch processor	DEBUG		USA_Lanker-2_16_T-1
+Batch processor	DEBUG		USA_Lanker-2_17_T-1
+Batch processor	DEBUG		USA_Lanker-2_17_T-1
+Batch processor	DEBUG		USA_Lanker-2_18_T-1
+Batch processor	DEBUG		USA_Lanker-2_18_T-1
+Batch processor	DEBUG		USA_Lanker-2_18_T-1
+Batch processor	DEBUG		USA_Lanker-2_19_T-1
+Batch processor	DEBUG		USA_Lanker-2_1_T-1
+Batch processor	DEBUG		USA_Lanker-2_20_T-1
+Batch processor	DEBUG		USA_Lanker-2_20_T-1
+Batch processor	DEBUG		USA_Lanker-2_21_T-1
+Batch processor	DEBUG		USA_Lanker-2_21_T-1
+Batch processor	DEBUG		USA_Lanker-2_21_T-1
+Batch processor	DEBUG		USA_Lanker-2_22_T-1
+Batch processor	DEBUG		USA_Lanker-2_23_T-1
+Batch processor	DEBUG		USA_Lanker-2_24_T-1
+Batch processor	DEBUG		USA_Lanker-2_24_T-1
+Batch processor	DEBUG		USA_Lanker-2_24_T-1
+Batch processor	DEBUG		USA_Lanker-2_25_T-1
+Batch processor	DEBUG		USA_Lanker-2_25_T-1
+Batch processor	DEBUG		USA_Lanker-2_25_T-1
+Batch processor	DEBUG		USA_Lanker-2_26_T-1
+Batch processor	DEBUG		USA_Lanker-2_26_T-1
+Batch processor	DEBUG		USA_Lanker-2_26_T-1
+Batch processor	DEBUG		USA_Lanker-2_2_T-1
+Batch processor	DEBUG		USA_Lanker-2_3_T-1
+Batch processor	DEBUG		USA_Lanker-2_4_T-1
+Batch processor	DEBUG		USA_Lanker-2_5_T-1
+Batch processor	DEBUG		USA_Lanker-2_6_T-1
+Batch processor	DEBUG		USA_Lanker-2_7_T-1
+Batch processor	DEBUG		USA_Lanker-2_8_T-1
+Batch processor	DEBUG		USA_Lanker-2_9_T-1
+Batch processor	DEBUG		USA_Peach-1_1_T-1
+Batch processor	DEBUG		USA_Peach-2_1_T-1
+Batch processor	DEBUG		USA_Peach-3_1_T-1
+Batch processor	DEBUG		USA_Peach-3_2_T-1
+Batch processor	DEBUG		USA_Peach-3_3_T-1
+Batch processor	DEBUG		USA_Peach-3_3_T-1
+Batch processor	DEBUG		USA_Peach-3_4_T-1
+Batch processor	DEBUG		USA_Peach-3_4_T-1
+Batch processor	DEBUG		USA_Peach-4_1_T-1
+Batch processor	DEBUG		USA_Peach-4_2_T-1
+Batch processor	DEBUG		USA_Peach-4_3_T-1
+Batch processor	DEBUG		USA_Peach-4_4_T-1
+Batch processor	DEBUG		USA_Peach-4_5_T-1
+Batch processor	DEBUG		USA_Peach-4_5_T-1
+Batch processor	DEBUG		USA_Peach-4_5_T-1
+Batch processor	DEBUG		USA_Peach-4_5_T-1
+Batch processor	DEBUG		USA_Peach-4_6_T-1
+Batch processor	DEBUG		USA_Peach-4_6_T-1
+Batch processor	DEBUG		USA_Peach-4_6_T-1
+Batch processor	DEBUG		USA_Peach-4_6_T-1
+Batch processor	DEBUG		USA_Peach-4_7_T-1
+Batch processor	DEBUG		USA_Peach-4_7_T-1
+Batch processor	DEBUG		USA_Peach-4_7_T-1
+Batch processor	DEBUG		USA_Peach-4_8_T-1
+Batch processor	DEBUG		USA_Peach-4_8_T-1
+Batch processor	DEBUG		USA_Peach-4_8_T-1
+Batch processor	DEBUG		USA_Peach-4_8_T-1
+Batch processor	DEBUG		USA_US101-10_1_T-1
+Batch processor	DEBUG		USA_US101-10_2_T-1
+Batch processor	DEBUG		USA_US101-10_3_T-1
+Batch processor	DEBUG		USA_US101-11_1_T-1
+Batch processor	DEBUG		USA_US101-11_2_T-1
+Batch processor	DEBUG		USA_US101-11_3_T-1
+Batch processor	DEBUG		USA_US101-12_1_T-1
+Batch processor	DEBUG		USA_US101-12_2_T-1
+Batch processor	DEBUG		USA_US101-12_3_T-1
+Batch processor	DEBUG		USA_US101-13_1_T-1
+Batch processor	DEBUG		USA_US101-13_2_T-1
+Batch processor	DEBUG		USA_US101-13_3_T-1
+Batch processor	DEBUG		USA_US101-13_4_T-1
+Batch processor	DEBUG		USA_US101-14_1_T-1
+Batch processor	DEBUG		USA_US101-14_2_T-1
+Batch processor	DEBUG		USA_US101-14_3_T-1
+Batch processor	DEBUG		USA_US101-14_4_T-1
+Batch processor	DEBUG		USA_US101-14_5_T-1
+Batch processor	DEBUG		USA_US101-15_1_T-1
+Batch processor	DEBUG		USA_US101-15_2_T-1
+Batch processor	DEBUG		USA_US101-16_1_T-1
+Batch processor	DEBUG		USA_US101-16_2_T-1
+Batch processor	DEBUG		USA_US101-17_1_T-1
+Batch processor	DEBUG		USA_US101-17_2_T-1
+Batch processor	DEBUG		USA_US101-18_1_T-1
+Batch processor	DEBUG		USA_US101-18_2_T-1
+Batch processor	DEBUG		USA_US101-19_1_T-1
+Batch processor	DEBUG		USA_US101-19_2_T-1
+Batch processor	DEBUG		USA_US101-1_1_S-1
+Batch processor	DEBUG		USA_US101-1_1_T-1
+Batch processor	DEBUG		USA_US101-1_2_T-1
+Batch processor	DEBUG		USA_US101-20_1_T-1
+Batch processor	DEBUG		USA_US101-20_2_T-1
+Batch processor	DEBUG		USA_US101-21_1_T-1
+Batch processor	DEBUG		USA_US101-21_2_T-1
+Batch processor	DEBUG		USA_US101-22_1_T-1
+Batch processor	DEBUG		USA_US101-22_2_T-1
+Batch processor	DEBUG		USA_US101-22_3_T-1
+Batch processor	DEBUG		USA_US101-23_1_T-1
+Batch processor	DEBUG		USA_US101-23_2_T-1
+Batch processor	DEBUG		USA_US101-24_1_T-1
+Batch processor	DEBUG		USA_US101-24_2_T-1
+Batch processor	DEBUG		USA_US101-25_1_T-1
+Batch processor	DEBUG		USA_US101-25_2_T-1
+Batch processor	DEBUG		USA_US101-26_1_T-1
+Batch processor	DEBUG		USA_US101-26_2_T-1
+Batch processor	DEBUG		USA_US101-27_1_T-1
+Batch processor	DEBUG		USA_US101-27_2_T-1
+Batch processor	DEBUG		USA_US101-27_3_T-1
+Batch processor	DEBUG		USA_US101-28_1_T-1
+Batch processor	DEBUG		USA_US101-28_2_T-1
+Batch processor	DEBUG		USA_US101-29_1_T-1
+Batch processor	DEBUG		USA_US101-29_2_T-1
+Batch processor	DEBUG		USA_US101-2_1_T-1
+Batch processor	DEBUG		USA_US101-2_2_T-1
+Batch processor	DEBUG		USA_US101-30_1_T-1
+Batch processor	DEBUG		USA_US101-31_1_T-1
+Batch processor	DEBUG		USA_US101-32_1_T-1
+Batch processor	DEBUG		USA_US101-33_1_T-1
+Batch processor	DEBUG		USA_US101-3_1_T-1
+Batch processor	DEBUG		USA_US101-3_3_T-1
+Batch processor	DEBUG		USA_US101-3_4_T-1
+Batch processor	DEBUG		USA_US101-4_1_T-1
+Batch processor	DEBUG		USA_US101-4_2_T-1
+Batch processor	DEBUG		USA_US101-4_3_T-1
+Batch processor	DEBUG		USA_US101-5_1_T-1
+Batch processor	DEBUG		USA_US101-5_2_T-1
+Batch processor	DEBUG		USA_US101-6_1_T-1
+Batch processor	DEBUG		USA_US101-6_2_T-1
+Batch processor	DEBUG		USA_US101-6_3_T-1
+Batch processor	DEBUG		USA_US101-7_1_T-1
+Batch processor	DEBUG		USA_US101-7_2_T-1
+Batch processor	DEBUG		USA_US101-7_3_T-1
+Batch processor	DEBUG		USA_US101-8_1_T-1
+Batch processor	DEBUG		USA_US101-8_2_T-1
+Batch processor	DEBUG		USA_US101-8_3_T-1
+Batch processor	DEBUG		USA_US101-8_4_T-1
+Batch processor	DEBUG		USA_US101-9_1_T-1
+Batch processor	DEBUG		USA_US101-9_2_T-1
+Batch processor	DEBUG		USA_US101-9_3_T-1
+Batch processor	DEBUG		ZAM_ACC-1_1_T-1
+Batch processor	DEBUG		ZAM_ACC-1_2_T-1
+Batch processor	DEBUG		ZAM_ACC-1_3_T-1
+Batch processor	DEBUG		ZAM_Merge-1_1_T-1
+Batch processor	DEBUG		ZAM_Over-1_1
+Batch processor	DEBUG		ZAM_Urban-2_1
+Batch processor	DEBUG		ZAM_Urban-3_1
+Batch processor	WARNING	Scenarios with path NOT FOUND   0/297:
+Batch processor	CRITICAL	Scenarios with EXCEPTION   0/297:
