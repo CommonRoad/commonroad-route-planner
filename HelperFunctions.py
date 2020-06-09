@@ -78,25 +78,30 @@ def initialize_logger(logger_name, config_file) -> logging.Logger:
     return logger
 
 
-def get_existing_scenarios(root_dir):
+def get_existing_scenarios(root_dir) -> dict:
+    scenarios = dict()
     for path, directories, files in os.walk(root_dir):
         for scenario in fnmatch.filter(files, "*.xml"):
-            scenario_path = os.path.join(path, scenario)
+            # res = os.path.normpath(path).split(os.path.sep)
+            # rel_path_to_scenario_from_root = os.path.join(*res[1:])
+            rel_path_to_scenario_from_root = path
             scenario_name = scenario[:-4]  # chop the '.xml' extension
-            yield {"name": scenario_name, "path": scenario_path}
+            scenarios[scenario_name] = rel_path_to_scenario_from_root
+
+    return scenarios
 
 
-def get_existing_scenarios_name(root_dir):
+def get_existing_scenario_ids(root_dir) -> list:
     existing_scenarios = get_existing_scenarios(root_dir)
-    scenarios_name = list()
-    for s in existing_scenarios:
-        scenarios_name.append(s["name"])
-
-    return scenarios_name
+    scenario_ids = list(existing_scenarios.keys())
+    return scenario_ids
 
 
 def load_scenario(root_dir, scenario_id) -> Tuple[Scenario, PlanningProblemSet]:
-    scenario_path = os.path.join(root_dir, scenario_id + '.xml')
+    # TODO check if path_to_scenario valid
+    path_to_scenario = get_existing_scenarios(root_dir)[scenario_id]
+    # scenario_path = os.path.join(root_dir, path_to_scenario, scenario_id + '.xml')
+    scenario_path = os.path.join(path_to_scenario, scenario_id + '.xml')
     # open and read in scenario and planning problem set
     scenario, planning_problem_set = CommonRoadFileReader(scenario_path).open()
 
@@ -109,7 +114,8 @@ def load_scenarios(root_dir, scenario_ids):
 
 
 def execute_search(scenario, planning_problem):
-    route_planner = RoutePlanner(scenario.benchmark_id, scenario.lanelet_network, planning_problem, backend="priority_queue")
+    route_planner = RoutePlanner(scenario.benchmark_id, scenario.lanelet_network, planning_problem,
+                                 backend="priority_queue")
 
     return route_planner.search_alg()
 

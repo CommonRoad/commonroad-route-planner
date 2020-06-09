@@ -9,7 +9,7 @@ from commonroad.visualization.plot_helper import set_non_blocking, redraw_obstac
 mpl.use('Qt5Agg')  # sets the backend for matplotlib
 # mpl.use('TkAgg')  # sets the backend for matplotlib
 import matplotlib.pyplot as plt
-from HelperFunctions import get_existing_scenarios, load_config_file, get_existing_scenarios_name, \
+from HelperFunctions import get_existing_scenarios, load_config_file, get_existing_scenario_ids, \
     load_scenarios, initialize_logger, draw_initial_state, get_last_time_step_in_scenario, \
     execute_search
 
@@ -27,8 +27,7 @@ if not os.path.exists(scenarios_root_folder):
 
 specified_scenario_ids = set(configs['scenarios_to_run'])
 skip_scenario_ids = configs['scenarios_to_skip']
-existing_scenarios = get_existing_scenarios(scenarios_root_folder)
-existing_scenario_ids = set(get_existing_scenarios_name(scenarios_root_folder))
+existing_scenario_ids = set(get_existing_scenario_ids(scenarios_root_folder))
 
 existing_scenario_ids.difference_update(skip_scenario_ids)
 if len(skip_scenario_ids) != 0:
@@ -81,6 +80,7 @@ set_non_blocking()  # ensures interactive plotting is activated
 plt.style.use('classic')
 inch_in_cm = 2.54
 figsize = [60, 30]
+existing_scenario_ids_paths_dict = get_existing_scenarios(scenarios_root_folder)
 
 counter = 1
 for scenario, planning_problem_set in load_scenarios(scenarios_root_folder, scenario_ids):
@@ -177,9 +177,17 @@ for scenario, planning_problem_set in load_scenarios(scenarios_root_folder, scen
                 # saving solved solutions
                 # output_folder
                 output_folder = configs["output_path"]
+
+                relative_path = existing_scenario_ids_paths_dict[scenario_id]
+                list_from_relative_path = os.path.normpath(relative_path).split(os.path.sep)
+
+                remove_first = len(os.path.normpath(scenarios_root_folder).split(os.path.sep))
+                rel_path_to_scenario_from_root = os.path.join(*list_from_relative_path[remove_first:])
+
+                output_folder = os.path.join(output_folder, rel_path_to_scenario_from_root)
                 # if directory not exists create it
-                if not os.path.exists(output_folder):
-                    os.mkdir(output_folder)
+                os.makedirs(output_folder, exist_ok=True)
+
                 output_file = os.path.join(output_folder, "fig_{}_goal_ID_{}.png".format(scenario_id, goal_lanelet_id))
                 fig.canvas.draw()
                 fig.savefig(output_file)
