@@ -104,7 +104,7 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
     routes = None
     time1 = time.perf_counter()
     try:
-        routes = execute_search(scenario, planning_problem)
+        routes = execute_search(scenario, planning_problem, backend="priority_queue")
     except IndexError as error:
         search_time = time.perf_counter() - time1
         scenarios_exception.append(scenario_id)
