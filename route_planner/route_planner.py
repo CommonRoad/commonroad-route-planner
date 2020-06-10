@@ -56,7 +56,7 @@ class RoutePlanner:
         #        Create Logger           #
         # ============================== #
         self.logger = logging.getLogger("Route Planner [{}]".format(self.scenario_id))
-        self.init_logger()
+        self.init_logger(log_to_file=False)
 
         # ================================================= #
         #                Check initial state                #
@@ -134,7 +134,8 @@ class RoutePlanner:
         if hasattr(self.planningProblem.initial_state, 'position'):
             start_position = self.planningProblem.initial_state.position
             # TODO: convert start_position : List[str] to List[ndarray]
-            #   actually in debugger I see a numpy array...
+            #   actually in the debugger I see a numpy array...
+            #   suppress warning
             self.startLanelet_ids = self.lanelet_network.find_lanelet_by_position([start_position])[0]
             if len(self.startLanelet_ids) > 1:
                 self.logger.info("More start lanelet ids - some of it can results in an unsuccessful search")
@@ -143,6 +144,8 @@ class RoutePlanner:
             raise NoSourceLaneletId("There is no start position given")
 
     def check_goal_state(self):
+        self.goal_lanelet_ids = list()
+
         if hasattr(self.planningProblem.goal, 'lanelets_of_goal_position'):
             if self.planningProblem.goal.lanelets_of_goal_position is None:
                 self.logger.info("No goal lanelet is given")
@@ -151,17 +154,29 @@ class RoutePlanner:
                 # the goals are in the dict, one goal can consist of multiple lanelets
                 # now we just iterating over the goals and adding every ID which we find to
                 # the goal_lanelet_ids list
-                self.goal_lanelet_ids = list()
                 for goal_i in self.planningProblem.goal.lanelets_of_goal_position.values():
                     self.goal_lanelet_ids.extend(goal_i)
 
-        if (self.goal_lanelet_ids is None) and hasattr(self.planningProblem.goal.state_list[0], 'position'):
-            goal_position = self.planningProblem.goal.state_list[0].position
-            self.goal_lanelet_ids = self.lanelet_network.find_lanelet_by_shape(goal_position)
-            if len(self.goal_lanelet_ids) != 0:
-                self.logger.info("Goal lanelet IDs estimated from goal shape")
-            else:
-                self.logger.info("No Goal lanelet IDs could be determined from the goal shape")
+        if (len(self.goal_lanelet_ids) == 0) and hasattr(self.planningProblem.goal, 'state_list'):
+            for idx, state in enumerate(self.planningProblem.goal.state_list):
+                if hasattr(state, 'position'):
+                    goal_position = state.position
+                    goal_state_lanelet_ids = list()
+                    # TODO suppress warning
+                    goal_state_lanelet_ids.extend(self.lanelet_network.find_lanelet_by_shape(goal_position))
+                    if len(goal_state_lanelet_ids) != 0:
+                        self.goal_lanelet_ids.extend(goal_state_lanelet_ids)
+                        self.logger.info("Goal lanelet IDs estimated from goal shape in state [{}]".format(idx))
+                    else:
+                        self.logger.info(
+                            "No Goal lanelet IDs could be determined from the goal shape in state [{}]".format(idx))
+
+        # Removing duplicates and reset to none if no lanelet IDs found
+        if len(self.goal_lanelet_ids) != 0:
+            # remove duplicates and sort in ascending order
+            self.goal_lanelet_ids = sorted(list(dict.fromkeys(self.goal_lanelet_ids)))
+        else:
+            self.goal_lanelet_ids = None
 
     def find_survival_route(self, start_lanelet_id: int) -> List:
         """
