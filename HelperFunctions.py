@@ -113,9 +113,9 @@ def load_scenarios(root_dir, scenario_ids):
         yield load_scenario(root_dir, scenario_id)
 
 
-def execute_search(scenario, planning_problem):
+def execute_search(scenario, planning_problem, backend="priority_queue"):
     route_planner = RoutePlanner(scenario.benchmark_id, scenario.lanelet_network, planning_problem,
-                                 backend="priority_queue")
+                                 backend=backend)
 
     return route_planner.search_alg()
 
