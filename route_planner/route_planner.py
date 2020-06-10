@@ -156,12 +156,12 @@ class RoutePlanner:
                     self.goal_lanelet_ids.extend(goal_i)
 
         if (self.goal_lanelet_ids is None) and hasattr(self.planningProblem.goal.state_list[0], 'position'):
-            if hasattr(self.planningProblem.goal.state_list[0].position, 'center'):
-                self.logger.info("Goal center is found")
-                goal_position = self.planningProblem.goal.state_list[0].position
-                self.goal_lanelet_ids = self.lanelet_network.find_lanelet_by_position([goal_position.center])[0]
+            goal_position = self.planningProblem.goal.state_list[0].position
+            self.goal_lanelet_ids = self.lanelet_network.find_lanelet_by_shape(goal_position)
+            if len(self.goal_lanelet_ids) != 0:
+                self.logger.info("Goal lanelet IDs estimated from goal shape")
             else:
-                self.logger.info("No goal center is found")
+                self.logger.info("No Goal lanelet IDs could be determined from the goal shape")
 
     def find_survival_route(self, start_lanelet_id: int) -> List:
         """
