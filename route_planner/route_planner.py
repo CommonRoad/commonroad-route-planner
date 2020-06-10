@@ -99,8 +99,8 @@ class RoutePlanner:
         # release_logger(self.logger)
         self.logger.setLevel(logging.DEBUG)
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        console_formatter = logging.Formatter('\t%(name)s\t%(levelname)s\t%(message)s')
-        file_formatter = logging.Formatter('%(name)s\t%(levelname)s\t%(message)s')
+        console_formatter = logging.Formatter('%(asctime)s\t\t%(name)s\t%(levelname)s\t%(message)s')
+        file_formatter = logging.Formatter('%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s')
 
         if log_to_console:
             # create console handler
@@ -148,8 +148,12 @@ class RoutePlanner:
                 self.logger.info("No goal lanelet is given")
             else:
                 self.logger.info("Goal lanelet is given")
-                # the zero element in the dict is the list of ids
-                self.goal_lanelet_ids = self.planningProblem.goal.lanelets_of_goal_position[0]
+                # the goals are in the dict, one goal can consist of multiple lanelets
+                # now we just iterating over the goals and adding every ID which we find to
+                # the goal_lanelet_ids list
+                self.goal_lanelet_ids = list()
+                for goal_i in self.planningProblem.goal.lanelets_of_goal_position.values():
+                    self.goal_lanelet_ids.extend(goal_i)
 
         if (self.goal_lanelet_ids is None) and hasattr(self.planningProblem.goal.state_list[0], 'position'):
             if hasattr(self.planningProblem.goal.state_list[0].position, 'center'):

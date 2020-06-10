@@ -48,7 +48,7 @@ def initialize_logger(logger_name, config_file) -> logging.Logger:
     release_logger(logger)
     logger.setLevel(logging.DEBUG)
     # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    formatter = logging.Formatter('%(name)s\t%(levelname)s\t%(message)s')
+    formatter = logging.Formatter('%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s')
 
     # create console handler
     console_handler = logging.StreamHandler()
