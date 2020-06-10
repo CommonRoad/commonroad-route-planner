@@ -1,16 +1,16 @@
-# all paths need to be specified relative to file run_1st_level_search
+# all paths need to be specified relative to file batch_processor
 
 # Logging
 log_to_file: True
 log_file_dir: solutions/logs
-log_file_name: route_planner_result_with_priority_queue_backend
+log_file_name: route_planner_result_with_priority_queue_backend_on_commonroad-scenarios
 add_timestamp_to_log_file: True
 
 # input directory of your intended CommonRoad scenarios
 # do NOT put a slash at the end
-input_path: scenarios/exercise
+input_path: ../commonroad-scenarios/scenarios
 # output directory for CommonRoad solution files
-output_path: solutions/figs/priority_queue_backend
+output_path: solutions/figs/commonroad-scenarios_priority-queue-backend
 # overwrite solution file if it already exists
 overwrite: True
 # timeout time for trajectory planner [s]
@@ -19,6 +19,7 @@ overwrite: True
 # the list of scenarios in form "- scenario_id"
 # if it is empty then run all scenarios
 scenarios_to_run:
+#  - USA_US101-2_3_T-1
 #  - DEU_Muc-1_2_T-1
 #  - CHN_Sha-10_1_T-1
 #  - CHN_Sha-13_1_T-1
