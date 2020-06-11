@@ -117,8 +117,7 @@ class RoutePlanner:
                 date_time_string = now.strftime("_%Y_%m_%d_%H-%M-%S")
 
             # if directory not exists create it
-            if not os.path.exists(log_file_dir):
-                os.mkdir(log_file_dir)
+            os.makedirs(log_file_dir)
 
             log_file_path = os.path.join(log_file_dir,
                                          "{}_{}{}.log".format(self.scenario_id, log_file_name, date_time_string))
@@ -453,10 +452,10 @@ class RoutePlanner:
                         results = self.find_all_shortest_paths(start_lanelet_id, goal_lanelet_id)
                     else:
                         results = self.find_path(start_lanelet_id, goal_lanelet_id)
-                    for res in results:
-                        routes.append(res)
+
+                    routes.extend(results)
             else:
-                routes.append(self.find_all_shortest_paths(start_lanelet_id))
+                routes.append(self.find_survival_route(start_lanelet_id))
         return routes
 
 
