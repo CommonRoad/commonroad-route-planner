@@ -21,9 +21,6 @@ class LaneletNode:
         self.count = current_length
 
     def __lt__(self, other):
-        if self.id != other.id:
-            print("oops")
-
         return self.cost < other.cost
 
 
@@ -117,7 +114,7 @@ class RoutePlanner:
                 date_time_string = now.strftime("_%Y_%m_%d_%H-%M-%S")
 
             # if directory not exists create it
-            os.makedirs(log_file_dir)
+            os.makedirs(log_file_dir, exist_ok=True)
 
             log_file_path = os.path.join(log_file_dir,
                                          "{}_{}{}.log".format(self.scenario_id, log_file_name, date_time_string))
@@ -423,19 +420,21 @@ class RoutePlanner:
         return reverse_path[::-1]
 
     def find_path(self, source_lanelet_id: int, target_lanelet_id: int = None) -> List[List]:
+        found_paths = list()
         if source_lanelet_id is None:
             raise NoSourceLaneletId("There is no start position given")
+
         if target_lanelet_id is None:
             self.logger.info("SURVIVAL SCENARIO")
-            return self.find_survival_route(source_lanelet_id)
-
-        found_paths = list()
-        try:
-            found_paths.append(self.find_astar_path(source_lanelet_id, target_lanelet_id))
-        except NoPathFound:
-            # it is a normal behaviour because of the overlapping lanelets in a road network
-            self.logger.info("The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
-                                                                                                    source_lanelet_id))
+            found_paths.append(self.find_survival_route(source_lanelet_id))
+        else:
+            try:
+                found_paths.append(self.find_astar_path(source_lanelet_id, target_lanelet_id))
+            except NoPathFound:
+                # it is a normal behaviour because of the overlapping lanelets in a road network
+                self.logger.info(
+                    "The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
+                                                                                           source_lanelet_id))
         return found_paths
 
     def search_alg(self) -> List[List]:
