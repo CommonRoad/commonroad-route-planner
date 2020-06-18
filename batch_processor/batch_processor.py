@@ -3,18 +3,21 @@ import os
 import time
 
 import matplotlib as mpl
-from commonroad.visualization.draw_dispatch_cr import draw_object
+try:
+    mpl.use('Qt5Agg')
+    import matplotlib.pyplot as plt
+except ImportError:
+    mpl.use('TkAgg')
+    import matplotlib.pyplot as plt
 
+from commonroad.visualization.draw_dispatch_cr import draw_object
 from commonroad_route_planner.util import plot_found_routes, draw_initial_state
 
-mpl.use('Qt5Agg')  # sets the backend for matplotlib
-# mpl.use('TkAgg')  # sets the backend for matplotlib
-import matplotlib.pyplot as plt
 from HelperFunctions import get_existing_scenarios, load_config_file, get_existing_scenario_ids, \
     load_scenarios, initialize_logger, execute_search
 
 # load config file
-configs = load_config_file('batch_processor/batch_processor_config.yaml')
+configs = load_config_file(os.path.join(os.path.dirname(__file__), 'batch_processor_config.yaml'))
 # create a logger
 logger = initialize_logger("Batch processor", configs)
 logger.debug("Config file loaded and logger created")
