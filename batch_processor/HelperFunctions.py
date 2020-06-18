@@ -5,14 +5,19 @@ from datetime import datetime
 from typing import Tuple
 
 import matplotlib as mpl
+try:
+    mpl.use('Qt5Agg')
+    import matplotlib.pyplot as plt
+except ImportError:
+    mpl.use('TkAgg')
+    import matplotlib.pyplot as plt
+
 import yaml
 from commonroad.common.file_reader import CommonRoadFileReader
 from commonroad.planning.planning_problem import PlanningProblemSet
 from commonroad.scenario.scenario import Scenario
 
 from commonroad_route_planner.route_planner import RoutePlanner
-
-mpl.use('Qt5Agg')
 
 
 def load_config_file(filename) -> dict:

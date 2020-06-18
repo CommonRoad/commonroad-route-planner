@@ -10,7 +10,7 @@ add_timestamp_to_log_file: True
 # do NOT put a slash at the end
 input_path: ../commonroad-scenarios/scenarios
 # output directory for CommonRoad solution files
-output_path: solutions/figs/commonroad-scenarios_priority-queue-backend
+output_path: ../solutions/figs/commonroad-scenarios_priority-queue-backend
 # overwrite solution file if it already exists
 overwrite: True
 # timeout time for trajectory planner [s]
