@@ -4,17 +4,17 @@ import time
 
 import matplotlib as mpl
 from commonroad.visualization.draw_dispatch_cr import draw_object
-from commonroad.visualization.plot_helper import set_non_blocking, redraw_obstacles
+
+from commonroad_route_planner.util import plot_found_routes, draw_initial_state
 
 mpl.use('Qt5Agg')  # sets the backend for matplotlib
 # mpl.use('TkAgg')  # sets the backend for matplotlib
 import matplotlib.pyplot as plt
 from HelperFunctions import get_existing_scenarios, load_config_file, get_existing_scenario_ids, \
-    load_scenarios, initialize_logger, draw_initial_state, get_last_time_step_in_scenario, \
-    execute_search
+    load_scenarios, initialize_logger, execute_search
 
 # load config file
-configs = load_config_file('batch_processor_config.yaml')
+configs = load_config_file('batch_processor/batch_processor_config.yaml')
 # create a logger
 logger = initialize_logger("Batch processor", configs)
 logger.debug("Config file loaded and logger created")
@@ -79,7 +79,6 @@ scenarios_with_initial_state_error = list()
 plot_and_save_scenarios = True
 animate_scenario = False
 # Initialize Plotting
-set_non_blocking()  # ensures interactive plotting is activated
 plt.style.use('classic')
 inch_in_cm = 2.54
 figsize = [60, 30]
@@ -138,10 +137,7 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
             logger.debug(msg + "\tpath FOUND to goal lanelet: [{}]".format(goal_lanelet_id))
             scenarios_path_found.append(scenario_id)
             if plot_and_save_scenarios:
-
-                # Create a Figure
-                fig_num = 1
-                fig = plt.figure(fig_num, figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
+                fig = plt.figure(figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
                 fig.clf()
                 fig.gca().axis('equal')
                 handles = {}  # collects handles of obstacle patches, plotted by matplotlib
@@ -153,10 +149,9 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
 
                 # draw ego vehicle - with a collision object - uses commonroad_cc.visualizer
                 try:
-                    draw_initial_state(planning_problem, fig_num)
+                    draw_initial_state(planning_problem)
                 except AssertionError as error:
-                    scenarios_with_initial_state_error.append(scenario_id)
-                    logger.exception(error)
+                    print(error)
 
                 for route_lanelet_id in route:
                     lanelet = scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
@@ -176,13 +171,8 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
                         'facecolor': '#c7c7c7',
                         'zorder': 30  # put it higher in the plot, to make it visible
                     }})
-                    # plot the center line vertices of the found route, scaling have to be switched off not to mess up
-                    # the original scaling
-                    plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "ro", zorder=31,
-                             scalex=False,
-                             scaley=False)
+
                     # TODO: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
-                    #   ! should be fixed !
                     plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b", zorder=30, scalex=False,
                              scaley=False)
 
@@ -201,26 +191,12 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
                 os.makedirs(output_folder, exist_ok=True)
 
                 output_file = os.path.join(output_folder, "fig_{}_goal_ID_{}.png".format(scenario_id, goal_lanelet_id))
-                fig.canvas.draw()
-                fig.savefig(output_file)
+                plt.savefig(output_file)
                 # logger.debug("{} 's solution saved out".format(scenario_id))
-
-                # only for fun :)
-                if animate_scenario:
-                    # visualize the scenario with the dynamic obstacles
-                    # plot_limits, and draw_params can be used to speed up the plotting - only draw necessary information
-                    fig.canvas.draw()  # have to call this line before calling redraw_obstacles function call
-                    last_time_step = get_last_time_step_in_scenario(scenario)
-                    for time_step in range(last_time_step + 1):
-                        # here the time_end can be changed to last_time_step to also visualize the occupancies of the dynamic vehicles
-                        # but then the plotting will be slower
-                        redraw_obstacles(scenario, handles=handles, figure_handle=fig, plot_limits=None,
-                                         draw_params={'time_begin': time_step, 'time_end': time_step})
-                        logger.debug("Timestep: {:3}".format(time_step))
 
     counter += 1
 
-logger.info("="*30+" RESULTS "+"="*30)
+logger.info("=" * 30 + " RESULTS " + "=" * 30)
 
 logger.debug("Successfully SOLVED scenarios {:3}/{}:".format(len(scenarios_path_found), num_of_scenarios_to_solve))
 for scen in scenarios_path_found:
@@ -229,11 +205,12 @@ logger.warning(
     "Scenarios with path NOT FOUND {:3}/{}:".format(len(scenarios_path_not_found), num_of_scenarios_to_solve))
 for scen in scenarios_path_not_found:
     logger.warning("\t{}".format(scen))
-logger.critical("Scenarios with EXCEPTION in path finding {:3}/{}:".format(len(scenarios_exception), num_of_scenarios_to_solve))
+logger.critical(
+    "Scenarios with EXCEPTION in path finding {:3}/{}:".format(len(scenarios_exception), num_of_scenarios_to_solve))
 for scen in scenarios_exception:
     logger.critical("\t{}".format(scen))
 
-logger.info("="*30+" OTHER WARNINGS "+"="*30)
+logger.info("=" * 30 + " OTHER WARNINGS " + "=" * 30)
 logger.warning("Scenarios with different name and benchmark ID {:3}/{}:".format(len(scenarios_with_different_ids),
                                                                                 num_of_scenarios_to_solve))
 for scen in scenarios_with_different_ids:
@@ -244,7 +221,4 @@ logger.warning("Scenarios with initial state assertion {:3}/{}:".format(len(scen
 for scen in scenarios_with_initial_state_error:
     logger.warning("\t{}".format(scen))
 
-# switch of interactive mode not to disappear the figures at the end of the program
-mpl.rc_context(rc={'interactive': False})
-# plt.figure(1)
 plt.show()
