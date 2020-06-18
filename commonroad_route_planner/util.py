@@ -1,9 +1,12 @@
 from typing import List
 
 import matplotlib as mpl
-
-mpl.use('Qt5Agg')
-import matplotlib.pyplot as plt
+try:
+    mpl.use('Qt5Agg')
+    import matplotlib.pyplot as plt
+except ImportError:
+    mpl.use('TkAgg')
+    import matplotlib.pyplot as plt
 
 from commonroad.geometry.shape import Rectangle
 from commonroad.scenario.scenario import Scenario
