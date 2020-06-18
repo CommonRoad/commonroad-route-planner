@@ -48,7 +48,6 @@ def plot_found_routes(scenario: Scenario, planning_problem: PlanningProblem, fou
         # draw ego vehicle - with a collision object - uses commonroad_cc.visualizer
         try:
             draw_initial_state(planning_problem)
-            pass
         except AssertionError as error:
             print(error)
 

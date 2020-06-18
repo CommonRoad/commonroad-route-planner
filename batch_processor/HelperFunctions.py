@@ -7,19 +7,12 @@ from typing import Tuple
 import matplotlib as mpl
 import yaml
 from commonroad.common.file_reader import CommonRoadFileReader
-from commonroad.geometry.shape import Rectangle
-from commonroad.planning.planning_problem import PlanningProblemSet, PlanningProblem
-from commonroad.prediction.prediction import TrajectoryPrediction
+from commonroad.planning.planning_problem import PlanningProblemSet
 from commonroad.scenario.scenario import Scenario
-from commonroad.scenario.trajectory import Trajectory
-# from commonroad.visualization.draw_dispatch_cr import draw_object
-from commonroad_cc.collision_detection.pycrcc_collision_dispatch import create_collision_object
-from commonroad_cc.visualization.draw_dispatch import draw_object as draw_cc_object
 
 from commonroad_route_planner.route_planner import RoutePlanner
 
 mpl.use('Qt5Agg')
-import matplotlib.pyplot as plt
 
 
 def load_config_file(filename) -> dict:
@@ -65,8 +58,7 @@ def initialize_logger(logger_name, config_file) -> logging.Logger:
             date_time_string = now.strftime("_%Y_%m_%d_%H-%M-%S")
 
         # if directory not exists create it
-        if not os.path.exists(log_file_dir):
-            os.mkdir(log_file_dir)
+        os.makedirs(log_file_dir, exist_ok=True)
 
         log_file_path = os.path.join(log_file_dir, config_file['log_file_name'] + date_time_string + ".log")
         file_handler = logging.FileHandler(log_file_path)
@@ -114,23 +106,9 @@ def load_scenarios(root_dir, scenario_ids):
 
 
 def execute_search(scenario, planning_problem, backend="priority_queue"):
-    route_planner = RoutePlanner(scenario.benchmark_id, scenario.lanelet_network, planning_problem,
-                                 backend=backend)
+    route_planner = RoutePlanner(scenario, planning_problem, backend=backend)
 
     return route_planner.search_alg()
-
-
-def draw_initial_state(planning_problem: PlanningProblem, fig_num=None):
-    # draw ego vehicle
-    if fig_num is not None:
-        plt.figure(fig_num)
-
-    egoShape = Rectangle(length=5, width=2)
-    trajectory = Trajectory(initial_time_step=int(planning_problem.initial_state.time_step),
-                            state_list=[planning_problem.initial_state])
-    prediction = TrajectoryPrediction(trajectory=trajectory, shape=egoShape)
-    collision_object = create_collision_object(prediction)
-    draw_cc_object(collision_object)
 
 
 def get_last_time_step_in_scenario(scenario: Scenario):
