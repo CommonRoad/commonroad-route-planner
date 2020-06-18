@@ -9,7 +9,7 @@ from commonroad_route_planner.route_planner import RoutePlanner
 
 
 if __name__ == "__main__":
-    scenario_path = 'example_scenarios/USA_Peach-2_1_T-1.xml'
+    scenario_path = 'example_scenarios/DEU_Gar-3_2_T-1.xml'
 
     # open and read in scenario and planning problem set
     scenario, planning_problem_set = CommonRoadFileReader(scenario_path).open()

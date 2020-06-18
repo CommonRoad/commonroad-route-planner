@@ -1,4 +1,5 @@
 from typing import List
+
 import matplotlib as mpl
 
 mpl.use('Qt5Agg')
@@ -10,8 +11,6 @@ from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.prediction.prediction import TrajectoryPrediction
 from commonroad.scenario.trajectory import Trajectory
 from commonroad.visualization.draw_dispatch_cr import draw_object
-from commonroad_cc.collision_detection.pycrcc_collision_dispatch import create_collision_object
-from commonroad_cc.visualization.draw_dispatch import draw_object as draw_cc_object
 
 
 def draw_initial_state(p_planning_problem: PlanningProblem, fig_num=None):
@@ -20,11 +19,11 @@ def draw_initial_state(p_planning_problem: PlanningProblem, fig_num=None):
         plt.figure(fig_num)
 
     egoShape = Rectangle(length=5, width=2)
-    trajectory = Trajectory(initial_time_step=int(p_planning_problem.initial_state.time_step),
+    initial_time_step = int(p_planning_problem.initial_state.time_step)
+    trajectory = Trajectory(initial_time_step=initial_time_step,
                             state_list=[p_planning_problem.initial_state])
     prediction = TrajectoryPrediction(trajectory=trajectory, shape=egoShape)
-    collision_object = create_collision_object(prediction)
-    draw_cc_object(collision_object)
+    draw_object(prediction.occupancy_at_time_step(initial_time_step).shape)
 
 
 def plot_found_routes(scenario: Scenario, planning_problem: PlanningProblem, found_routes: List[List]):
@@ -46,6 +45,7 @@ def plot_found_routes(scenario: Scenario, planning_problem: PlanningProblem, fou
         # draw ego vehicle - with a collision object - uses commonroad_cc.visualizer
         try:
             draw_initial_state(planning_problem)
+            pass
         except AssertionError as error:
             print(error)
 
