@@ -16,7 +16,7 @@ from commonroad.scenario.trajectory import Trajectory
 from commonroad_cc.collision_detection.pycrcc_collision_dispatch import create_collision_object
 from commonroad_cc.visualization.draw_dispatch import draw_object as draw_cc_object
 
-from route_planner.route_planner import RoutePlanner
+from commonroad_route_planner.route_planner import RoutePlanner
 
 mpl.use('Qt5Agg')
 import matplotlib.pyplot as plt
