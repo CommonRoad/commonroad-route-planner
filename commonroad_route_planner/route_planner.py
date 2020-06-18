@@ -6,13 +6,13 @@ from typing import List
 import networkx as nx
 import numpy as np
 from commonroad.planning.planning_problem import PlanningProblem
-from commonroad.scenario.lanelet import LaneletNetwork, Lanelet
+from commonroad.scenario.lanelet import Lanelet
 from commonroad.scenario.scenario import Scenario
 
-from route_planner.priority_queue import PriorityQueue
+from commonroad_route_planner.priority_queue import PriorityQueue
 
 
-class LaneletNode:
+class _LaneletNode:
     def __init__(self, laneletID: int, lanelet: Lanelet, cost: float, current_length: int):
         # it must be id because of the implementation of the priority queue
         self.id = laneletID
@@ -336,14 +336,14 @@ class RoutePlanner:
         diff = target.center_vertices[0] - current.center_vertices[-1]
         return np.sqrt(np.dot(diff, diff))
 
-    def _add_child(self, parent_node: LaneletNode, next_lanelet_id: int, target: Lanelet, extra_cost: float = 0.0):
+    def _add_child(self, parent_node: _LaneletNode, next_lanelet_id: int, target: Lanelet, extra_cost: float = 0.0):
         next_lanelet = self.lanelet_network.find_lanelet_by_id(next_lanelet_id)
 
         frontier_lanelet_ids = self.frontier.get_item_ids()
         cost = extra_cost + parent_node.cost + self._calc_cost(next_lanelet) + self._calc_heuristic(next_lanelet,
                                                                                                     target)
 
-        node = LaneletNode(next_lanelet_id, next_lanelet, cost, parent_node.count + 1)
+        node = _LaneletNode(next_lanelet_id, next_lanelet, cost, parent_node.count + 1)
         node.parent_node = parent_node
 
         # TODO: check speed
@@ -360,13 +360,13 @@ class RoutePlanner:
         target_lanelet = self.lanelet_network.find_lanelet_by_id(target_lanelet_id)
 
         lanelet = self.lanelet_network.find_lanelet_by_id(source_lanelet_id)
-        node = LaneletNode(source_lanelet_id, lanelet,
-                           self._calc_cost(lanelet) + self._calc_heuristic(lanelet, target_lanelet), 1)
+        node = _LaneletNode(source_lanelet_id, lanelet,
+                            self._calc_cost(lanelet) + self._calc_heuristic(lanelet, target_lanelet), 1)
 
         self.frontier.put(node.id, node, node.cost)
         while not self.frontier.is_empty():
 
-            node: LaneletNode = self.frontier.pop()
+            node: _LaneletNode = self.frontier.pop()
 
             # maybe the frontier is not empty but only contains invalid elements
             if node is None:
@@ -408,8 +408,9 @@ class RoutePlanner:
                     for right_lanelet_successor_id in right_lanelet_successor_ids:
                         self._add_child(node, right_lanelet_successor_id, target_lanelet, 0.9)
         else:
-            raise self.NoPathFound("The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
-                                                                                                     source_lanelet_id))
+            raise self.NoPathFound(
+                "The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
+                                                                                       source_lanelet_id))
 
         reverse_path = list()
 

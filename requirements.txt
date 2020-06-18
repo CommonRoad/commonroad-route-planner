@@ -1,0 +1,3 @@
+commonroad-io>=2019.2
+networkx>=2.4
+numpy>=1.17.4
