@@ -1,5 +1,0 @@
-Route Planner [CHN_Sha-9_1_T-1]	INFO	Using backend: priority_queue
-Route Planner [CHN_Sha-9_1_T-1]	INFO	More start lanelet ids - some of it can results in an unsuccessful search
-Route Planner [CHN_Sha-9_1_T-1]	INFO	No goal lanelet is given
-Route Planner [CHN_Sha-9_1_T-1]	INFO	Goal center is found
-Route Planner [CHN_Sha-9_1_T-1]	INFO	The Target lanelet_id [89] cannot be reached from Source [118]
