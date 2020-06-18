@@ -2,3 +2,9 @@
 .idea/
 
 *.pyc
+
+build/
+
+commonroad_route_planner.egg-info/
+
+dist/

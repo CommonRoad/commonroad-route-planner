@@ -1,9 +1,4 @@
-import matplotlib as mpl
-
 from commonroad_route_planner.util import plot_found_routes
-
-mpl.use('Qt5Agg')
-
 from commonroad.common.file_reader import CommonRoadFileReader
 from commonroad_route_planner.route_planner import RoutePlanner
 
@@ -11,8 +6,12 @@ from commonroad_route_planner.route_planner import RoutePlanner
 if __name__ == "__main__":
     scenario_path = 'example_scenarios/DEU_Gar-3_2_T-1.xml'
 
+    print(f"Loading scenario {scenario_path}")
+
     # open and read in scenario and planning problem set
     scenario, planning_problem_set = CommonRoadFileReader(scenario_path).open()
+
+    print(f"Scenario {scenario_path} loaded!")
 
     # retrieve planning problem with given index (for cooperative scenario:0, 1, 2, ..., otherwise: 0)
     # with the heuristic A* we do not want to solve cooperative scenarios so in all cases we will have

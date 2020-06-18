@@ -33,20 +33,29 @@ class RoutePlanner:
         Class implements route planning for the CommonRoad scenarios
         This is a higher level planner to plan only on the lanelet structure.
         It is like plan a route with google maps.
-        It gives back the best route (list of lanelet IDs in the right order) from each start position to all goal positions.
+        It gives back the best route (list of lanelet IDs in the right order)
+        from each start position to all goal positions.
         If there are no goal position then it is going forward and if it can not go forward then goes right.
         The best route is the route with the lowest cost according to the heuristic function.
         """
 
-    def __init__(self, scenario: Scenario, planningProblem: PlanningProblem,
-                 allow_diagonal=False, backend="networkx"):
+    def __init__(self, scenario: Scenario, planning_problem: PlanningProblem,
+                 allow_diagonal=False, backend="networkx", log_to_console=True):
+        """
+        Initializes a RoutePlanner object
+        :param scenario: Scenario which should be used for the route planning
+        :param planning_problem: PlanningProblem for which the route should be planned
+        :param allow_diagonal: Indicates whether diagonal movements are allowed - experimental
+        :param backend: The backend which should be used, supported choices: networkx, priority_queue
+        :param log_to_console: Indicates whether the outputs should be logged to the console
+        """
 
         # ============================== #
         #       Binding variables        #
         # ============================== #
         self.scenario_id = scenario.benchmark_id
         self.lanelet_network = scenario.lanelet_network
-        self.planningProblem = planningProblem
+        self.planningProblem = planning_problem
         # self.priority_queue = PriorityQueue()
         self.allow_diagonal = allow_diagonal
         self.backend = backend
@@ -54,7 +63,7 @@ class RoutePlanner:
         #        Create Logger           #
         # ============================== #
         self.logger = logging.getLogger("Route Planner [{}]".format(self.scenario_id))
-        self._init_logger(log_to_file=False)
+        self._init_logger(log_to_file=False, log_to_console=log_to_console)
 
         # ================================================= #
         #                Check initial state                #
@@ -82,11 +91,14 @@ class RoutePlanner:
                     self.digraph = self._create_graph_from_lanelet_network_lane_change()
                 else:
                     self.digraph = self._create_graph_from_lanelet_network()
-            else:
+            elif self.backend == "priority_queue":
                 if self.allow_diagonal:
                     self.logger.critical("diagonal search with custom backend is not implemented")
                 self.frontier = PriorityQueue()
                 self.explored = set()
+            else:
+                raise ValueError(f"The backend {self.backend} is not recognized as supported backend "
+                                 f"for the RoutePlanner")
 
     # =============== end of constructor ============== #
 
@@ -95,7 +107,7 @@ class RoutePlanner:
         log_file_dir = "solutions/logs/scenario_logs"
         log_file_name = "route_planner_result_with_priority_queue_backend"
         # release_logger(self.logger)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.INFO)
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         console_formatter = logging.Formatter('%(asctime)s\t\t%(name)s\t%(levelname)s\t%(message)s')
         file_formatter = logging.Formatter('%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s')
@@ -125,7 +137,7 @@ class RoutePlanner:
             file_handler.setFormatter(file_formatter)
             self.logger.addHandler(file_handler)
 
-        self.logger.info("Using backend: {}".format(self.backend))
+        self.logger.debug("Using backend: {}".format(self.backend))
 
     def _check_initial_state(self):
         if hasattr(self.planningProblem.initial_state, 'position'):
@@ -136,16 +148,16 @@ class RoutePlanner:
                 self.logger.info("More start lanelet ids - some of it can results in an unsuccessful search")
         else:
             self.logger.critical("There is no start position given")
-            raise self.NoSourceLaneletId("There is no start position given")
+            raise self._NoSourceLaneletId("There is no start position given")
 
     def _check_goal_state(self):
         self.goal_lanelet_ids = list()
 
         if hasattr(self.planningProblem.goal, 'lanelets_of_goal_position'):
             if self.planningProblem.goal.lanelets_of_goal_position is None:
-                self.logger.info("No goal lanelet is given")
+                self.logger.debug("No goal lanelet is given")
             else:
-                self.logger.info("Goal lanelet is given")
+                self.logger.debug("Goal lanelet is given")
                 # the goals are in the dict, one goal can consist of multiple lanelets
                 # now we just iterating over the goals and adding every ID which we find to
                 # the goal_lanelet_ids list
@@ -161,9 +173,9 @@ class RoutePlanner:
                     goal_state_lanelet_ids.extend(self.lanelet_network.find_lanelet_by_shape(goal_position))
                     if len(goal_state_lanelet_ids) != 0:
                         self.goal_lanelet_ids.extend(goal_state_lanelet_ids)
-                        self.logger.info("Goal lanelet IDs estimated from goal shape in state [{}]".format(idx))
+                        self.logger.debug("Goal lanelet IDs estimated from goal shape in state [{}]".format(idx))
                     else:
-                        self.logger.info(
+                        self.logger.debug(
                             "No Goal lanelet IDs could be determined from the goal shape in state [{}]".format(idx))
 
         # Removing duplicates and reset to none if no lanelet IDs found
@@ -313,7 +325,7 @@ class RoutePlanner:
          :return: list of simple paths with lanelet IDs
          """
         if source_lanelet_id is None:
-            raise self.NoSourceLaneletId("There is no start position given")
+            raise self._NoSourceLaneletId("There is no start position given")
         if target_lanelet_id is None:
             self.logger.info("SURVIVAL SCENARIO")
             return self._find_survival_route(source_lanelet_id)
@@ -323,8 +335,8 @@ class RoutePlanner:
                                                      weight='weight', method='dijkstra'))
         except nx.exception.NetworkXNoPath:
             # it is a normal behaviour because of the overlapping lanelets in a road network
-            self.logger.info("The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
-                                                                                                    source_lanelet_id))
+            self.logger.debug("The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
+                                                                                                     source_lanelet_id))
         return found_paths
 
     @staticmethod
@@ -408,7 +420,7 @@ class RoutePlanner:
                     for right_lanelet_successor_id in right_lanelet_successor_ids:
                         self._add_child(node, right_lanelet_successor_id, target_lanelet, 0.9)
         else:
-            raise self.NoPathFound(
+            raise self._NoPathFound(
                 "The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
                                                                                        source_lanelet_id))
 
@@ -423,17 +435,17 @@ class RoutePlanner:
     def _find_path(self, source_lanelet_id: int, target_lanelet_id: int = None) -> List[List]:
         found_paths = list()
         if source_lanelet_id is None:
-            raise self.NoSourceLaneletId("There is no start position given")
+            raise self._NoSourceLaneletId("There is no start position given")
 
         if target_lanelet_id is None:
-            self.logger.info("SURVIVAL SCENARIO")
+            self.logger.debug("SURVIVAL SCENARIO")
             found_paths.append(self._find_survival_route(source_lanelet_id))
         else:
             try:
                 found_paths.append(self._find_astar_path(source_lanelet_id, target_lanelet_id))
-            except self.NoPathFound:
+            except self._NoPathFound:
                 # it is a normal behaviour because of the overlapping lanelets in a road network
-                self.logger.info(
+                self.logger.debug(
                     "The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
                                                                                            source_lanelet_id))
         return found_paths
@@ -442,29 +454,34 @@ class RoutePlanner:
         """
         Find all paths to all of the goal lanelet IDs from all the start lanelet IDs using networkx module.
         If no goal lanelet ID is given then return a survival route
-        :return:
+        :return: empty list if no path has been found
         """
+        self.logger.info("Route planning started")
         routes = list()
         for start_lanelet_id in self.startLanelet_ids:
             if self.goal_lanelet_ids:
                 for goal_lanelet_id in self.goal_lanelet_ids:
                     if self.backend == "networkx":
                         results = self._find_all_shortest_paths(start_lanelet_id, goal_lanelet_id)
-                    else:
+                    elif self.backend == "priority_queue":
                         results = self._find_path(start_lanelet_id, goal_lanelet_id)
+                    else:
+                        raise ValueError(f"The backend {self.backend} is not recognized as supported backend "
+                                         f"for the RoutePlanner")
 
                     routes.extend(results)
             else:
                 routes.append(self._find_survival_route(start_lanelet_id))
+        self.logger.info("Route planning finished")
         return routes
 
     # ================================================= #
     #                 Custom Exceptions                 #
     # ================================================= #
-    class NoSourceLaneletId(Exception):
+    class _NoSourceLaneletId(Exception):
         def __init__(self, message):
             self.message = message
 
-    class NoPathFound(Exception):
+    class _NoPathFound(Exception):
         def __init__(self, message):
             self.message = message
