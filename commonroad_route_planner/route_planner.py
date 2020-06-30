@@ -100,6 +100,11 @@ class RoutePlanner:
                 raise ValueError(f"The backend {self.backend} is not recognized as supported backend "
                                  f"for the RoutePlanner")
 
+        # ==================== #
+        #        Extra         #
+        # ==================== #
+        self.lanelet_ids_in_the_opposite_direction = set()
+
     # =============== end of constructor ============== #
 
     def _init_logger(self, log_to_console=True, log_to_file=True, add_timestamp_to_log_file=True):
@@ -475,10 +480,12 @@ class RoutePlanner:
         self.logger.info("Route planning finished")
         return routes
 
-    def get_adjacent_lanelets_list(self, lanelet_id: int) -> list:
+    def get_adjacent_lanelets_list(self, lanelet_id: int, is_opposite_direction_allowed=False) -> list:
         """
         Recursively gets adj_left and adj_right lanelets of current lanelet id
         :param lanelet_id: current lanelet id
+        :param is_opposite_direction_allowed: specifies if it should give back only the lanelets in the driving
+            direction or it should give back the first neighbouring lanelet in the opposite direction
         :return: list of adjacent lanelet ids: all lanelets which are going in the same direction and one-one from the
                  left and right side which are going in the opposite direction, empty lists if there are none
         """
@@ -487,35 +494,39 @@ class RoutePlanner:
 
         # left direction
         current_lanelet = base_lanelet
-        temp_id = current_lanelet.adj_left
+        temp_id = current_lanelet.lanelet_id
         while temp_id is not None:
-            # append the left adjacent lanelet if it exists
-            adjacent_list.append(temp_id)
-
             # set this lanelet as the current if it goes in the same direction and iterate further
             if current_lanelet.adj_left_same_direction:
                 current_lanelet = self.lanelet_network.find_lanelet_by_id(temp_id)
                 temp_id = current_lanelet.adj_left
             # this lanelet was already such which goes in the opposite direction -> exit the loop
             else:
-                self.lanelet_ids_in_the_opposite_direction.append(temp_id)
+                self.lanelet_ids_in_the_opposite_direction.add(temp_id)
+                if is_opposite_direction_allowed:
+                    adjacent_list.append(temp_id)
                 break
+
+            # append the left adjacent lanelet if it exists
+            adjacent_list.append(temp_id)
 
         # right direction
         current_lanelet = base_lanelet
-        temp_id = current_lanelet.adj_right
+        temp_id = current_lanelet.lanelet_id
         while temp_id is not None:
-            # append the right adjacent lanelet if it exists
-            adjacent_list.append(temp_id)
-
             # set this lanelet as the current if it goes in the same direction and iterate further
             if current_lanelet.adj_right_same_direction:
                 current_lanelet = self.lanelet_network.find_lanelet_by_id(temp_id)
                 temp_id = current_lanelet.adj_right
             # this lanelet was already such which goes in the opposite direction -> exit the loop
             else:
-                self.lanelet_ids_in_the_opposite_direction.append(temp_id)
+                self.lanelet_ids_in_the_opposite_direction.add(temp_id)
+                if is_opposite_direction_allowed:
+                    adjacent_list.append(temp_id)
                 break
+
+            # append the right adjacent lanelet if it exists
+            adjacent_list.append(temp_id)
 
         return adjacent_list
 
@@ -527,7 +538,7 @@ class RoutePlanner:
         section_id = 0
         sections = list()
         for lanelet_id_in_route in route:
-            lanelet_ids_in_section = self.get_adjacent_lanelets_list(lanelet_id_in_route)
+            lanelet_ids_in_section = self.get_adjacent_lanelets_list(lanelet_id_in_route, is_opposite_direction_allowed)
             lanelet_ids_in_section.append(lanelet_id_in_route)
             lanelet_ids_in_section.sort()
 
