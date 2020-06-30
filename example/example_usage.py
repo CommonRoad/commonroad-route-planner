@@ -1,10 +1,10 @@
-from commonroad_route_planner.util import plot_found_routes
+from commonroad_route_planner.util import plot_found_routes, plot_route_environment
 from commonroad.common.file_reader import CommonRoadFileReader
 from commonroad_route_planner.route_planner import RoutePlanner
 
 
 if __name__ == "__main__":
-    scenario_path = 'example_scenarios/DEU_Gar-3_2_T-1.xml'
+    scenario_path = 'example_scenarios/USA_Peach-2_1_T-1.xml'
 
     print(f"Loading scenario {scenario_path}")
 
@@ -22,4 +22,11 @@ if __name__ == "__main__":
     route_planner = RoutePlanner(scenario, planning_problem, backend="networkx")
     routes = route_planner.search_alg()
 
-    plot_found_routes(scenario, planning_problem, routes)
+    # plot_found_routes(scenario, planning_problem, routes)
+
+    # you can get the envrionment of the found route
+    chosen_route = routes[0]
+    route_environment = \
+        route_planner.get_sectionized_environment_from_route(chosen_route, is_opposite_direction_allowed=False)
+
+    plot_route_environment(scenario, planning_problem, route_environment)
