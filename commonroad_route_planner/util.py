@@ -75,3 +75,52 @@ def plot_found_routes(scenario: Scenario, planning_problem: PlanningProblem, fou
                      scaley=False)
 
         plt.show()
+
+
+def plot_route_environment(scenario: Scenario, planning_problem: PlanningProblem, route_environment: List[List]):
+    plt.style.use('classic')
+    inch_in_cm = 2.54
+    figsize = [60, 30]
+
+    fig = plt.figure(figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
+    fig.clf()
+    fig.gca().axis('equal')
+
+    handles = {}  # collects handles of obstacle patches, plotted by matplotlib
+
+    # plot the lanelet network and the planning problem
+    draw_object(scenario, handles=handles)
+    draw_object(planning_problem, handles=handles)
+    fig.gca().autoscale()
+
+    for ctn, section in enumerate(route_environment):
+        # draw ego vehicle - with a collision object - uses commonroad_cc.visualizer
+        try:
+            draw_initial_state(planning_problem)
+        except AssertionError as error:
+            print(error)
+
+        for route_lanelet_id in section:
+            lanelet = scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
+            draw_object(lanelet, handles=handles, draw_params={'lanelet': {
+                'center_bound_color': '#3232ff',  # color of the found route
+                'draw_stop_line': False,
+                'stop_line_color': '#ff0000',
+                'draw_line_markings': True,
+                'draw_left_bound': False,
+                'draw_right_bound': False,
+                'draw_center_bound': True,
+                'draw_border_vertices': False,
+                'draw_start_and_direction': True,
+                'show_label': False,
+                'draw_linewidth': 2,
+                'fill_lanelet': False,
+                'facecolor': '#c7c7c7',
+                'zorder': 30  # put it higher in the plot, to make it visible
+            }})
+
+            # TODO: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
+            plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b", zorder=30, scalex=False,
+                     scaley=False)
+
+    plt.show()

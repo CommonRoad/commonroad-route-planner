@@ -16,6 +16,8 @@ python setup.py install
 
 ## Usage
 
+### Route planning
+
 You can find an example under `example/example_usage.py`:
 ```python
 from commonroad_route_planner.util import plot_found_routes
@@ -48,6 +50,18 @@ if __name__ == "__main__":
 It should give the following result.
 
 ![USA_Peach-2_1_T-1](doc/res/USA_Peach-2_1_T-1.png "USA_Peach-2_1_T-1")
+
+### Extract environment of a route
+
+You can extract the environment from a planned route. It can be helpful in trajectory planning to know, which lanelets are leading to the desired goal.
+
+#### Supported features:
+* `is_opposite_direction_allowed`: Include one lanelet in the opposite direction (can be used for take over)
+
+After running the example under `example/example_usage.py`, you should get the following results:
+
+![USA_Peach-2_1_T-1_sectionized_opposite](doc/res/USA_Peach-2_1_T-1_sectionized_opposite.png "USA_Peach-2_1_T-1_sectionized_opposite")
+![USA_Peach-2_1_T-1_sectionized](doc/res/USA_Peach-2_1_T-1_sectionized.png "USA_Peach-2_1_T-1_sectionized")
 
 ### Backends
 The route planner supports different backends to search the shortest path
