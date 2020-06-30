@@ -1,7 +1,7 @@
 import logging
 import os
 from datetime import datetime
-from typing import List
+from typing import List, Union
 
 import networkx as nx
 import numpy as np
@@ -474,6 +474,70 @@ class RoutePlanner:
                 routes.append(self._find_survival_route(start_lanelet_id))
         self.logger.info("Route planning finished")
         return routes
+
+    def get_adjacent_lanelets_list(self, lanelet_id: int) -> list:
+        """
+        Recursively gets adj_left and adj_right lanelets of current lanelet id
+        :param lanelet_id: current lanelet id
+        :return: list of adjacent lanelet ids: all lanelets which are going in the same direction and one-one from the
+                 left and right side which are going in the opposite direction, empty lists if there are none
+        """
+        adjacent_list = list()
+        base_lanelet = self.lanelet_network.find_lanelet_by_id(lanelet_id)
+
+        # left direction
+        current_lanelet = base_lanelet
+        temp_id = current_lanelet.adj_left
+        while temp_id is not None:
+            # append the left adjacent lanelet if it exists
+            adjacent_list.append(temp_id)
+
+            # set this lanelet as the current if it goes in the same direction and iterate further
+            if current_lanelet.adj_left_same_direction:
+                current_lanelet = self.lanelet_network.find_lanelet_by_id(temp_id)
+                temp_id = current_lanelet.adj_left
+            # this lanelet was already such which goes in the opposite direction -> exit the loop
+            else:
+                self.lanelet_ids_in_the_opposite_direction.append(temp_id)
+                break
+
+        # right direction
+        current_lanelet = base_lanelet
+        temp_id = current_lanelet.adj_right
+        while temp_id is not None:
+            # append the right adjacent lanelet if it exists
+            adjacent_list.append(temp_id)
+
+            # set this lanelet as the current if it goes in the same direction and iterate further
+            if current_lanelet.adj_right_same_direction:
+                current_lanelet = self.lanelet_network.find_lanelet_by_id(temp_id)
+                temp_id = current_lanelet.adj_right
+            # this lanelet was already such which goes in the opposite direction -> exit the loop
+            else:
+                self.lanelet_ids_in_the_opposite_direction.append(temp_id)
+                break
+
+        return adjacent_list
+
+    def get_sectionized_environment_from_route(self, route, is_opposite_direction_allowed=False) -> \
+            Union[None, List[List[int]]]:
+        if route is None:
+            return None
+
+        section_id = 0
+        sections = list()
+        for lanelet_id_in_route in route:
+            lanelet_ids_in_section = self.get_adjacent_lanelets_list(lanelet_id_in_route)
+            lanelet_ids_in_section.append(lanelet_id_in_route)
+            lanelet_ids_in_section.sort()
+
+            if len(sections) == 0:
+                sections.append(lanelet_ids_in_section)
+            elif sections[section_id] != lanelet_ids_in_section:
+                sections.append(lanelet_ids_in_section)
+                section_id += 1
+
+        return sections
 
     # ================================================= #
     #                 Custom Exceptions                 #
