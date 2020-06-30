@@ -494,12 +494,17 @@ class RoutePlanner:
 
         # left direction
         current_lanelet = base_lanelet
-        temp_id = current_lanelet.lanelet_id
+        temp_id = current_lanelet.adj_left
         while temp_id is not None:
             # set this lanelet as the current if it goes in the same direction and iterate further
             if current_lanelet.adj_left_same_direction:
+                # append the left adjacent lanelet if it exists
+                adjacent_list.append(temp_id)
+
+                # Update current_lanelet
                 current_lanelet = self.lanelet_network.find_lanelet_by_id(temp_id)
                 temp_id = current_lanelet.adj_left
+
             # this lanelet was already such which goes in the opposite direction -> exit the loop
             else:
                 self.lanelet_ids_in_the_opposite_direction.add(temp_id)
@@ -507,15 +512,16 @@ class RoutePlanner:
                     adjacent_list.append(temp_id)
                 break
 
-            # append the left adjacent lanelet if it exists
-            adjacent_list.append(temp_id)
-
         # right direction
         current_lanelet = base_lanelet
-        temp_id = current_lanelet.lanelet_id
+        temp_id = current_lanelet.adj_right
         while temp_id is not None:
             # set this lanelet as the current if it goes in the same direction and iterate further
             if current_lanelet.adj_right_same_direction:
+                # append the right adjacent lanelet if it exists
+                adjacent_list.append(temp_id)
+
+                # Update current_lanelet
                 current_lanelet = self.lanelet_network.find_lanelet_by_id(temp_id)
                 temp_id = current_lanelet.adj_right
             # this lanelet was already such which goes in the opposite direction -> exit the loop
@@ -525,17 +531,21 @@ class RoutePlanner:
                     adjacent_list.append(temp_id)
                 break
 
-            # append the right adjacent lanelet if it exists
-            adjacent_list.append(temp_id)
-
         return adjacent_list
 
-    def get_sectionized_environment_from_route(self, route, is_opposite_direction_allowed=False) -> \
+    def get_sectionized_environment_from_route(self, route: List[int], is_opposite_direction_allowed: bool=False) -> \
             Union[None, List[List[int]]]:
+        """
+        Creates sectionized environment from a given route.
+        :param route: The route as a list of lanelet ids
+        :param is_opposite_direction_allowed: Indicates whether it is required to contain one opposite lanelet in the
+                                              environment
+        :return: Returns a sectional environment in a form of list of list of lanelet ids. This environment contains
+                 the environemnt of the planned route in every time steps.
+        """
         if route is None:
             return None
 
-        section_id = 0
         sections = list()
         for lanelet_id_in_route in route:
             lanelet_ids_in_section = self._get_adjacent_lanelets_list(lanelet_id_in_route, is_opposite_direction_allowed)
@@ -544,9 +554,8 @@ class RoutePlanner:
 
             if len(sections) == 0:
                 sections.append(lanelet_ids_in_section)
-            elif sections[section_id] != lanelet_ids_in_section:
+            elif sections[-1] != lanelet_ids_in_section:
                 sections.append(lanelet_ids_in_section)
-                section_id += 1
 
         return sections
 
