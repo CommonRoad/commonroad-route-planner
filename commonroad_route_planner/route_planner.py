@@ -480,7 +480,7 @@ class RoutePlanner:
         self.logger.info("Route planning finished")
         return routes
 
-    def get_adjacent_lanelets_list(self, lanelet_id: int, is_opposite_direction_allowed=False) -> list:
+    def _get_adjacent_lanelets_list(self, lanelet_id: int, is_opposite_direction_allowed=False) -> list:
         """
         Recursively gets adj_left and adj_right lanelets of current lanelet id
         :param lanelet_id: current lanelet id
@@ -538,7 +538,7 @@ class RoutePlanner:
         section_id = 0
         sections = list()
         for lanelet_id_in_route in route:
-            lanelet_ids_in_section = self.get_adjacent_lanelets_list(lanelet_id_in_route, is_opposite_direction_allowed)
+            lanelet_ids_in_section = self._get_adjacent_lanelets_list(lanelet_id_in_route, is_opposite_direction_allowed)
             lanelet_ids_in_section.append(lanelet_id_in_route)
             lanelet_ids_in_section.sort()
 
