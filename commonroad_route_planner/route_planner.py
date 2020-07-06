@@ -216,7 +216,8 @@ class RoutePlanner:
                     goal_position = state.position
                     # noinspection PyTypeChecker
                     all_goal_state_lanelet_ids = self.lanelet_network.find_lanelet_by_shape(goal_position)
-                    goal_state_lanelet_ids = list(self._filter_allowed_lanelet_ids(all_goal_state_lanelet_ids))
+                    goal_state_lanelet_ids = list()
+                    goal_state_lanelet_ids.extend(self._filter_allowed_lanelet_ids(all_goal_state_lanelet_ids))
                     if len(goal_state_lanelet_ids) != 0:
                         self.goal_lanelet_ids.extend(goal_state_lanelet_ids)
                         self.logger.debug("Goal lanelet IDs estimated from goal shape in state [{}]".format(idx))
