@@ -46,7 +46,7 @@ class RoutePlanner:
         Initializes a RoutePlanner object
         :param scenario: Scenario which should be used for the route planning
         :param planning_problem: PlanningProblem for which the route should be planned
-        :param lanelet_type_blacklist: TODO
+        :param lanelet_type_blacklist: Set of lanelet types which should be avoided during route planning
         :type lanelet_type_blacklist: Set[LaneletType]
         :param allow_diagonal: Indicates whether diagonal movements are allowed - experimental
         :param backend: The backend which should be used, supported choices: networkx, priority_queue
