@@ -106,6 +106,12 @@ class RoutePlanner:
                     self.digraph = self._create_graph_from_lanelet_network_lane_change()
                 else:
                     self.digraph = self._create_graph_from_lanelet_network()
+            elif self.backend == "networkx_reversed":
+                if self.allow_diagonal:
+                    self.logger.warning("diagonal search not tested")
+                    self.digraph = self._create_reversed_graph_from_lanelet_network_lane_change()
+                else:
+                    self.digraph = self._create_reversed_graph_from_lanelet_network()
             elif self.backend == "priority_queue":
                 if self.allow_diagonal:
                     self.logger.critical("diagonal search with custom backend is not implemented")
@@ -303,12 +309,49 @@ class RoutePlanner:
             # add edge if left lanelet
             adj_left = lanelet.adj_left
             if adj_left and lanelet.adj_left_same_direction and adj_left in self.allowed_lanelet_ids:
-                edges.append((lanelet.lanelet_id, lanelet.adj_left, {'weight': 1.0}))
+                edges.append((lanelet.lanelet_id, adj_left, {'weight': 1.0}))
 
             # add edge if right lanelet
             adj_right = lanelet.adj_right
             if adj_right and lanelet.adj_right_same_direction and adj_right in self.allowed_lanelet_ids:
-                edges.append((lanelet.lanelet_id, lanelet.adj_right, {'weight': 1.0}))
+                edges.append((lanelet.lanelet_id, adj_right, {'weight': 1.0}))
+
+        # add all nodes and edges to graph
+        graph.add_nodes_from(nodes)
+        graph.add_edges_from(edges)
+        return graph
+
+    def _create_reversed_graph_from_lanelet_network(self) -> nx.DiGraph:
+        """
+        Build a graph from the lanelet network.
+
+        :return: created graph from lanelet network
+        """
+
+        graph = nx.DiGraph()
+        nodes = list()
+        edges = list()
+        for lanelet in self.lanelet_network.lanelets:
+            if lanelet.lanelet_id not in self.allowed_lanelet_ids:
+                continue
+
+            nodes.append(lanelet.lanelet_id)
+
+            # add edge if succeeding lanelet
+            for predecessor in lanelet.predecessor:
+                if predecessor not in self.allowed_lanelet_ids:
+                    continue
+                edges.append((lanelet.lanelet_id, predecessor, {'weight': lanelet.distance[-1]}))
+
+            # add edge if left lanelet
+            adj_left = lanelet.adj_left
+            if adj_left and lanelet.adj_left_same_direction and adj_left in self.allowed_lanelet_ids:
+                edges.append((lanelet.lanelet_id, adj_left, {'weight': np.inf}))
+
+            # add edge if right lanelet
+            adj_right = lanelet.adj_right
+            if adj_right and lanelet.adj_right_same_direction and adj_right in self.allowed_lanelet_ids:
+                edges.append((lanelet.lanelet_id, adj_right, {'weight': np.inf}))
 
         # add all nodes and edges to graph
         graph.add_nodes_from(nodes)
@@ -373,6 +416,9 @@ class RoutePlanner:
         graph.add_edges_from(edges)
         return graph
 
+    def _create_reversed_graph_from_lanelet_network_lane_change(self):
+        raise NotImplementedError
+
     def _find_all_shortest_paths(self, source_lanelet_id: int, target_lanelet_id: int = None) -> List[List]:
         """
          Find all shortest paths using networkx module
@@ -389,6 +435,28 @@ class RoutePlanner:
         try:
             found_paths = list(nx.all_shortest_paths(self.digraph, source=source_lanelet_id, target=target_lanelet_id,
                                                      weight='weight', method='dijkstra'))
+        except nx.exception.NetworkXNoPath:
+            # it is a normal behaviour because of the overlapping lanelets in a road network
+            self.logger.debug("The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
+                                                                                                     source_lanelet_id))
+        return found_paths
+
+    def _find_shortest_reversed_path(self, source_lanelet_id: int, target_lanelet_id: int = None) -> List[List]:
+        """
+         Find the shortest paths reversed using networkx module
+         :param source_lanelet_id: ID of source lanelet
+         :param target_lanelet_id: ID of goal lanelet
+         :return: list of lanelet IDs
+         """
+        if source_lanelet_id is None:
+            raise self._NoSourceLaneletId("There is no start position given")
+        if target_lanelet_id is None:
+            self.logger.info("SURVIVAL SCENARIO")
+            return self._find_survival_route(source_lanelet_id)
+        found_paths = list()
+        try:
+            found_paths.append(list(nx.shortest_path(self.digraph, source=target_lanelet_id, target=source_lanelet_id,
+                                                     weight='weight', method='dijkstra'))[::-1])
         except nx.exception.NetworkXNoPath:
             # it is a normal behaviour because of the overlapping lanelets in a road network
             self.logger.debug("The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
@@ -527,6 +595,8 @@ class RoutePlanner:
                 for goal_lanelet_id in self.goal_lanelet_ids:
                     if self.backend == "networkx":
                         results = self._find_all_shortest_paths(start_lanelet_id, goal_lanelet_id)
+                    elif self.backend == "networkx_reversed":
+                        results = self._find_shortest_reversed_path(start_lanelet_id, goal_lanelet_id)
                     elif self.backend == "priority_queue":
                         results = self._find_path(start_lanelet_id, goal_lanelet_id)
                     else:
