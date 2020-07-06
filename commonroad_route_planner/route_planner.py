@@ -309,12 +309,12 @@ class RoutePlanner:
             # add edge if left lanelet
             adj_left = lanelet.adj_left
             if adj_left and lanelet.adj_left_same_direction and adj_left in self.allowed_lanelet_ids:
-                edges.append((lanelet.lanelet_id, lanelet.adj_left, {'weight': 1.0}))
+                edges.append((lanelet.lanelet_id, adj_left, {'weight': 1.0}))
 
             # add edge if right lanelet
             adj_right = lanelet.adj_right
             if adj_right and lanelet.adj_right_same_direction and adj_right in self.allowed_lanelet_ids:
-                edges.append((lanelet.lanelet_id, lanelet.adj_right, {'weight': 1.0}))
+                edges.append((lanelet.lanelet_id, adj_right, {'weight': 1.0}))
 
         # add all nodes and edges to graph
         graph.add_nodes_from(nodes)
@@ -332,19 +332,26 @@ class RoutePlanner:
         nodes = list()
         edges = list()
         for lanelet in self.lanelet_network.lanelets:
+            if lanelet.lanelet_id not in self.allowed_lanelet_ids:
+                continue
+
             nodes.append(lanelet.lanelet_id)
 
             # add edge if succeeding lanelet
             for predecessor in lanelet.predecessor:
+                if predecessor not in self.allowed_lanelet_ids:
+                    continue
                 edges.append((lanelet.lanelet_id, predecessor, {'weight': lanelet.distance[-1]}))
 
             # add edge if left lanelet
-            if lanelet.adj_left and lanelet.adj_left_same_direction:
-                edges.append((lanelet.lanelet_id, lanelet.adj_left, {'weight': np.inf}))
+            adj_left = lanelet.adj_left
+            if adj_left and lanelet.adj_left_same_direction and adj_left in self.allowed_lanelet_ids:
+                edges.append((lanelet.lanelet_id, adj_left, {'weight': np.inf}))
 
             # add edge if right lanelet
-            if lanelet.adj_right and lanelet.adj_right_same_direction:
-                edges.append((lanelet.lanelet_id, lanelet.adj_right, {'weight': np.inf}))
+            adj_right = lanelet.adj_right
+            if adj_right and lanelet.adj_right_same_direction and adj_right in self.allowed_lanelet_ids:
+                edges.append((lanelet.lanelet_id, adj_right, {'weight': np.inf}))
 
         # add all nodes and edges to graph
         graph.add_nodes_from(nodes)
