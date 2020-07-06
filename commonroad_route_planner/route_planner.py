@@ -40,12 +40,14 @@ class RoutePlanner:
         """
 
     def __init__(self, scenario: Scenario, planning_problem: PlanningProblem,
-                 lanelet_type_blacklist: Set[LaneletType]=set(),
+                 lanelet_type_blacklist=None,
                  allow_diagonal=False, backend="networkx", log_to_console=True):
         """
         Initializes a RoutePlanner object
         :param scenario: Scenario which should be used for the route planning
         :param planning_problem: PlanningProblem for which the route should be planned
+        :param lanelet_type_blacklist: TODO
+        :type lanelet_type_blacklist: Set[LaneletType]
         :param allow_diagonal: Indicates whether diagonal movements are allowed - experimental
         :param backend: The backend which should be used, supported choices: networkx, priority_queue
         :param log_to_console: Indicates whether the outputs should be logged to the console
@@ -54,6 +56,9 @@ class RoutePlanner:
         # ============================== #
         #       Binding variables        #
         # ============================== #
+        if lanelet_type_blacklist is None:
+            lanelet_type_blacklist = set()
+
         self.scenario_id = scenario.benchmark_id
         self.lanelet_network = scenario.lanelet_network
         self.planningProblem = planning_problem
@@ -117,7 +122,8 @@ class RoutePlanner:
 
     # =============== end of constructor ============== #
 
-    def _filter_lanelets_by_type(self, lanelets_to_filter: List[Lanelet], lanelet_type_blacklist: Set[LaneletType]) \
+    @staticmethod
+    def _filter_lanelets_by_type(lanelets_to_filter: List[Lanelet], lanelet_type_blacklist: Set[LaneletType]) \
             -> Generator[Lanelet, None, None]:
         """
         Generator filters the lanelets by the defined blacklist
@@ -130,7 +136,7 @@ class RoutePlanner:
                 yield lanelet_to_filter
 
     def _filter_allowed_lanelet_ids(self, lanelet_ids_to_filter: List[int]) \
-        -> Generator[Lanelet, None, None]:
+            -> Generator[Lanelet, None, None]:
         """
         Generator filters the lanelet ids by the defined blacklist
 
@@ -305,7 +311,6 @@ class RoutePlanner:
         graph.add_nodes_from(nodes)
         graph.add_edges_from(edges)
         return graph
-
 
     def _create_graph_from_lanelet_network_lane_change(self) -> nx.DiGraph:
         """
@@ -558,7 +563,6 @@ class RoutePlanner:
                         current_lanelet = self.lanelet_network.find_lanelet_by_id(temp_id)
                         temp_id = current_lanelet.adj_left
 
-
                 # this lanelet was already such which goes in the opposite direction -> exit the loop
                 else:
                     self.lanelet_ids_in_the_opposite_direction.add(temp_id)
@@ -594,7 +598,7 @@ class RoutePlanner:
 
         return adjacent_list
 
-    def get_sectionized_environment_from_route(self, route: List[int], is_opposite_direction_allowed: bool=False) -> \
+    def get_sectionized_environment_from_route(self, route: List[int], is_opposite_direction_allowed: bool = False) -> \
             Union[None, List[List[int]]]:
         """
         Creates sectionized environment from a given route.
@@ -602,14 +606,15 @@ class RoutePlanner:
         :param is_opposite_direction_allowed: Indicates whether it is required to contain one opposite lanelet in the
                                               environment
         :return: Returns a sectional environment in a form of list of list of lanelet ids. This environment contains
-                 the environemnt of the planned route in every time steps.
+                 the environment of the planned route in every time steps.
         """
         if route is None:
             return None
 
         sections = list()
         for lanelet_id_in_route in route:
-            lanelet_ids_in_section = self._get_adjacent_lanelets_list(lanelet_id_in_route, is_opposite_direction_allowed)
+            lanelet_ids_in_section = self._get_adjacent_lanelets_list(lanelet_id_in_route,
+                                                                      is_opposite_direction_allowed)
             lanelet_ids_in_section.append(lanelet_id_in_route)
             lanelet_ids_in_section.sort()
 
