@@ -1,10 +1,13 @@
 import fnmatch
 import logging
 import os
+import pickle
+import time
 from datetime import datetime
 from typing import Tuple
 
 import matplotlib as mpl
+
 try:
     mpl.use('Qt5Agg')
     import matplotlib.pyplot as plt
@@ -88,8 +91,27 @@ def get_existing_scenarios(root_dir) -> dict:
     return scenarios
 
 
+def get_existing_pickle_scenarios(root_dir) -> dict:
+    scenarios = dict()
+    for path, directories, files in os.walk(root_dir):
+        for scenario in fnmatch.filter(files, "*.pickle"):
+            # res = os.path.normpath(path).split(os.path.sep)
+            # rel_path_to_scenario_from_root = os.path.join(*res[1:])
+            rel_path_to_scenario_from_root = path
+            scenario_name = scenario[:-7]  # chop the '.xml' extension
+            scenarios[scenario_name] = rel_path_to_scenario_from_root
+
+    return scenarios
+
+
 def get_existing_scenario_ids(root_dir) -> list:
     existing_scenarios = get_existing_scenarios(root_dir)
+    scenario_ids = list(existing_scenarios.keys())
+    return scenario_ids
+
+
+def get_existing_pickle_scenario_ids(root_dir) -> list:
+    existing_scenarios = get_existing_pickle_scenarios(root_dir)
     scenario_ids = list(existing_scenarios.keys())
     return scenario_ids
 
@@ -105,9 +127,27 @@ def load_scenario(root_dir, scenario_id) -> Tuple[Scenario, PlanningProblemSet]:
     return scenario, planning_problem_set
 
 
+def load_pickle_scenario(root_dir, scenario_id) -> Tuple[Scenario, PlanningProblemSet]:
+    path_to_scenario = get_existing_pickle_scenarios(root_dir)[scenario_id]
+    scenario_path = os.path.join(path_to_scenario, scenario_id + '.pickle')
+    # load scenario and planning problem set
+    with open(scenario_path, "rb") as pickle_scenario:
+        time1 = time.perf_counter()
+        loaded_scenario_tuple = pickle.load(pickle_scenario)
+        pickle_load_time = (time.perf_counter() - time1) * 1000
+        print("Loading scenario [{:<20}] took\t{:10.4f}\tms".format(scenario_id, pickle_load_time))
+
+    return loaded_scenario_tuple
+
+
 def load_scenarios(root_dir, scenario_ids):
     for scenario_id in scenario_ids:
         yield load_scenario(root_dir, scenario_id)
+
+
+def load_pickle_scenarios(root_dir, scenario_ids):
+    for scenario_id in scenario_ids:
+        yield load_pickle_scenario(root_dir, scenario_id)
 
 
 def execute_search(scenario, planning_problem, backend="priority_queue"):
