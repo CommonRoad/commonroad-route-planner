@@ -1,7 +1,10 @@
 import logging
 import os
+import sys
+import warnings
 from datetime import datetime
-from typing import List, Union, Generator, Set
+from enum import Enum
+from typing import List, Union, Generator, Set, Tuple
 
 import networkx as nx
 import numpy as np
@@ -12,6 +15,15 @@ from commonroad.scenario.scenario import Scenario
 from commonroad.scenario.trajectory import State
 
 from commonroad_route_planner.priority_queue import PriorityQueue
+
+try:
+    import pycrccosy
+    from commonroad_ccosy.geometry.util import resample_polyline
+    import commonroad.geometry.shape as cr_shape
+    from shapely.ops import cascaded_union
+    from shapely.geometry import LineString, Point, Polygon
+except ModuleNotFoundError as exp:
+    warnings.warn(f"You won't be able to use the ccosy for the Navigator, the calculations won't be precise. {exp}")
 
 
 class _LaneletNode:
@@ -296,14 +308,253 @@ class RouteCandidates:
 
 
 class Navigator:
+    class Backend(Enum):
+        PYCRCCOSY = 'pycrccosy'
+        APPROXIMATE = 'approx'
+
     def __init__(self, route: Route):
+        if 'pycrccosy' in sys.modules:
+            self.backend = self.Backend.PYCRCCOSY
+        else:
+            self.backend = self.Backend.APPROXIMATE
+
         self.scenario = route.scenario
+        self.lanelet_network = self.scenario.lanelet_network
         self.planning_problem = route.planning_problem
         self.route = route
+        self.sectionized_environment = self.route.get_sectionized_environment()
+        self.sectionized_environment_set = set([item for sublist in self.sectionized_environment for item in sublist])
+        self.ccosy_list = self._get_route_cosy()
+        self.num_of_lane_changes = len(self.ccosy_list)
+        self.merged_section_lengthes = np.array([self._get_length(curvi_cosy) for curvi_cosy in self.ccosy_list])
 
-    def get_lane_change_distance(self) -> float:
-        # TODO: implement
-        raise NotImplementedError()
+        self.goal_face_coords = self._get_goal_face_points(self._get_goal_polygon(self.planning_problem.goal))
+        self.goal_curvi_face_coords = [self._get_curvilinear_coords(self.ccosy_list[-1], g) for g in
+                                       self.goal_face_coords]
+
+        self.goal_curvi_minimal_coord = np.min(self.goal_curvi_face_coords, axis=0)
+
+    def _get_route_cosy(self) -> Union[pycrccosy.TrapezoidCoordinateSystem, List[Lanelet]]:
+        # Merge reference route
+        merged_lanelets = []
+        current_merged_lanelet = None
+        for current_lanelet_id, next_lanelet_id in zip(self.route.route[:-1], self.route.route[1:]):
+            lanelet = self.lanelet_network.find_lanelet_by_id(current_lanelet_id)
+            # If the lanelet is the end of a section, then change section
+            if next_lanelet_id not in lanelet.successor:
+                if current_merged_lanelet is not None:
+                    merged_lanelets.append(current_merged_lanelet)
+                    current_merged_lanelet = None
+            else:
+                if current_merged_lanelet is None:
+                    current_merged_lanelet = lanelet
+                else:
+                    current_merged_lanelet = Lanelet.merge_lanelets(current_merged_lanelet, lanelet)
+
+        goal_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[-1])
+        if current_merged_lanelet is not None:
+            current_merged_lanelet = Lanelet.merge_lanelets(current_merged_lanelet, goal_lanelet)
+        else:
+            current_merged_lanelet = goal_lanelet
+
+        # Append successor fo the goal to ensure that the goal state is not out of the projection domain
+        goal_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[-1])
+        successors_of_goal = goal_lanelet.successor
+        if successors_of_goal is not None and len(successors_of_goal) != 0:
+            successor_lanelet = self.lanelet_network.find_lanelet_by_id(successors_of_goal[0])
+            current_merged_lanelet = Lanelet.merge_lanelets(current_merged_lanelet, successor_lanelet)
+
+        merged_lanelets.append(current_merged_lanelet)
+
+        if self.backend == self.Backend.APPROXIMATE:
+            # If ccosy is not installed using temporary method for approximate calculations
+            return merged_lanelets
+        else:
+            return [self._create_coordinate_system_from_polyline(merged_lanelet.center_vertices)
+                    for merged_lanelet in merged_lanelets]
+
+    @staticmethod
+    def _create_coordinate_system_from_polyline(polyline):
+        if len(polyline) <= 3:
+            last_point = polyline[-1]
+            polyline = resample_polyline(polyline, 2)
+            # make sure that the original vertices are all contained
+            polyline = np.append(polyline, [last_point], axis=0)
+        return pycrccosy.TrapezoidCoordinateSystem(polyline)
+
+    def _get_length(self, ccosy):
+        if self.backend == self.Backend.PYCRCCOSY:
+            return ccosy.get_length()
+        else:
+            lanelet = ccosy
+            return lanelet.distance[-1]
+
+    def _get_curvilinear_coords(self, ccosy, position: np.ndarray):
+        if self.backend == self.Backend.PYCRCCOSY:
+            return ccosy.convert_to_curvilinear_coords(position[0], position[1])
+        else:
+            lanelet = ccosy
+            return self._get_curvilinear_coords_over_lanelet(lanelet, position)
+
+    def _get_curvilinear_coords_over_lanelet(self, lanelet: Lanelet, position):
+        if self.backend == self.Backend.PYCRCCOSY:
+            current_ccosy = self._create_coordinate_system_from_polyline(lanelet.center_vertices)
+            return current_ccosy.convert_to_curvilinear_coords(position[0], position[1])
+        else:
+            position_diffs = np.linalg.norm(position - lanelet.center_vertices, axis=1)
+            closest_vertex_index = np.argmin(position_diffs)
+
+            if closest_vertex_index < len(lanelet.center_vertices) - 1:
+                direction_vector_pos_1 = lanelet.center_vertices[closest_vertex_index]
+                direction_vector_pos_2 = lanelet.center_vertices[closest_vertex_index + 1]
+            else:
+                direction_vector_pos_1 = lanelet.center_vertices[closest_vertex_index - 1]
+                direction_vector_pos_2 = lanelet.center_vertices[closest_vertex_index]
+
+            direction_vector = direction_vector_pos_2 - direction_vector_pos_1
+            relative_pos_to_point_1 = position - direction_vector_pos_1
+            relative_pos_to_point_2 = position - direction_vector_pos_2
+
+            if closest_vertex_index == len(lanelet.center_vertices) - 1 and np.dot(direction_vector,
+                                                                                   relative_pos_to_point_2) > 0:
+                raise ValueError("Position is out of projection domain")
+
+            relative_lanelet_side = np.sign(np.cross(direction_vector, relative_pos_to_point_1))
+
+            long_distance = lanelet.distance[closest_vertex_index]
+            lat_distance = relative_lanelet_side * position_diffs[closest_vertex_index]
+            return long_distance, lat_distance
+
+    @staticmethod
+    def _get_goal_face_points(goal_shape: Polygon):
+        """
+        Extracts the middle points of each face of the goal region
+        NOTE in pathological examples, this can still result in points outside the coordinate system
+        however for the points on both ends of the lanelet, they coincide with the center vertices,
+        which is what the curvilinear coordinate system is based on
+        NOTE if the goal areas edges are not all intersecting with any lanelet in the ccosy, this operation will fail
+        :param goal_shape: shape of the goal area
+        :return: tuples of x,y coordinates of the middle points of each face of the goal region
+        """
+        goal_coords = [np.array(x) for x in zip(*goal_shape.exterior.coords.xy)]
+
+        # round the same precision as is done within the commonroad xml files
+        goal_coords = [np.round((a + b) / 2, 6) for a, b in zip(goal_coords, goal_coords[1:])]
+        return goal_coords
+
+    def _get_goal_polygon(self, goal: GoalRegion) -> Polygon:
+        """
+        Get the goal postion as Polygon
+        :param goal: the goal given as a GoalRegion
+        :return: Polygon of the goal position
+        """
+
+        def get_polygon_list_from_shapegroup(shapegroup: cr_shape.ShapeGroup) -> List[Polygon]:
+            """
+            Converts cr_shape.ShapeGroup to list of Polygons
+            :param shapegroup: the ShapeGroup to be converted
+            :return: The list of the polygons
+            """
+
+            polygon_list = []
+            for shape in shapegroup.shapes:
+                if isinstance(shape, cr_shape.ShapeGroup):
+                    polygon_list.append(get_polygon_list_from_shapegroup(shape))
+                elif isinstance(shape, (cr_shape.Rectangle, cr_shape.Polygon)):
+                    polygon_list.append(shape.shapely_object)
+                else:
+                    raise ValueError(f"Shape can't be converted to Shapely Polygon: {shape}")
+            return polygon_list
+
+        if len(goal.state_list) > 1:
+            raise NotImplementedError("Using more than one goal state is not implemented")
+        elif len(goal.state_list) == 0:
+            return Polygon()
+
+        goal_state = goal.state_list[0]
+        if hasattr(goal_state, 'position'):
+            if isinstance(goal_state.position, cr_shape.ShapeGroup):
+                polygons = get_polygon_list_from_shapegroup(goal_state.position)
+                merged_polygon = cascaded_union(polygons)
+                return merged_polygon
+            elif isinstance(goal_state.position, (cr_shape.Rectangle, cr_shape.Polygon)):
+                return goal_state.position.shapely_object
+            else:
+                raise NotImplementedError(
+                    f"Goal position not supported yet, "
+                    f"only ShapeGroup, Rectangle or Polygon shapes can be used, "
+                    f"the given shape was: {type(goal_state.position)}")
+        else:
+            # No position defined
+            return Polygon()
+
+    def get_long_lat_distance_to_goal(self, ego_vehicle_state: State) -> Tuple[float, float]:
+        """
+        Get the longitudinal and latitudinal distance from the ego vehicle to the goal.
+        :param ego_vehicle_state: state of the ego vehicle
+        :param curvi_cosy: Trapezoid coordinate system to calculate easily the longitudinal and lateral distance
+        :param planning_problem: The planning problem to be solved
+        :return: longitudinal distance, latitudinal distance
+        """
+        for cosy_idx, curvi_cosy in enumerate(self.ccosy_list):
+            try:
+                ego_curvi_coord = self._get_curvilinear_coords(curvi_cosy, ego_vehicle_state.position)
+                if cosy_idx == self.num_of_lane_changes - 1:
+                    relative_distances = np.array(self.goal_curvi_face_coords) - np.array(ego_curvi_coord)
+                    min_distance = np.min(relative_distances, axis=0)
+                    max_distance = np.max(relative_distances, axis=0)
+
+                    (min_distance_long, min_distance_lat) = np.maximum(np.minimum(0.0, max_distance), min_distance)
+                else:
+                    (min_distance_long, min_distance_lat) = self.merged_section_lengthes[cosy_idx] - ego_curvi_coord[0], \
+                                                            ego_curvi_coord[1]
+                    current_section_idx = cosy_idx + 1
+                    while current_section_idx != self.num_of_lane_changes - 1:
+                        min_distance_long += self.merged_section_lengthes[current_section_idx]
+                        current_section_idx += 1
+
+                    min_distance_long += self.goal_curvi_minimal_coord[0]
+                    min_distance_lat += self.goal_curvi_minimal_coord[1]
+
+                return min_distance_long, min_distance_lat
+
+            except ValueError:
+                pass
+
+        raise ValueError("Unable to project the ego vehicle on the global cosy")
+
+    def get_lane_change_distance(self, state: State) -> float:
+
+        sorted_current_lanelet_ids = get_sorted_lanelet_ids_by_state(self.scenario, state)
+        sorted_current_lanelet_ids_on_route = [current_lanelet_id for current_lanelet_id in sorted_current_lanelet_ids
+                                               if current_lanelet_id in self.sectionized_environment_set]
+
+        # The state is not on the route, instant lane change is required
+        if len(sorted_current_lanelet_ids_on_route) == 0:
+            return 0.0
+
+        # The most likely current lanelet id by considering the orinetation of the state
+        current_lanelet_id = sorted_current_lanelet_ids[0]
+        current_lanelet = self.lanelet_network.find_lanelet_by_id(current_lanelet_id)
+
+        # Calculate the remaining distance in this lanelet
+        current_distance = self._get_curvilinear_coords_over_lanelet(current_lanelet, state.position)
+        current_distance_long = current_distance[0]
+        distance_until_lane_change = current_lanelet.distance[-1] - current_distance_long
+
+        successors_set = set(current_lanelet.successor)
+        route_successors = successors_set.intersection(self.sectionized_environment_set)
+        while len(route_successors) != 0:
+            # Add the length of the current lane
+            current_lanelet_id = route_successors.pop()
+            current_lanelet = self.lanelet_network.find_lanelet_by_id(current_lanelet_id)
+
+            distance_until_lane_change += current_lanelet.distance[-1]
+
+            successors_set = set(current_lanelet.successor)
+            route_successors = successors_set.intersection(self.sectionized_environment_set)
+
+        return distance_until_lane_change
 
 
 # ================================================= #
