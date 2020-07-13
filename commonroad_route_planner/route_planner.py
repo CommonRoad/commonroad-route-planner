@@ -1,13 +1,15 @@
 import logging
 import os
 from datetime import datetime
-from typing import List, Union, Generator, Set
+from typing import List, Union, Generator, Set, Tuple
 
 import networkx as nx
 import numpy as np
+from commonroad.planning.goal import GoalRegion
 from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import Lanelet, LaneletType
 from commonroad.scenario.scenario import Scenario
+from commonroad.scenario.trajectory import State
 
 from commonroad_route_planner.priority_queue import PriorityQueue
 
@@ -25,9 +27,131 @@ class _LaneletNode:
         return self.cost < other.cost
 
 
+def relative_orientation(from_angle1_in_rad, to_angle2_in_rad):
+    phi = (to_angle2_in_rad - from_angle1_in_rad) % (2 * np.pi)
+    if phi > np.pi:
+        phi -= (2 * np.pi)
+
+    return phi
+
+
+def get_lanelet_orientation_at_state(lanelet: Lanelet, state: State):
+    center_vertices = lanelet.center_vertices
+
+    # TODO: Refine the orientation calculation
+    direction_vector = center_vertices[-1, :] - center_vertices[0, :]
+    return np.arctan2(direction_vector[1], direction_vector[0])
+
+
+def get_sorted_lanelet_ids_by_state(scenario: Scenario, state: State) -> int:
+    """
+    Get the lanelet of the state of an object at the specific time step.
+    :param state:
+    :param scenario: commonroad scenario
+    :return: lanelet id, if the obstacle is out of lanelet boundary (no lanelet is found, therefore return the
+    lanelet id of last time step)
+    """
+
+    # output list
+    lanelet_id_list = scenario.lanelet_network.find_lanelet_by_position([state.position])[0]
+    if len(lanelet_id_list) == 1:
+        return lanelet_id_list[0]
+    elif len(lanelet_id_list) > 1:
+
+        def get_lanelet_relative_orientation(lanelet_id):
+            lanelet = scenario.lanelet_network.find_lanelet_by_id(lanelet_id)
+            lanelet_orientation = get_lanelet_orientation_at_state(lanelet, state)
+            return np.abs(relative_orientation(lanelet_orientation, lanelet_orientation))
+
+        orientation_differences = map(get_lanelet_relative_orientation, lanelet_id_list)
+        sorted_indices = np.argmin(orientation_differences)[0]
+        return lanelet_id_list[sorted_indices]
+    else:
+        return -1
+
+
+def get_lanelet_id_by_goal(scenario: Scenario, goal: GoalRegion):
+    """
+    Get the lanelet id of the goal
+    :param goal:
+    :param scenario: commonroad scenario
+    :return: lanelet id, if the obstacle is out of lanelet boundary (no lanelet is found, therefore return the
+    lanelet id of last time step)
+    """
+    if hasattr(goal, 'lanelets_of_goal_position') and goal.lanelets_of_goal_position is not None:
+        return list(goal.lanelets_of_goal_position.values())[0][0]
+    if goal.state_list is not None and len(goal.state_list) != 0:
+        if len(goal.state_list) > 1:
+            raise ValueError("More than one goal state is not supported yet!")
+        goal_shape = goal.state_list[0]
+        goal_orientation = np.mean([goal_shape.orientation.start, goal_shape.orientation.end])
+        goal_state = State(position=goal_shape.position.center, orientation=goal_orientation)
+        return get_lanelet_id_by_state(scenario, goal_state)
+
+    raise NotImplementedError("Whole lanelet as goal must be implemented here!")
+
+
+class Route:
+    def __init__(self, scenario: Scenario, planning_problem: PlanningProblem, route: List[int]):
+        self.scenario = scenario
+        self.planning_problem = planning_problem
+        self.route = route
+
+        self._sectionized_environment = None
+
+    def get_navigator(self):
+        return Navigator(self)
+
+    @property
+    def sectionized_environment(self):
+        if self._sectionized_environment is None:
+            # TODO: implement
+            raise NotImplementedError()
+            self._sectionized_environment = None
+        else:
+            return self._sectionized_environment
+
+
+class RouteCandidates:
+    def __init__(self, scenario: Scenario, planning_problem: PlanningProblem, route_candidates: List[List[int]]):
+        self.scenario = scenario
+        self.planning_problem = planning_problem
+        self.route_candidates = route_candidates
+
+    def get_first_route(self) -> Route:
+        route = self.route_candidates[0]
+        return Route(self.scenario, self.planning_problem, route)
+
+    def get_most_likely_route_by_orientation(self) -> Route:
+        initial_lanelet_id = get_lanelet_id_by_state(self.scenario, self.planning_problem.initial_state)
+        goal_lanelet_id = get_lanelet_id_by_goal(self.scenario, self.planning_problem.goal)
+        route = None
+        return Route(self.scenario, self.planning_problem, route)
+
+
+
+    def __repr__(self):
+        return f"{len(self.route_candidates)} routeCandidates of scenario {self.scenario.benchmark_id}, planning problem {self.planning_problem.planning_problem_id}"
+
+    def __str__(self):
+        return self.__repr__()
+
+
+class Navigator:
+    def __init__(self, route: Route):
+        self.scenario = route.scenario
+        self.planning_problem = route.planning_problem
+        self.route = route
+
+    def get_lane_change_distance(self) -> float:
+        # TODO: implement
+        raise NotImplementedError()
+
 # ================================================= #
 #                   Route Planner                   #
 # ================================================= #
+
+
 class RoutePlanner:
     """
         Class implements route planning for the CommonRoad scenarios
@@ -59,9 +183,10 @@ class RoutePlanner:
         if lanelet_type_blacklist is None:
             lanelet_type_blacklist = set()
 
+        self.scenario = scenario
         self.scenario_id = scenario.benchmark_id
         self.lanelet_network = scenario.lanelet_network
-        self.planningProblem = planning_problem
+        self.planning_problem = planning_problem
         self.lanelet_type_blacklist = lanelet_type_blacklist
         # self.priority_queue = PriorityQueue()
         self.allow_diagonal = allow_diagonal
@@ -191,8 +316,8 @@ class RoutePlanner:
         self.logger.debug("Using backend: {}".format(self.backend))
 
     def _check_initial_state(self):
-        if hasattr(self.planningProblem.initial_state, 'position'):
-            start_position = self.planningProblem.initial_state.position
+        if hasattr(self.planning_problem.initial_state, 'position'):
+            start_position = self.planning_problem.initial_state.position
             # noinspection PyTypeChecker
             all_startLanelet_ids = self.lanelet_network.find_lanelet_by_position([start_position])[0]
             self.startLanelet_ids = list(self._filter_allowed_lanelet_ids(all_startLanelet_ids))
@@ -205,8 +330,8 @@ class RoutePlanner:
     def _check_goal_state(self):
         self.goal_lanelet_ids = list()
 
-        if hasattr(self.planningProblem.goal, 'lanelets_of_goal_position'):
-            if self.planningProblem.goal.lanelets_of_goal_position is None:
+        if hasattr(self.planning_problem.goal, 'lanelets_of_goal_position'):
+            if self.planning_problem.goal.lanelets_of_goal_position is None:
                 self.logger.debug("No goal lanelet is given")
             else:
                 self.logger.debug("Goal lanelet is given")
@@ -214,12 +339,12 @@ class RoutePlanner:
                 # now we just iterating over the goals and adding every ID which we find to
                 # the goal_lanelet_ids list
                 all_goal_lanelet_ids = list()
-                for all_goal_lanelet_id in list(self.planningProblem.goal.lanelets_of_goal_position.values()):
+                for all_goal_lanelet_id in list(self.planning_problem.goal.lanelets_of_goal_position.values()):
                     all_goal_lanelet_ids.extend(all_goal_lanelet_id)
                 self.goal_lanelet_ids.extend(list(self._filter_allowed_lanelet_ids(all_goal_lanelet_ids)))
 
-        if (len(self.goal_lanelet_ids) == 0) and hasattr(self.planningProblem.goal, 'state_list'):
-            for idx, state in enumerate(self.planningProblem.goal.state_list):
+        if (len(self.goal_lanelet_ids) == 0) and hasattr(self.planning_problem.goal, 'state_list'):
+            for idx, state in enumerate(self.planning_problem.goal.state_list):
                 if hasattr(state, 'position'):
                     goal_position = state.position
                     # noinspection PyTypeChecker
@@ -608,6 +733,15 @@ class RoutePlanner:
                 routes.append(self._find_survival_route(start_lanelet_id))
         self.logger.info("Route planning finished")
         return routes
+
+    def get_route_candidates(self) -> RouteCandidates:
+        """
+        Find all paths to all of the goal lanelet IDs from all the start lanelet IDs using networkx module.
+        If no goal lanelet ID is given then return a survival route
+        :return: empty list if no path has been found
+        """
+        route_candidates = self.search_alg()
+        return RouteCandidates(self.scenario, self.planning_problem, route_candidates)
 
     def _get_adjacent_lanelets_list(self, lanelet_id: int, is_opposite_direction_allowed=False) -> list:
         """
