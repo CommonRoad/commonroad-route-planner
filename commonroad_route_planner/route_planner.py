@@ -1,7 +1,7 @@
 import logging
 import os
 from datetime import datetime
-from typing import List, Union, Generator, Set, Tuple
+from typing import List, Union, Generator, Set
 
 import networkx as nx
 import numpy as np
@@ -43,7 +43,7 @@ def get_lanelet_orientation_at_state(lanelet: Lanelet, state: State):
     return np.arctan2(direction_vector[1], direction_vector[0])
 
 
-def get_sorted_lanelet_ids_by_state(scenario: Scenario, state: State) -> int:
+def get_sorted_lanelet_ids_by_state(scenario: Scenario, state: State) -> List[int]:
     """
     Get the lanelet of the state of an object at the specific time step.
     :param state:
@@ -53,9 +53,9 @@ def get_sorted_lanelet_ids_by_state(scenario: Scenario, state: State) -> int:
     """
 
     # output list
-    lanelet_id_list = scenario.lanelet_network.find_lanelet_by_position([state.position])[0]
+    lanelet_id_list = np.array(scenario.lanelet_network.find_lanelet_by_position([state.position])[0])
     if len(lanelet_id_list) == 1:
-        return lanelet_id_list[0]
+        return list(lanelet_id_list)
     elif len(lanelet_id_list) > 1:
 
         def get_lanelet_relative_orientation(lanelet_id):
@@ -63,14 +63,14 @@ def get_sorted_lanelet_ids_by_state(scenario: Scenario, state: State) -> int:
             lanelet_orientation = get_lanelet_orientation_at_state(lanelet, state)
             return np.abs(relative_orientation(lanelet_orientation, lanelet_orientation))
 
-        orientation_differences = map(get_lanelet_relative_orientation, lanelet_id_list)
-        sorted_indices = np.argmin(orientation_differences)[0]
-        return lanelet_id_list[sorted_indices]
+        orientation_differences = np.array(list(map(get_lanelet_relative_orientation, lanelet_id_list)))
+        sorted_indices = np.argsort(orientation_differences)
+        return list(lanelet_id_list[sorted_indices])
     else:
-        return -1
+        return []
 
 
-def get_lanelet_id_by_goal(scenario: Scenario, goal: GoalRegion):
+def get_sorted_lanelet_id_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int]:
     """
     Get the lanelet id of the goal
     :param goal:
@@ -79,14 +79,14 @@ def get_lanelet_id_by_goal(scenario: Scenario, goal: GoalRegion):
     lanelet id of last time step)
     """
     if hasattr(goal, 'lanelets_of_goal_position') and goal.lanelets_of_goal_position is not None:
-        return list(goal.lanelets_of_goal_position.values())[0][0]
+        return list(goal.lanelets_of_goal_position.values())[0]
     if goal.state_list is not None and len(goal.state_list) != 0:
         if len(goal.state_list) > 1:
             raise ValueError("More than one goal state is not supported yet!")
         goal_shape = goal.state_list[0]
         goal_orientation = np.mean([goal_shape.orientation.start, goal_shape.orientation.end])
         goal_state = State(position=goal_shape.position.center, orientation=goal_orientation)
-        return get_lanelet_id_by_state(scenario, goal_state)
+        return get_sorted_lanelet_ids_by_state(scenario, goal_state)
 
     raise NotImplementedError("Whole lanelet as goal must be implemented here!")
 
@@ -221,13 +221,21 @@ class RouteCandidates:
         route = self.route_candidates[0]
         return Route(self.scenario, self.planning_problem, route)
 
-    def get_most_likely_route_by_orientation(self) -> Route:
-        initial_lanelet_id = get_lanelet_id_by_state(self.scenario, self.planning_problem.initial_state)
-        goal_lanelet_id = get_lanelet_id_by_goal(self.scenario, self.planning_problem.goal)
-        route = None
-        return Route(self.scenario, self.planning_problem, route)
+    def get_most_likely_route_by_orientation(self) -> Union[Route, None]:
+        sorted_initial_lanelet_ids = get_sorted_lanelet_ids_by_state(self.scenario, self.planning_problem.initial_state)
+        sorted_goal_lanelet_ids = get_sorted_lanelet_id_by_goal(self.scenario, self.planning_problem.goal)
 
+        candidates_goal_lanelet_ids = [route_candidate[-1] for route_candidate in self.route_candidates]
 
+        for goal_lanelet_id in sorted_goal_lanelet_ids:
+            if goal_lanelet_id in candidates_goal_lanelet_ids:
+                candidates_initial_lanelet_ids = [route_candidate[0] for route_candidate in self.route_candidates if
+                                                  route_candidate[-1] == goal_lanelet_id]
+                for initial_lanelet_id in sorted_initial_lanelet_ids:
+                    if initial_lanelet_id in candidates_initial_lanelet_ids:
+                        route = self.route_candidates[np.where(candidates_initial_lanelet_ids == initial_lanelet_id)[0][0]]
+                        return Route(self.scenario, self.planning_problem, route)
+        return None
 
     def __repr__(self):
         return f"{len(self.route_candidates)} routeCandidates of scenario {self.scenario.benchmark_id}, planning problem {self.planning_problem.planning_problem_id}"
@@ -245,6 +253,7 @@ class Navigator:
     def get_lane_change_distance(self) -> float:
         # TODO: implement
         raise NotImplementedError()
+
 
 # ================================================= #
 #                   Route Planner                   #

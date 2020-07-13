@@ -19,14 +19,17 @@ if __name__ == "__main__":
     planning_problem_idx = 0
     planning_problem = list(planning_problem_set.planning_problem_dict.values())[planning_problem_idx]
 
-    route_planner = RoutePlanner(scenario, planning_problem, backend="networkx")
-    routes = route_planner.search_alg()
+    route_planner = RoutePlanner(scenario, planning_problem, backend="networkx_reversed")
 
-    # plot_found_routes(scenario, planning_problem, routes)
+    route_candidates = route_planner.get_route_candidates()
+    print(f"Found route candidates: {route_candidates}")
+
+    route = route_candidates.get_most_likely_route_by_orientation()
+    plot_found_routes(scenario, planning_problem, [route.route])
 
     # you can get the envrionment of the found route
-    chosen_route = routes[0]
-    route_environment = \
-        route_planner.get_sectionized_environment_from_route(chosen_route, is_opposite_direction_allowed=False)
-
-    plot_route_environment(scenario, planning_problem, route_environment)
+    # chosen_route = routes[0]
+    # route_environment = \
+    #     route_planner.get_sectionized_environment_from_route(chosen_route, is_opposite_direction_allowed=False)
+    #
+    # plot_route_environment(scenario, planning_problem, route_environment)
