@@ -128,6 +128,10 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
             logger.info(base_msg + msg + "MORE path FOUND")
             msg = base_msg
         else:
+            if len(routes) == 0:
+                logger.warning(msg + "path NOT FOUND")
+                scenarios_path_not_found.append(scenario_id)
+                continue
             msg = base_msg + msg
 
         for ctn, route in enumerate(routes):
