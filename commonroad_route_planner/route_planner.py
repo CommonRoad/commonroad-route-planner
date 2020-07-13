@@ -92,7 +92,8 @@ def get_sorted_lanelet_id_by_goal(scenario: Scenario, goal: GoalRegion) -> List[
 
 
 class Route:
-    def __init__(self, scenario: Scenario, planning_problem: PlanningProblem, route: List[int], allowed_lanelet_ids: Set[int]):
+    def __init__(self, scenario: Scenario, planning_problem: PlanningProblem, route: List[int],
+                 allowed_lanelet_ids: Set[int] = None):
         self.scenario = scenario
         self.lanelet_network = scenario.lanelet_network
         self.planning_problem = planning_problem
@@ -233,7 +234,8 @@ class RouteCandidates:
                                                   route_candidate[-1] == goal_lanelet_id]
                 for initial_lanelet_id in sorted_initial_lanelet_ids:
                     if initial_lanelet_id in candidates_initial_lanelet_ids:
-                        route = self.route_candidates[np.where(candidates_initial_lanelet_ids == initial_lanelet_id)[0][0]]
+                        route = self.route_candidates[
+                            np.where(candidates_initial_lanelet_ids == initial_lanelet_id)[0][0]]
                         return Route(self.scenario, self.planning_problem, route)
         return None
 
