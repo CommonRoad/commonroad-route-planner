@@ -36,10 +36,26 @@ def relative_orientation(from_angle1_in_rad, to_angle2_in_rad):
 
 
 def get_lanelet_orientation_at_state(lanelet: Lanelet, state: State):
+    """
+    Approximates the lanelet orientation with the two closest point to the given state
+
+    :param lanelet: Lanelet on which the orientation at the given state should be calculated
+    :param state: State where the lanelet's orientation should be calculated
+    :return: An orientation in interval [-pi,pi]
+    """
+
     center_vertices = lanelet.center_vertices
 
-    # TODO: Refine the orientation calculation
-    direction_vector = center_vertices[-1, :] - center_vertices[0, :]
+    position_diff = []
+    for idx in range(1, len(center_vertices) - 1):
+        vertex1 = center_vertices[idx]
+        position_diff.append(np.linalg.norm(state.position - vertex1))
+
+    closest_vertex_index = position_diff.index(min(position_diff))
+
+    vertex1 = center_vertices[closest_vertex_index, :]
+    vertex2 = center_vertices[closest_vertex_index + 1, :]
+    direction_vector = vertex2 - vertex1
     return np.arctan2(direction_vector[1], direction_vector[0])
 
 
@@ -61,7 +77,7 @@ def get_sorted_lanelet_ids_by_state(scenario: Scenario, state: State) -> List[in
         def get_lanelet_relative_orientation(lanelet_id):
             lanelet = scenario.lanelet_network.find_lanelet_by_id(lanelet_id)
             lanelet_orientation = get_lanelet_orientation_at_state(lanelet, state)
-            return np.abs(relative_orientation(lanelet_orientation, lanelet_orientation))
+            return np.abs(relative_orientation(lanelet_orientation, state.orientation))
 
         orientation_differences = np.array(list(map(get_lanelet_relative_orientation, lanelet_id_list)))
         sorted_indices = np.argsort(orientation_differences)
