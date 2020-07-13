@@ -95,7 +95,7 @@ def get_sorted_lanelet_ids_by_state(scenario: Scenario, state: State) -> List[in
         return []
 
 
-def get_sorted_lanelet_id_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int]:
+def get_sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int]:
     """
     Get the lanelet id of the goal
     :param goal:
@@ -104,7 +104,15 @@ def get_sorted_lanelet_id_by_goal(scenario: Scenario, goal: GoalRegion) -> List[
     lanelet id of last time step)
     """
     if hasattr(goal, 'lanelets_of_goal_position') and goal.lanelets_of_goal_position is not None:
-        return list(goal.lanelets_of_goal_position.values())[0]
+        goal_lanelet_id_batch_list = list(goal.lanelets_of_goal_position.values())
+        goal_lanelet_id_list = [item for sublist in goal_lanelet_id_batch_list for item in sublist]
+        goal_lanelet_id_set = set(goal_lanelet_id_list)
+        goal_lanelets = [scenario.lanelet_network.find_lanelet_by_id(goal_lanelet_id) for goal_lanelet_id in
+                         goal_lanelet_id_list]
+        goal_lanelets_with_successor = np.array(
+            [1.0 if len(set(goal_lanelet.successor).intersection(goal_lanelet_id_set)) > 0 else 0.0 for goal_lanelet
+             in goal_lanelets])
+        return [x for _,x in sorted(zip(goal_lanelets_with_successor, goal_lanelet_id_list))]
     if goal.state_list is not None and len(goal.state_list) != 0:
         if len(goal.state_list) > 1:
             raise ValueError("More than one goal state is not supported yet!")
@@ -237,10 +245,20 @@ class Route:
 
 
 class RouteCandidates:
-    def __init__(self, scenario: Scenario, planning_problem: PlanningProblem, route_candidates: List[List[int]]):
+    def __init__(self, scenario: Scenario, planning_problem: PlanningProblem, route_candidates: List[List[int]],
+                 allowed_lanelet_ids: Set[int] = None):
         self.scenario = scenario
+        self.lanelet_network = self.scenario.lanelet_network
         self.planning_problem = planning_problem
         self.route_candidates = route_candidates
+
+        # ==================== #
+        #        Extra         #
+        # ==================== #
+        if allowed_lanelet_ids is None:
+            self.allowed_lanelet_ids = {lanelet.lanelet_id for lanelet in self.lanelet_network.lanelets}
+        else:
+            self.allowed_lanelet_ids = allowed_lanelet_ids
 
     def get_first_route(self) -> Route:
         route = self.route_candidates[0]
@@ -252,7 +270,7 @@ class RouteCandidates:
             return Route(self.scenario, self.planning_problem, self.route_candidates[0])
 
         sorted_initial_lanelet_ids = get_sorted_lanelet_ids_by_state(self.scenario, self.planning_problem.initial_state)
-        sorted_goal_lanelet_ids = get_sorted_lanelet_id_by_goal(self.scenario, self.planning_problem.goal)
+        sorted_goal_lanelet_ids = get_sorted_lanelet_ids_by_goal(self.scenario, self.planning_problem.goal)
 
         candidates_goal_lanelet_ids = np.array([route_candidate[-1] for route_candidate in self.route_candidates])
 
@@ -267,7 +285,7 @@ class RouteCandidates:
                     if initial_lanelet_id in candidates_initial_lanelet_ids:
                         route = self.route_candidates[
                             np.where(candidates_initial_lanelet_ids == initial_lanelet_id)[0][0]]
-                        return Route(self.scenario, self.planning_problem, route)
+                        return Route(self.scenario, self.planning_problem, route, self.allowed_lanelet_ids)
         return None
 
     def __repr__(self):
