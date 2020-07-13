@@ -38,6 +38,7 @@ def relative_orientation(from_angle1_in_rad, to_angle2_in_rad):
 def get_lanelet_orientation_at_state(lanelet: Lanelet, state: State):
     """
     Approximates the lanelet orientation with the two closest point to the given state
+    # TODO optimize more for speed
 
     :param lanelet: Lanelet on which the orientation at the given state should be calculated
     :param state: State where the lanelet's orientation should be calculated
@@ -47,7 +48,7 @@ def get_lanelet_orientation_at_state(lanelet: Lanelet, state: State):
     center_vertices = lanelet.center_vertices
 
     position_diff = []
-    for idx in range(1, len(center_vertices) - 1):
+    for idx in range(len(center_vertices) - 1):
         vertex1 = center_vertices[idx]
         position_diff.append(np.linalg.norm(state.position - vertex1))
 
@@ -69,10 +70,18 @@ def get_sorted_lanelet_ids_by_state(scenario: Scenario, state: State) -> List[in
     """
 
     # output list
-    lanelet_id_list = np.array(scenario.lanelet_network.find_lanelet_by_position([state.position])[0])
+    lanelet_id_list = scenario.lanelet_network.find_lanelet_by_position([state.position])
+    if len(lanelet_id_list) != 0:
+        # it only returns 1 element because only 1 point is given as argument (^ there)
+        lanelet_id_list = lanelet_id_list[0]
+    else:
+        return list()
+
     if len(lanelet_id_list) == 1:
-        return list(lanelet_id_list)
+        return lanelet_id_list
     elif len(lanelet_id_list) > 1:
+
+        lanelet_id_list = np.array(lanelet_id_list)
 
         def get_lanelet_relative_orientation(lanelet_id):
             lanelet = scenario.lanelet_network.find_lanelet_by_id(lanelet_id)
@@ -238,15 +247,22 @@ class RouteCandidates:
         return Route(self.scenario, self.planning_problem, route)
 
     def get_most_likely_route_by_orientation(self) -> Union[Route, None]:
+        # handling the survival scenarios and where only one path found
+        if len(self.route_candidates) == 1:
+            return Route(self.scenario, self.planning_problem, self.route_candidates[0])
+
         sorted_initial_lanelet_ids = get_sorted_lanelet_ids_by_state(self.scenario, self.planning_problem.initial_state)
         sorted_goal_lanelet_ids = get_sorted_lanelet_id_by_goal(self.scenario, self.planning_problem.goal)
 
-        candidates_goal_lanelet_ids = [route_candidate[-1] for route_candidate in self.route_candidates]
+        candidates_goal_lanelet_ids = np.array([route_candidate[-1] for route_candidate in self.route_candidates])
 
         for goal_lanelet_id in sorted_goal_lanelet_ids:
             if goal_lanelet_id in candidates_goal_lanelet_ids:
-                candidates_initial_lanelet_ids = [route_candidate[0] for route_candidate in self.route_candidates if
-                                                  route_candidate[-1] == goal_lanelet_id]
+                # candidates_initial_lanelet_ids = [route_candidate[0] for route_candidate in self.route_candidates if
+                #                                   route_candidate[-1] == goal_lanelet_id else None]
+                candidates_initial_lanelet_ids = np.array(
+                    [route_candidate[0] if route_candidate[-1] == goal_lanelet_id else None for route_candidate in
+                     self.route_candidates])
                 for initial_lanelet_id in sorted_initial_lanelet_ids:
                     if initial_lanelet_id in candidates_initial_lanelet_ids:
                         route = self.route_candidates[

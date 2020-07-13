@@ -166,6 +166,24 @@ def get_last_time_step_in_scenario(scenario: Scenario):
     return last_time_step
 
 
+def get_plot_limits(route, scenario, border=15):
+
+    x_min_values = list()
+    x_max_values = list()
+    y_min_values = list()
+    y_max_values = list()
+    for route_lanelet_id in route:
+        lanelet = scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
+        x_min_values.append(lanelet.center_vertices[:, 0].min())
+        x_max_values.append(lanelet.center_vertices[:, 0].max())
+        y_min_values.append(lanelet.center_vertices[:, 1].min())
+        y_max_values.append(lanelet.center_vertices[:, 1].max())
+
+    plot_limits = [min(x_min_values) - border, max(x_max_values) + border, min(y_min_values) - border,
+                   max(y_max_values) + border]
+    return plot_limits
+
+
 def dim(a):
     if not type(a) == list:
         return []
