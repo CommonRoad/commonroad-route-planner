@@ -278,19 +278,24 @@ class Navigator:
 
 
 class RoutePlanner:
+    class Backend(Enum):
+        NETWORKX = "networkx"
+        NETWORKX_REVERSED = "networkx_reversed"
+        PRIORITY_QUEUE = "priority_queue"
+
     """
-        Class implements route planning for the CommonRoad scenarios
-        This is a higher level planner to plan only on the lanelet structure.
-        It is like plan a route with google maps.
-        It gives back the best route (list of lanelet IDs in the right order)
-        from each start position to all goal positions.
-        If there are no goal position then it is going forward and if it can not go forward then goes right.
-        The best route is the route with the lowest cost according to the heuristic function.
-        """
+    Class implements route planning for the CommonRoad scenarios
+    This is a higher level planner to plan only on the lanelet structure.
+    It is like plan a route with google maps.
+    It gives back the best route (list of lanelet IDs in the right order)
+    from each start position to all goal positions.
+    If there are no goal position then it is going forward and if it can not go forward then goes right.
+    The best route is the route with the lowest cost according to the heuristic function.
+    """
 
     def __init__(self, scenario: Scenario, planning_problem: PlanningProblem,
                  lanelet_type_blacklist=None,
-                 allow_diagonal=False, backend="networkx", log_to_console=True):
+                 allow_diagonal=False, backend=None, log_to_console=True):
         """
         Initializes a RoutePlanner object
         :param scenario: Scenario which should be used for the route planning
@@ -307,6 +312,9 @@ class RoutePlanner:
         # ============================== #
         if lanelet_type_blacklist is None:
             lanelet_type_blacklist = set()
+
+        if backend is None:
+            backend = RoutePlanner.Backend.NETWORKX
 
         self.scenario = scenario
         self.scenario_id = scenario.benchmark_id
@@ -349,19 +357,19 @@ class RoutePlanner:
         if self.goal_lanelet_ids is None:
             self.logger.info("SURVIVAL Scenario: There is no goal position or lanelet given")
         else:
-            if self.backend == "networkx":
+            if self.backend == RoutePlanner.Backend.NETWORKX:
                 if self.allow_diagonal:
                     self.logger.warning("diagonal search not tested")
                     self.digraph = self._create_graph_from_lanelet_network_lane_change()
                 else:
                     self.digraph = self._create_graph_from_lanelet_network()
-            elif self.backend == "networkx_reversed":
+            elif self.backend == RoutePlanner.Backend.NETWORKX_REVERSED:
                 if self.allow_diagonal:
                     self.logger.warning("diagonal search not tested")
                     self.digraph = self._create_reversed_graph_from_lanelet_network_lane_change()
                 else:
                     self.digraph = self._create_reversed_graph_from_lanelet_network()
-            elif self.backend == "priority_queue":
+            elif self.backend == RoutePlanner.Backend.PRIORITY_QUEUE:
                 if self.allow_diagonal:
                     self.logger.critical("diagonal search with custom backend is not implemented")
                 self.frontier = PriorityQueue()
@@ -837,11 +845,11 @@ class RoutePlanner:
         for start_lanelet_id in self.startLanelet_ids:
             if self.goal_lanelet_ids:
                 for goal_lanelet_id in self.goal_lanelet_ids:
-                    if self.backend == "networkx":
+                    if self.backend == RoutePlanner.Backend.NETWORKX:
                         results = self._find_all_shortest_paths(start_lanelet_id, goal_lanelet_id)
-                    elif self.backend == "networkx_reversed":
+                    elif self.backend == RoutePlanner.Backend.NETWORKX_REVERSED:
                         results = self._find_shortest_reversed_path(start_lanelet_id, goal_lanelet_id)
-                    elif self.backend == "priority_queue":
+                    elif self.backend == RoutePlanner.Backend.PRIORITY_QUEUE:
                         results = self._find_path(start_lanelet_id, goal_lanelet_id)
                     else:
                         raise ValueError(f"The backend {self.backend} is not recognized as supported backend "
