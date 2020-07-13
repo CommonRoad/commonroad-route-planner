@@ -3,6 +3,10 @@ import os
 import time
 
 import matplotlib as mpl
+from commonroad.scenario.lanelet import LaneletType
+
+from commonroad_route_planner.route_planner import RoutePlanner
+
 try:
     mpl.use('Qt5Agg')
     import matplotlib.pyplot as plt
@@ -14,7 +18,7 @@ from commonroad.visualization.draw_dispatch_cr import draw_object
 from commonroad_route_planner.util import plot_found_routes, draw_initial_state
 
 from HelperFunctions import get_existing_scenarios, load_config_file, get_existing_scenario_ids, \
-    load_scenarios, initialize_logger, execute_search
+    load_scenarios, initialize_logger, execute_search, load_pickle_scenarios, get_existing_pickle_scenarios
 
 # load config file
 configs = load_config_file(os.path.join(os.path.dirname(__file__), 'batch_processor_config.yaml'))
@@ -106,7 +110,8 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
     routes = None
     time1 = time.perf_counter()
     try:
-        routes = execute_search(scenario, planning_problem, backend="priority_queue")
+        route_planner = RoutePlanner(scenario, planning_problem, backend="networkx_reversed")
+        routes = route_planner.search_alg()
     except IndexError as error:
         search_time = time.perf_counter() - time1
         scenarios_exception.append(scenario_id)
