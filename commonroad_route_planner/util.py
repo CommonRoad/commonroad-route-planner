@@ -1,6 +1,8 @@
-from typing import List
-
+from typing import List, Union
+import warnings
 import matplotlib as mpl
+from commonroad.scenario.lanelet import Lanelet
+
 try:
     mpl.use('Qt5Agg')
     import matplotlib.pyplot as plt
@@ -15,6 +17,11 @@ from commonroad.prediction.prediction import TrajectoryPrediction
 from commonroad.scenario.trajectory import Trajectory
 from commonroad.visualization.draw_dispatch_cr import draw_object
 
+try:
+    import pycrccosy
+    import commonroad_ccosy.visualization.draw_dispatch
+except ModuleNotFoundError as exp:
+    warnings.warn(f"Xou won't be able to draw the navigation, {exp}")
 
 def draw_initial_state(p_planning_problem: PlanningProblem, fig_num=None):
     # draw ego vehicle
@@ -122,5 +129,83 @@ def plot_route_environment(scenario: Scenario, planning_problem: PlanningProblem
             # TODO: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
             plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b", zorder=30, scalex=False,
                      scaley=False)
+
+    plt.show()
+
+def plot_navigation(scenario: Scenario, planning_problem: PlanningProblem, ccosy_list: Union[List[Lanelet], List[pycrccosy.TrapezoidCoordinateSystem]]):
+    plt.style.use('classic')
+    inch_in_cm = 2.54
+    figsize = [60, 30]
+
+    fig = plt.figure(figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
+    fig.clf()
+    fig.gca().axis('equal')
+
+    if isinstance(ccosy_list[0], pycrccosy.TrapezoidCoordinateSystem):
+        for global_cosy in ccosy_list:
+            commonroad_ccosy.visualization.draw_dispatch.draw_object(global_cosy.get_segment_list())
+    else:
+        for lanelet in ccosy_list:
+            draw_object(lanelet, draw_params={'lanelet': {
+                'center_bound_color': '#3232ff',  # color of the found route
+                'draw_stop_line': False,
+                'stop_line_color': '#ff0000',
+                'draw_line_markings': True,
+                'draw_left_bound': False,
+                'draw_right_bound': False,
+                'draw_center_bound': True,
+                'draw_border_vertices': False,
+                'draw_start_and_direction': True,
+                'show_label': False,
+                'draw_linewidth': 2,
+                'fill_lanelet': False,
+                'facecolor': '#c7c7c7',
+                'zorder': 30  # put it higher in the plot, to make it visible
+            }})
+
+
+    draw_object(scenario, draw_params={
+        'time_begin': 0,
+        'scenario': {
+            'lanelet_network': {
+                'lanelet': {
+                    'show_label': False,
+                    'fill_lanelet': False,
+                }
+            },
+        },
+        'planning_problem_set': {
+            'planning_problem': {
+                'goal_region': {
+                    'draw_shape': True,
+                    'shape': {
+                        'polygon': {
+                            'opacity': 0.5,
+                            'linewidth': 0.5,
+                            'facecolor': '#f1b514',
+                            'edgecolor': '#302404',
+                            'zorder': 15,
+                        },
+                        'rectangle': {
+                            'opacity': 0.5,
+                            'linewidth': 0.5,
+                            'facecolor': '#f1b514',
+                            'edgecolor': '#302404',
+                            'zorder': 15,
+                        },
+                        'circle': {
+                            'opacity': 0.5,
+                            'linewidth': 0.5,
+                            'facecolor': '#f1b514',
+                            'edgecolor': '#302404',
+                            'zorder': 15,
+                        }
+                    },
+                },
+            },
+        },
+    })
+    draw_object(planning_problem)
+    plt.gca().set_aspect('equal')
 
     plt.show()
