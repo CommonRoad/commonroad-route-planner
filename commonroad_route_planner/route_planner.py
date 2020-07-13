@@ -203,13 +203,12 @@ class Route:
 
         return sections
 
-    @property
-    def sectionized_environment(self, is_opposite_direction_allowed: bool = False):
+    def get_sectionized_environment(self, is_opposite_direction_allowed: bool = False):
         if self._sectionized_environment is None:
             self._sectionized_environment = self._get_sectionized_environment_from_route(self.route,
                                                                                          is_opposite_direction_allowed=is_opposite_direction_allowed)
-        else:
-            return self._sectionized_environment
+
+        return self._sectionized_environment
 
 
 class RouteCandidates:
