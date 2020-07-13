@@ -92,22 +92,121 @@ def get_lanelet_id_by_goal(scenario: Scenario, goal: GoalRegion):
 
 
 class Route:
-    def __init__(self, scenario: Scenario, planning_problem: PlanningProblem, route: List[int]):
+    def __init__(self, scenario: Scenario, planning_problem: PlanningProblem, route: List[int], allowed_lanelet_ids: Set[int]):
         self.scenario = scenario
+        self.lanelet_network = scenario.lanelet_network
         self.planning_problem = planning_problem
         self.route = route
 
         self._sectionized_environment = None
 
+        # ==================== #
+        #        Extra         #
+        # ==================== #
+        if allowed_lanelet_ids is None:
+            self.allowed_lanelet_ids = {lanelet.lanelet_id for lanelet in self.lanelet_network.lanelets}
+        else:
+            self.allowed_lanelet_ids = allowed_lanelet_ids
+
+        self.lanelet_ids_in_the_opposite_direction = set()
+
     def get_navigator(self):
         return Navigator(self)
 
+    def _get_adjacent_lanelets_list(self, lanelet_id: int, is_opposite_direction_allowed=False) -> list:
+        """
+        Recursively gets adj_left and adj_right lanelets of current lanelet id
+        :param lanelet_id: current lanelet id
+        :param is_opposite_direction_allowed: specifies if it should give back only the lanelets in the driving
+            direction or it should give back the first neighbouring lanelet in the opposite direction
+        :return: list of adjacent lanelet ids: all lanelets which are going in the same direction and one-one from the
+                 left and right side which are going in the opposite direction, empty lists if there are none
+        """
+        adjacent_list = list()
+        base_lanelet = self.lanelet_network.find_lanelet_by_id(lanelet_id)
+
+        # left direction
+        current_lanelet = base_lanelet
+        temp_id = current_lanelet.adj_left
+        while temp_id is not None:
+            # set this lanelet as the current if it goes in the same direction and iterate further
+            if temp_id in self.allowed_lanelet_ids:
+                if current_lanelet.adj_left_same_direction:
+                    if temp_id in self.allowed_lanelet_ids:
+                        # append the left adjacent lanelet if it exists
+                        adjacent_list.append(temp_id)
+
+                        # Update current_lanelet
+                        current_lanelet = self.lanelet_network.find_lanelet_by_id(temp_id)
+                        temp_id = current_lanelet.adj_left
+
+                # this lanelet was already such which goes in the opposite direction -> exit the loop
+                else:
+                    self.lanelet_ids_in_the_opposite_direction.add(temp_id)
+                    if is_opposite_direction_allowed:
+                        adjacent_list.append(temp_id)
+                    break
+            else:
+                # it is not allowed to drive in that lane, so just breaking
+                break
+
+        # right direction
+        current_lanelet = base_lanelet
+        temp_id = current_lanelet.adj_right
+        while temp_id is not None:
+            # set this lanelet as the current if it goes in the same direction and iterate further
+            if temp_id in self.allowed_lanelet_ids:
+                if current_lanelet.adj_right_same_direction:
+                    # append the right adjacent lanelet if it exists
+                    adjacent_list.append(temp_id)
+
+                    # Update current_lanelet
+                    current_lanelet = self.lanelet_network.find_lanelet_by_id(temp_id)
+                    temp_id = current_lanelet.adj_right
+                # this lanelet was already such which goes in the opposite direction -> exit the loop
+                else:
+                    self.lanelet_ids_in_the_opposite_direction.add(temp_id)
+                    if is_opposite_direction_allowed:
+                        adjacent_list.append(temp_id)
+                    break
+            else:
+                # it is not allowed to drive in that lane, so just breaking
+                break
+
+        return adjacent_list
+
+    def _get_sectionized_environment_from_route(self, route: List[int], is_opposite_direction_allowed: bool = False) -> \
+            Union[None, List[List[int]]]:
+        """
+        Creates sectionized environment from a given route.
+        :param route: The route as a list of lanelet ids
+        :param is_opposite_direction_allowed: Indicates whether it is required to contain one opposite lanelet in the
+                                              environment
+        :return: Returns a sectional environment in a form of list of list of lanelet ids. This environment contains
+                 the environment of the planned route in every time steps.
+        """
+        if route is None:
+            return None
+
+        sections = list()
+        for lanelet_id_in_route in route:
+            lanelet_ids_in_section = self._get_adjacent_lanelets_list(lanelet_id_in_route,
+                                                                      is_opposite_direction_allowed)
+            lanelet_ids_in_section.append(lanelet_id_in_route)
+            lanelet_ids_in_section.sort()
+
+            if len(sections) == 0:
+                sections.append(lanelet_ids_in_section)
+            elif sections[-1] != lanelet_ids_in_section:
+                sections.append(lanelet_ids_in_section)
+
+        return sections
+
     @property
-    def sectionized_environment(self):
+    def sectionized_environment(self, is_opposite_direction_allowed: bool = False):
         if self._sectionized_environment is None:
-            # TODO: implement
-            raise NotImplementedError()
-            self._sectionized_environment = None
+            self._sectionized_environment = self._get_sectionized_environment_from_route(self.route,
+                                                                                         is_opposite_direction_allowed=is_opposite_direction_allowed)
         else:
             return self._sectionized_environment
 
@@ -245,11 +344,6 @@ class RoutePlanner:
             else:
                 raise ValueError(f"The backend {self.backend} is not recognized as supported backend "
                                  f"for the RoutePlanner")
-
-        # ==================== #
-        #        Extra         #
-        # ==================== #
-        self.lanelet_ids_in_the_opposite_direction = set()
 
     # =============== end of constructor ============== #
 
@@ -742,95 +836,6 @@ class RoutePlanner:
         """
         route_candidates = self.search_alg()
         return RouteCandidates(self.scenario, self.planning_problem, route_candidates)
-
-    def _get_adjacent_lanelets_list(self, lanelet_id: int, is_opposite_direction_allowed=False) -> list:
-        """
-        Recursively gets adj_left and adj_right lanelets of current lanelet id
-        :param lanelet_id: current lanelet id
-        :param is_opposite_direction_allowed: specifies if it should give back only the lanelets in the driving
-            direction or it should give back the first neighbouring lanelet in the opposite direction
-        :return: list of adjacent lanelet ids: all lanelets which are going in the same direction and one-one from the
-                 left and right side which are going in the opposite direction, empty lists if there are none
-        """
-        adjacent_list = list()
-        base_lanelet = self.lanelet_network.find_lanelet_by_id(lanelet_id)
-
-        # left direction
-        current_lanelet = base_lanelet
-        temp_id = current_lanelet.adj_left
-        while temp_id is not None:
-            # set this lanelet as the current if it goes in the same direction and iterate further
-            if temp_id in self.allowed_lanelet_ids:
-                if current_lanelet.adj_left_same_direction:
-                    if temp_id in self.allowed_lanelet_ids:
-                        # append the left adjacent lanelet if it exists
-                        adjacent_list.append(temp_id)
-
-                        # Update current_lanelet
-                        current_lanelet = self.lanelet_network.find_lanelet_by_id(temp_id)
-                        temp_id = current_lanelet.adj_left
-
-                # this lanelet was already such which goes in the opposite direction -> exit the loop
-                else:
-                    self.lanelet_ids_in_the_opposite_direction.add(temp_id)
-                    if is_opposite_direction_allowed:
-                        adjacent_list.append(temp_id)
-                    break
-            else:
-                # it is not allowed to drive in that lane, so just breaking
-                break
-
-        # right direction
-        current_lanelet = base_lanelet
-        temp_id = current_lanelet.adj_right
-        while temp_id is not None:
-            # set this lanelet as the current if it goes in the same direction and iterate further
-            if temp_id in self.allowed_lanelet_ids:
-                if current_lanelet.adj_right_same_direction:
-                    # append the right adjacent lanelet if it exists
-                    adjacent_list.append(temp_id)
-
-                    # Update current_lanelet
-                    current_lanelet = self.lanelet_network.find_lanelet_by_id(temp_id)
-                    temp_id = current_lanelet.adj_right
-                # this lanelet was already such which goes in the opposite direction -> exit the loop
-                else:
-                    self.lanelet_ids_in_the_opposite_direction.add(temp_id)
-                    if is_opposite_direction_allowed:
-                        adjacent_list.append(temp_id)
-                    break
-            else:
-                # it is not allowed to drive in that lane, so just breaking
-                break
-
-        return adjacent_list
-
-    def get_sectionized_environment_from_route(self, route: List[int], is_opposite_direction_allowed: bool = False) -> \
-            Union[None, List[List[int]]]:
-        """
-        Creates sectionized environment from a given route.
-        :param route: The route as a list of lanelet ids
-        :param is_opposite_direction_allowed: Indicates whether it is required to contain one opposite lanelet in the
-                                              environment
-        :return: Returns a sectional environment in a form of list of list of lanelet ids. This environment contains
-                 the environment of the planned route in every time steps.
-        """
-        if route is None:
-            return None
-
-        sections = list()
-        for lanelet_id_in_route in route:
-            lanelet_ids_in_section = self._get_adjacent_lanelets_list(lanelet_id_in_route,
-                                                                      is_opposite_direction_allowed)
-            lanelet_ids_in_section.append(lanelet_id_in_route)
-            lanelet_ids_in_section.sort()
-
-            if len(sections) == 0:
-                sections.append(lanelet_ids_in_section)
-            elif sections[-1] != lanelet_ids_in_section:
-                sections.append(lanelet_ids_in_section)
-
-        return sections
 
     # ================================================= #
     #                 Custom Exceptions                 #
