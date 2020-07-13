@@ -113,7 +113,7 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
     time1 = time.perf_counter()
     try:
 
-        route_planner = RoutePlanner(scenario, planning_problem, backend="networkx_reversed")
+        route_planner = RoutePlanner(scenario, planning_problem, backend=RoutePlanner.Backend.NETWORKX_REVERSED)
 
         route_candidates = route_planner.get_route_candidates()
         print(f"Found route candidates: {route_candidates}")
@@ -138,7 +138,7 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
         logger.exception(error)
     else:
         search_time = time.perf_counter() - time1
-        msg = "search took\t{:10.4f}\tms\t".format(search_time * 1000)
+        msg = base_msg + "search took\t{:10.4f}\tms\t".format(search_time * 1000)
 
         if len(route_obj.route) == 0:
             logger.warning(msg + "path NOT FOUND")
@@ -151,6 +151,7 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
         if plot_and_save_scenarios:
             fig = plt.figure(num=0, figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
             fig.clf()
+            fig.suptitle(scenario.benchmark_id, fontsize=20)
             fig.gca().axis('equal')
             handles = {}  # collects handles of obstacle patches, plotted by matplotlib
             plot_limits = get_plot_limits(route_obj.route, scenario, border=15)
