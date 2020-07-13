@@ -28,8 +28,6 @@ if __name__ == "__main__":
     plot_found_routes(scenario, planning_problem, [route.route])
 
     # you can get the envrionment of the found route
-    # chosen_route = routes[0]
-    # route_environment = \
-    #     route_planner.get_sectionized_environment_from_route(chosen_route, is_opposite_direction_allowed=False)
-    #
-    # plot_route_environment(scenario, planning_problem, route_environment)
+    route_environment = route.sectionized_environment
+
+    plot_route_environment(scenario, planning_problem, route_environment)
