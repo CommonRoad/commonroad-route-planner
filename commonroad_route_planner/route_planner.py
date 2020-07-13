@@ -299,10 +299,9 @@ class RoutePlanner:
         # ================================================= #
         #               Find allowed lanelets               #
         # ================================================= #
-        self.allowed_lanelet_ids = \
-            {allowed_lanelet.lanelet_id
-             for allowed_lanelet in
-             self._filter_lanelets_by_type(self.lanelet_network.lanelets, self.lanelet_type_blacklist)}
+        self.allowed_lanelet_ids = {allowed_lanelet.lanelet_id for allowed_lanelet in
+                                    self._filter_lanelets_by_type(self.lanelet_network.lanelets,
+                                                                  self.lanelet_type_blacklist)}
 
         # ================================================= #
         #                Check initial state                #
