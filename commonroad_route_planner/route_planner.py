@@ -136,13 +136,20 @@ def get_sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List
     raise NotImplementedError("Whole lanelet as goal must be implemented here!")
 
 
+class RouteType(Enum):
+    UNIQUE = "unique"
+    SURVIVAL = "survival"
+
+
 class Route:
+
     def __init__(self, scenario: Scenario, planning_problem: PlanningProblem, route: List[int],
-                 allowed_lanelet_ids: Set[int] = None):
+                 route_type: RouteType, allowed_lanelet_ids: Set[int] = None):
         self.scenario = scenario
         self.lanelet_network = scenario.lanelet_network
         self.planning_problem = planning_problem
         self.route = route
+        self.type = route_type
 
         self._sectionized_environment = None
 
@@ -258,11 +265,12 @@ class Route:
 
 class RouteCandidates:
     def __init__(self, scenario: Scenario, planning_problem: PlanningProblem, route_candidates: List[List[int]],
-                 allowed_lanelet_ids: Set[int] = None):
+                 route_type: RouteType, allowed_lanelet_ids: Set[int] = None):
         self.scenario = scenario
         self.lanelet_network = self.scenario.lanelet_network
         self.planning_problem = planning_problem
         self.route_candidates = route_candidates
+        self.route_type = route_type
 
         # ==================== #
         #        Extra         #
@@ -274,12 +282,12 @@ class RouteCandidates:
 
     def get_first_route(self) -> Route:
         route = self.route_candidates[0]
-        return Route(self.scenario, self.planning_problem, route)
+        return Route(self.scenario, self.planning_problem, route, self.route_type, self.allowed_lanelet_ids)
 
     def get_most_likely_route_by_orientation(self) -> Union[Route, None]:
         # handling the survival scenarios and where only one path found
         if len(self.route_candidates) == 1:
-            return Route(self.scenario, self.planning_problem, self.route_candidates[0])
+            return Route(self.scenario, self.planning_problem, self.route_candidates[0], self.route_type, self.allowed_lanelet_ids)
 
         sorted_initial_lanelet_ids = get_sorted_lanelet_ids_by_state(self.scenario, self.planning_problem.initial_state)
         sorted_goal_lanelet_ids = get_sorted_lanelet_ids_by_goal(self.scenario, self.planning_problem.goal)
@@ -297,7 +305,7 @@ class RouteCandidates:
                     if initial_lanelet_id in candidates_initial_lanelet_ids:
                         route = self.route_candidates[
                             np.where(candidates_initial_lanelet_ids == initial_lanelet_id)[0][0]]
-                        return Route(self.scenario, self.planning_problem, route, self.allowed_lanelet_ids)
+                        return Route(self.scenario, self.planning_problem, route, self.route_type, self.allowed_lanelet_ids)
         return None
 
     def __repr__(self):
@@ -328,16 +336,33 @@ class Navigator:
         self.num_of_lane_changes = len(self.ccosy_list)
         self.merged_section_lengthes = np.array([self._get_length(curvi_cosy) for curvi_cosy in self.ccosy_list])
 
-        self.goal_face_coords = self._get_goal_face_points(self._get_goal_polygon(self.planning_problem.goal))
-        self.goal_curvi_face_coords = [self._get_curvilinear_coords(self.ccosy_list[-1], g) for g in
-                                       self.goal_face_coords]
+        # ==================== #
+        #         Goal         #
+        # ==================== #
+        self.goal_curvi_face_coords = None
+        self.goal_curvi_minimal_coord = None
+        self._initialize_goal()
 
-        self.goal_curvi_minimal_coord = np.min(self.goal_curvi_face_coords, axis=0)
+    def _initialize_goal(self):
+        if self.route.type == RouteType.UNIQUE:
+            goal_face_coords = self._get_goal_face_points(self._get_goal_polygon(self.planning_problem.goal))
+            self.goal_curvi_face_coords = [self._get_curvilinear_coords(self.ccosy_list[-1], g) for g in
+                                            goal_face_coords]
+            self.goal_curvi_minimal_coord = np.min(self.goal_curvi_face_coords, axis=0)
 
     def _get_route_cosy(self) -> Union[pycrccosy.TrapezoidCoordinateSystem, List[Lanelet]]:
         # Merge reference route
         merged_lanelets = []
-        current_merged_lanelet = None
+
+        # Append predecessor of the initial to ensure that the goal state is not out of the projection domain
+        initial_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[0])
+        predecessors_lanelet = initial_lanelet.predecessor
+        if predecessors_lanelet is not None and len(predecessors_lanelet) != 0:
+            predecessor_lanelet = self.lanelet_network.find_lanelet_by_id(predecessors_lanelet[0])
+            current_merged_lanelet = predecessor_lanelet
+        else:
+            current_merged_lanelet = None
+
         for current_lanelet_id, next_lanelet_id in zip(self.route.route[:-1], self.route.route[1:]):
             lanelet = self.lanelet_network.find_lanelet_by_id(current_lanelet_id)
             # If the lanelet is the end of a section, then change section
@@ -357,7 +382,7 @@ class Navigator:
         else:
             current_merged_lanelet = goal_lanelet
 
-        # Append successor fo the goal to ensure that the goal state is not out of the projection domain
+        # Append successor of the goal to ensure that the goal state is not out of the projection domain
         goal_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[-1])
         successors_of_goal = goal_lanelet.successor
         if successors_of_goal is not None and len(successors_of_goal) != 0:
@@ -496,6 +521,10 @@ class Navigator:
         :param planning_problem: The planning problem to be solved
         :return: longitudinal distance, latitudinal distance
         """
+        # If the route is survival, then return zero
+        if self.route.type == RouteType.SURVIVAL:
+            return 0.0, 0.0
+
         for cosy_idx, curvi_cosy in enumerate(self.ccosy_list):
             try:
                 ego_curvi_coord = self._get_curvilinear_coords(curvi_cosy, ego_vehicle_state.position)
@@ -524,6 +553,9 @@ class Navigator:
         raise ValueError("Unable to project the ego vehicle on the global cosy")
 
     def get_lane_change_distance(self, state: State) -> float:
+        # If the route is survival, then return zero
+        if self.route.type == RouteType.SURVIVAL:
+            return 0.0
 
         sorted_current_lanelet_ids = get_sorted_lanelet_ids_by_state(self.scenario, state)
         sorted_current_lanelet_ids_on_route = [current_lanelet_id for current_lanelet_id in sorted_current_lanelet_ids
@@ -640,8 +672,10 @@ class RoutePlanner:
         # if there is no goal lanelet ids than it is a survival scenario and we do not need to make
         # a graph from the lanelet network
         if self.goal_lanelet_ids is None:
+            self.route_type = RouteType.SURVIVAL
             self.logger.info("SURVIVAL Scenario: There is no goal position or lanelet given")
         else:
+            self.route_type = RouteType.UNIQUE
             if self.backend == RoutePlanner.Backend.NETWORKX:
                 if self.allow_diagonal:
                     self.logger.warning("diagonal search not tested")
@@ -1153,7 +1187,8 @@ class RoutePlanner:
         :return: empty list if no path has been found
         """
         route_candidates = self.search_alg()
-        return RouteCandidates(self.scenario, self.planning_problem, route_candidates)
+        return RouteCandidates(self.scenario, self.planning_problem, route_candidates,
+                               self.route_type, self.allowed_lanelet_ids)
 
     # ================================================= #
     #                 Custom Exceptions                 #
