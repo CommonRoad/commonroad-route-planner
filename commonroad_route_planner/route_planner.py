@@ -10,7 +10,7 @@ import networkx as nx
 import numpy as np
 from commonroad.planning.goal import GoalRegion
 from commonroad.planning.planning_problem import PlanningProblem
-from commonroad.scenario.lanelet import Lanelet, LaneletType
+from commonroad.scenario.lanelet import Lanelet, LaneletType, LaneletNetwork
 from commonroad.scenario.scenario import Scenario
 from commonroad.scenario.trajectory import State
 
@@ -345,8 +345,26 @@ class Navigator:
 
     def _initialize_goal(self):
         if self.route.type == RouteType.UNIQUE:
+
+            def get_goal_ccosy_safe(ccosy: pycrccosy.TrapezoidCoordinateSystem, position):
+                try:
+                    return self._get_curvilinear_coords(self.ccosy_list[-1], position)
+                except ValueError:
+                    long_dist = ccosy.get_length()
+
+                    last_segment = ccosy.get_segment_list()[-1]
+
+                    rel_pos = position - last_segment.pt_1
+                    tol = 1e-8
+                    dot_prod = np.dot(last_segment.tangent, rel_pos)
+                    dot_prod = dot_prod if np.abs(dot_prod) > tol else 0.0
+
+                    lat_side = np.sign(dot_prod)
+                    lat_dist = lat_side * np.linalg.norm(rel_pos)
+                    return long_dist, lat_dist
+
             goal_face_coords = self._get_goal_face_points(self._get_goal_polygon(self.planning_problem.goal))
-            self.goal_curvi_face_coords = [self._get_curvilinear_coords(self.ccosy_list[-1], g) for g in
+            self.goal_curvi_face_coords = [get_goal_ccosy_safe(self.ccosy_list[-1], g) for g in
                                             goal_face_coords]
             self.goal_curvi_minimal_coord = np.min(self.goal_curvi_face_coords, axis=0)
 
@@ -496,22 +514,23 @@ class Navigator:
         elif len(goal.state_list) == 0:
             return Polygon()
 
-        goal_state = goal.state_list[0]
-        if hasattr(goal_state, 'position'):
-            if isinstance(goal_state.position, cr_shape.ShapeGroup):
-                polygons = get_polygon_list_from_shapegroup(goal_state.position)
-                merged_polygon = cascaded_union(polygons)
-                return merged_polygon
-            elif isinstance(goal_state.position, (cr_shape.Rectangle, cr_shape.Polygon)):
-                return goal_state.position.shapely_object
-            else:
-                raise NotImplementedError(
-                    f"Goal position not supported yet, "
-                    f"only ShapeGroup, Rectangle or Polygon shapes can be used, "
-                    f"the given shape was: {type(goal_state.position)}")
         else:
-            # No position defined
-            return Polygon()
+            goal_state = goal.state_list[0]
+            if hasattr(goal_state, 'position'):
+                if isinstance(goal_state.position, cr_shape.ShapeGroup):
+                    polygons = get_polygon_list_from_shapegroup(goal_state.position)
+                    merged_polygon = cascaded_union(polygons)
+                    return merged_polygon
+                elif isinstance(goal_state.position, (cr_shape.Rectangle, cr_shape.Polygon)):
+                    return goal_state.position.shapely_object
+                else:
+                    raise NotImplementedError(
+                        f"Goal position not supported yet, "
+                        f"only ShapeGroup, Rectangle or Polygon shapes can be used, "
+                        f"the given shape was: {type(goal_state.position)}")
+            else:
+                # No position defined
+                return Polygon()
 
     def get_long_lat_distance_to_goal(self, ego_vehicle_state: State) -> Tuple[float, float]:
         """

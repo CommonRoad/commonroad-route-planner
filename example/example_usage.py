@@ -7,7 +7,7 @@ from commonroad_route_planner.route_planner import RoutePlanner
 
 
 if __name__ == "__main__":
-    scenario_path = 'example_scenarios/DEU_Muc-1_2_T-1.xml'
+    scenario_path = 'example_scenarios/USA_Lanker-2_26_T-1.xml'
 
     print(f"Loading scenario {scenario_path}")
 
@@ -33,12 +33,13 @@ if __name__ == "__main__":
     # Query the distance until lane change is required
     navigator = route.get_navigator()
 
-    states = [planning_problem.initial_state,
-              State(position=np.array([-6.5, 6.5]), orientation=np.pi),
-              State(position=np.array([-6.5, 20]), orientation=np.pi/2),
-              State(position=np.array([-6.5, 60]), orientation=np.pi/2),
-              State(position=np.array([-12.5, 20]), orientation=np.pi/2),
-              State(position=np.array([-12.5, 60]), orientation=np.pi/2)]
+    # states = [planning_problem.initial_state,
+    #           State(position=np.array([-6.5, 6.5]), orientation=np.pi),
+    #           State(position=np.array([-6.5, 20]), orientation=np.pi/2),
+    #           State(position=np.array([-6.5, 60]), orientation=np.pi/2),
+    #           State(position=np.array([-12.5, 20]), orientation=np.pi/2),
+    #           State(position=np.array([-12.5, 60]), orientation=np.pi/2)]
+    states = [planning_problem.initial_state]
 
     distances_until_lane_change = [navigator.get_lane_change_distance(state) for state in states]
     long_lat_distances = [navigator.get_long_lat_distance_to_goal(state) for state in states]
