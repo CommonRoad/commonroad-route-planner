@@ -479,6 +479,9 @@ class Navigator:
         :param goal_shape: shape of the goal area
         :return: tuples of x,y coordinates of the middle points of each face of the goal region
         """
+        assert isinstance(goal_shape, Polygon), f"Only single Polygon is supported, but {type(goal_shape)} was given, " \
+                                                f"Use a planning problem with contiguous goal region"
+
         goal_coords = [np.array(x) for x in zip(*goal_shape.exterior.coords.xy)]
 
         # round the same precision as is done within the commonroad xml files
