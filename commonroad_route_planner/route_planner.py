@@ -348,21 +348,36 @@ class Navigator:
     def _initialize_goal(self):
         if self.route.type == RouteType.UNIQUE:
 
-            def get_goal_ccosy_safe(ccosy: pycrccosy.TrapezoidCoordinateSystem, position):
+            def get_goal_ccosy_safe(ccosy: Union[pycrccosy.TrapezoidCoordinateSystem, Lanelet], position):
                 try:
                     return self._get_curvilinear_coords(self.ccosy_list[-1], position)
                 except ValueError:
-                    long_dist = ccosy.get_length()
-
-                    last_segment = ccosy.get_segment_list()[-1]
-
-                    rel_pos = position - last_segment.pt_1
                     tol = 1e-8
-                    dot_prod = np.dot(last_segment.tangent, rel_pos)
-                    dot_prod = dot_prod if np.abs(dot_prod) > tol else 0.0
+                    if self.backend == self.Backend.PYCRCCOSY:
+                        long_dist = ccosy.get_length()
 
-                    lat_side = np.sign(dot_prod)
-                    lat_dist = lat_side * np.linalg.norm(rel_pos)
+                        last_segment = ccosy.get_segment_list()[-1]
+
+                        rel_pos = position - last_segment.pt_1
+
+                        dot_prod = np.dot(last_segment.tangent, rel_pos)
+                        dot_prod = dot_prod if np.abs(dot_prod) > tol else 0.0
+
+                        lat_side = np.sign(dot_prod)
+                        lat_dist = lat_side * np.linalg.norm(rel_pos)
+                    else:
+                        lanelet = ccosy
+                        long_dist = lanelet.distance[-1]
+
+                        rel_pos = position - lanelet.center_vertices[-1]
+                        tangent = lanelet.left_vertices[-1] - lanelet.right_vertices[-1]
+
+                        dot_prod = np.dot(tangent, rel_pos)
+                        dot_prod = dot_prod if np.abs(dot_prod) > tol else 0.0
+
+                        lat_side = np.sign(dot_prod)
+                        lat_dist = lat_side * np.linalg.norm(rel_pos)
+
                     return long_dist, lat_dist
 
             goal_face_coords = self._get_goal_face_points(self._get_goal_polygon(self.planning_problem.goal))
@@ -514,9 +529,9 @@ class Navigator:
                     raise ValueError(f"Shape can't be converted to Shapely Polygon: {shape}")
             return polygon_list
 
-        def merge_polygons(polygons):
+        def merge_polygons(polygons_to_merge):
             return cascaded_union([
-                geom if geom.is_valid else geom.buffer(0) for geom in polygons
+                geom if geom.is_valid else geom.buffer(0) for geom in polygons_to_merge
             ])
 
         polygons = [Polygon()]
