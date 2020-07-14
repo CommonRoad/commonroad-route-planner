@@ -3,6 +3,11 @@ import os
 import time
 
 import matplotlib as mpl
+from commonroad.scenario.lanelet import LaneletType
+from commonroad.visualization.plot_helper import set_non_blocking
+
+from commonroad_route_planner.route_planner import RoutePlanner
+
 try:
     mpl.use('Qt5Agg')
     import matplotlib.pyplot as plt
@@ -11,10 +16,11 @@ except ImportError:
     import matplotlib.pyplot as plt
 
 from commonroad.visualization.draw_dispatch_cr import draw_object
-from commonroad_route_planner.util import plot_found_routes, draw_initial_state
+from commonroad_route_planner.util import plot_found_routes, draw_initial_state, plot_route_environment
 
 from HelperFunctions import get_existing_scenarios, load_config_file, get_existing_scenario_ids, \
-    load_scenarios, initialize_logger, execute_search
+    load_scenarios, initialize_logger, execute_search, load_pickle_scenarios, get_existing_pickle_scenarios, \
+    get_plot_limits
 
 # load config file
 configs = load_config_file(os.path.join(os.path.dirname(__file__), 'batch_processor_config.yaml'))
@@ -106,7 +112,18 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
     routes = None
     time1 = time.perf_counter()
     try:
-        routes = execute_search(scenario, planning_problem, backend="priority_queue")
+
+        route_planner = RoutePlanner(scenario, planning_problem, backend=RoutePlanner.Backend.NETWORKX_REVERSED)
+
+        route_candidates = route_planner.get_route_candidates()
+        print(f"Found route candidates: {route_candidates}")
+
+        route_obj = route_candidates.get_most_likely_route_by_orientation()
+        # plot_found_routes(scenario, planning_problem, [route_obj.route])
+
+        route_environment = route_obj.get_sectionized_environment()
+        # plot_route_environment(scenario, planning_problem, route_environment)
+
     except IndexError as error:
         search_time = time.perf_counter() - time1
         scenarios_exception.append(scenario_id)
@@ -121,47 +138,42 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
         logger.exception(error)
     else:
         search_time = time.perf_counter() - time1
-        msg = "search took\t{:10.4f}\tms\t".format(search_time * 1000)
+        msg = base_msg + "search took\t{:10.4f}\tms\t".format(search_time * 1000)
 
-        # test = dim(routes)
-        if len(routes) > 1:
-            logger.info(base_msg + msg + "MORE path FOUND")
-            msg = base_msg
-        else:
-            msg = base_msg + msg
+        if len(route_obj.route) == 0:
+            logger.warning(msg + "path NOT FOUND")
+            scenarios_path_not_found.append(scenario_id)
+            continue
 
-        for ctn, route in enumerate(routes):
-            if len(route) == 0:
-                logger.warning(msg + "path NOT FOUND")
-                scenarios_path_not_found.append(scenario_id)
-                continue
+        goal_lanelet_id = route_obj.route[-1]
+        logger.debug(msg + "\tpath FOUND to goal lanelet: [{}]".format(goal_lanelet_id))
+        scenarios_path_found.append(scenario_id)
+        if plot_and_save_scenarios:
+            fig = plt.figure(num=0, figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
+            fig.clf()
+            fig.suptitle(scenario.benchmark_id, fontsize=20)
+            fig.gca().axis('equal')
+            handles = {}  # collects handles of obstacle patches, plotted by matplotlib
+            plot_limits = get_plot_limits(route_obj.route, scenario, border=15)
 
-            goal_lanelet_id = route[-1]
-            logger.debug(msg + "\tpath FOUND to goal lanelet: [{}]".format(goal_lanelet_id))
-            scenarios_path_found.append(scenario_id)
-            if plot_and_save_scenarios:
-                fig = plt.figure(figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
-                fig.clf()
-                fig.gca().axis('equal')
-                handles = {}  # collects handles of obstacle patches, plotted by matplotlib
+            # plot the lanelet network and the planning problem
+            draw_object(scenario, handles=handles, plot_limits=plot_limits,
+                        draw_params={'lanelet': {'show_label': False}})
+            draw_object(planning_problem, handles=handles, plot_limits=plot_limits)
+            fig.gca().autoscale()
 
-                # plot the lanelet network and the planning problem
-                draw_object(scenario, handles=handles)
-                draw_object(planning_problem, handles=handles)
-                fig.gca().autoscale()
-
-                # draw ego vehicle - with a collision object - uses commonroad_cc.visualizer
+            # draw ego vehicle - with a collision object - uses commonroad_cc.visualizer
                 try:
                     draw_initial_state(planning_problem)
-                except AssertionError as error:
-                    print(error)
+            except AssertionError as error:
+                print(error)
 
-                for route_lanelet_id in route:
-                    lanelet = scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
-                    draw_object(lanelet, handles=handles, draw_params={'lanelet': {
-                        'center_bound_color': '#3232ff',  # color of the found route
-                        'draw_stop_line': False,
-                        'stop_line_color': '#ff0000',
+            for route_lanelet_id in route_obj.route:
+                lanelet = scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
+                draw_object(lanelet, handles=handles, plot_limits=plot_limits, draw_params={'lanelet': {
+                    'center_bound_color': '#3232ff',  # color of the found route
+                    'draw_stop_line': False,
+                    'stop_line_color': '#ff0000',
                         'draw_line_markings': True,
                         'draw_left_bound': False,
                         'draw_right_bound': False,
