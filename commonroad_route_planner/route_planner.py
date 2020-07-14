@@ -124,7 +124,7 @@ def get_sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List
         goal_lanelets_with_successor = np.array(
             [1.0 if len(set(goal_lanelet.successor).intersection(goal_lanelet_id_set)) > 0 else 0.0 for goal_lanelet
              in goal_lanelets])
-        return [x for _,x in sorted(zip(goal_lanelets_with_successor, goal_lanelet_id_list))]
+        return [x for _, x in sorted(zip(goal_lanelets_with_successor, goal_lanelet_id_list))]
     if goal.state_list is not None and len(goal.state_list) != 0:
         if len(goal.state_list) > 1:
             raise ValueError("More than one goal state is not supported yet!")
@@ -164,7 +164,7 @@ class Route:
         self.lanelet_ids_in_the_opposite_direction = set()
 
     def get_navigator(self):
-        return Navigator(route = self)
+        return Navigator(route=self)
 
     def _get_adjacent_lanelets_list(self, lanelet_id: int, is_opposite_direction_allowed=False) -> list:
         """
@@ -287,7 +287,8 @@ class RouteCandidates:
     def get_most_likely_route_by_orientation(self) -> Union[Route, None]:
         # handling the survival scenarios and where only one path found
         if len(self.route_candidates) == 1:
-            return Route(self.scenario, self.planning_problem, self.route_candidates[0], self.route_type, self.allowed_lanelet_ids)
+            return Route(self.scenario, self.planning_problem, self.route_candidates[0], self.route_type,
+                         self.allowed_lanelet_ids)
 
         sorted_initial_lanelet_ids = get_sorted_lanelet_ids_by_state(self.scenario, self.planning_problem.initial_state)
         sorted_goal_lanelet_ids = get_sorted_lanelet_ids_by_goal(self.scenario, self.planning_problem.goal)
@@ -305,7 +306,8 @@ class RouteCandidates:
                     if initial_lanelet_id in candidates_initial_lanelet_ids:
                         route = self.route_candidates[
                             np.where(candidates_initial_lanelet_ids == initial_lanelet_id)[0][0]]
-                        return Route(self.scenario, self.planning_problem, route, self.route_type, self.allowed_lanelet_ids)
+                        return Route(self.scenario, self.planning_problem, route, self.route_type,
+                                     self.allowed_lanelet_ids)
         return None
 
     def __repr__(self):
@@ -365,7 +367,7 @@ class Navigator:
 
             goal_face_coords = self._get_goal_face_points(self._get_goal_polygon(self.planning_problem.goal))
             self.goal_curvi_face_coords = [get_goal_ccosy_safe(self.ccosy_list[-1], g) for g in
-                                            goal_face_coords]
+                                           goal_face_coords]
             self.goal_curvi_minimal_coord = np.min(self.goal_curvi_face_coords, axis=0)
 
     def _get_route_cosy(self) -> Union[pycrccosy.TrapezoidCoordinateSystem, List[Lanelet]]:
