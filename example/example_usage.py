@@ -7,7 +7,7 @@ from commonroad_route_planner.route_planner import RoutePlanner
 
 
 if __name__ == "__main__":
-    scenario_path = 'example_scenarios/USA_US101-32_1_T-1.xml'
+    scenario_path = 'example_scenarios/DEU_Muc-1_2_T-1.xml'
 
     print(f"Loading scenario {scenario_path}")
 
