@@ -164,7 +164,7 @@ class Route:
         self.lanelet_ids_in_the_opposite_direction = set()
 
     def get_navigator(self):
-        return Navigator(self)
+        return Navigator(route = self)
 
     def _get_adjacent_lanelets_list(self, lanelet_id: int, is_opposite_direction_allowed=False) -> list:
         """
