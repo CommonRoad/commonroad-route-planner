@@ -509,28 +509,20 @@ class Navigator:
                     raise ValueError(f"Shape can't be converted to Shapely Polygon: {shape}")
             return polygon_list
 
-        if len(goal.state_list) > 1:
-            raise NotImplementedError("Using more than one goal state is not implemented")
-        elif len(goal.state_list) == 0:
-            return Polygon()
-
-        else:
-            goal_state = goal.state_list[0]
+        merged_polygon = Polygon()
+        for goal_state in goal.state_list:
             if hasattr(goal_state, 'position'):
                 if isinstance(goal_state.position, cr_shape.ShapeGroup):
                     polygons = get_polygon_list_from_shapegroup(goal_state.position)
                     merged_polygon = cascaded_union(polygons)
-                    return merged_polygon
                 elif isinstance(goal_state.position, (cr_shape.Rectangle, cr_shape.Polygon)):
-                    return goal_state.position.shapely_object
+                    merged_polygon = cascaded_union(goal_state.position.shapely_object)
                 else:
                     raise NotImplementedError(
                         f"Goal position not supported yet, "
                         f"only ShapeGroup, Rectangle or Polygon shapes can be used, "
                         f"the given shape was: {type(goal_state.position)}")
-            else:
-                # No position defined
-                return Polygon()
+        return merged_polygon
 
     def get_long_lat_distance_to_goal(self, ego_vehicle_state: State) -> Tuple[float, float]:
         """
