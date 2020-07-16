@@ -348,40 +348,8 @@ class Navigator:
     def _initialize_goal(self):
         if self.route.type == RouteType.UNIQUE:
 
-            def get_goal_ccosy_safe(ccosy: Union[pycrccosy.TrapezoidCoordinateSystem, Lanelet], position):
-                try:
-                    return self._get_curvilinear_coords(self.ccosy_list[-1], position)
-                except ValueError:
-                    tol = 1e-8
-                    if self.backend == self.Backend.PYCRCCOSY:
-                        long_dist = ccosy.get_length()
-
-                        last_segment = ccosy.get_segment_list()[-1]
-
-                        rel_pos = position - last_segment.pt_1
-
-                        dot_prod = np.dot(last_segment.tangent, rel_pos)
-                        dot_prod = dot_prod if np.abs(dot_prod) > tol else 0.0
-
-                        lat_side = np.sign(dot_prod)
-                        lat_dist = lat_side * np.linalg.norm(rel_pos)
-                    else:
-                        lanelet = ccosy
-                        long_dist = lanelet.distance[-1]
-
-                        rel_pos = position - lanelet.center_vertices[-1]
-                        tangent = lanelet.left_vertices[-1] - lanelet.right_vertices[-1]
-
-                        dot_prod = np.dot(tangent, rel_pos)
-                        dot_prod = dot_prod if np.abs(dot_prod) > tol else 0.0
-
-                        lat_side = np.sign(dot_prod)
-                        lat_dist = lat_side * np.linalg.norm(rel_pos)
-
-                    return long_dist, lat_dist
-
             goal_face_coords = self._get_goal_face_points(self._get_goal_polygon(self.planning_problem.goal))
-            self.goal_curvi_face_coords = [get_goal_ccosy_safe(self.ccosy_list[-1], g) for g in
+            self.goal_curvi_face_coords = [self._get_safe_curvilinear_coords(self.ccosy_list[-1], g) for g in
                                            goal_face_coords]
             self.goal_curvi_minimal_coord = np.min(self.goal_curvi_face_coords, axis=0)
 
@@ -435,11 +403,13 @@ class Navigator:
 
     @staticmethod
     def _create_coordinate_system_from_polyline(polyline):
-        if len(polyline) <= 3:
+        if len(polyline) <= 4:
             last_point = polyline[-1]
-            polyline = resample_polyline(polyline, 2)
+            length = np.linalg.norm(polyline[-1] - polyline[0])
+            polyline = resample_polyline(polyline, length / 4.0)
             # make sure that the original vertices are all contained
-            polyline = np.append(polyline, [last_point], axis=0)
+            if not np.all(np.isclose(polyline[-1], last_point)):
+                polyline = np.append(polyline, [last_point], axis=0)
         return pycrccosy.TrapezoidCoordinateSystem(polyline)
 
     def _get_length(self, ccosy):
@@ -449,18 +419,64 @@ class Navigator:
             lanelet = ccosy
             return lanelet.distance[-1]
 
+    def _get_safe_curvilinear_coords(self, ccosy, position: np.ndarray):
+        try:
+            return self._get_curvilinear_coords(ccosy, position)
+        except ValueError:
+            return self._project_out_of_domain(ccosy, position)
+
+    def _project_out_of_domain(self, ccosy, position: np.ndarray):
+        if self.backend == self.Backend.PYCRCCOSY:
+
+            segment_list = ccosy.get_segment_list()
+            bounding_segments = [segment_list[0], segment_list[-1]]
+
+            rel_positions = position - np.array([segment.pt_1 for segment in bounding_segments])
+            distances = np.linalg.norm(rel_positions)
+
+            if distances[0] < distances[1]:
+                nearest_idx = 0
+                long_dist = 0
+            else:
+                nearest_idx = 0
+                long_dist = ccosy.get_length()
+
+            nearest_segment = bounding_segments[nearest_idx]
+            rel_position = rel_positions[nearest_idx]
+
+            long_dist = long_dist + np.dot(nearest_segment.normal, rel_position)
+            lat_dist = np.dot(nearest_segment.tangent, rel_position)
+
+        else:
+            lanelet = ccosy
+
+            bounding_center_vertices = np.array([lanelet.center_vertices[0], lanelet.center_vertices[-1]])
+            rel_positions = position - bounding_center_vertices
+            distances = np.linalg.norm(rel_positions)
+
+            if distances[0] < distances[1]:
+                long_dist = 0
+                nearest_vertex = bounding_center_vertices[0, :]
+                tangent_vector = lanelet.left_vertices[0] - nearest_vertex
+                normal_vector = lanelet.center_vertices[1] - nearest_vertex
+                rel_position = rel_positions[0]
+            else:
+                long_dist = lanelet.distance[-1]
+                nearest_vertex = bounding_center_vertices[1, :]
+                tangent_vector = lanelet.left_vertices[-1] - nearest_vertex
+                normal_vector = lanelet.center_vertices[-2] - nearest_vertex
+                rel_position = rel_positions[1]
+
+            long_dist = long_dist + np.dot(normal_vector, rel_position)
+            lat_dist = np.dot(tangent_vector, rel_position)
+
+        return long_dist, lat_dist
+
     def _get_curvilinear_coords(self, ccosy, position: np.ndarray):
         if self.backend == self.Backend.PYCRCCOSY:
             return ccosy.convert_to_curvilinear_coords(position[0], position[1])
         else:
             lanelet = ccosy
-            return self._get_curvilinear_coords_over_lanelet(lanelet, position)
-
-    def _get_curvilinear_coords_over_lanelet(self, lanelet: Lanelet, position):
-        if self.backend == self.Backend.PYCRCCOSY:
-            current_ccosy = self._create_coordinate_system_from_polyline(lanelet.center_vertices)
-            return current_ccosy.convert_to_curvilinear_coords(position[0], position[1])
-        else:
             position_diffs = np.linalg.norm(position - lanelet.center_vertices, axis=1)
             closest_vertex_index = np.argmin(position_diffs)
 
@@ -484,6 +500,13 @@ class Navigator:
             long_distance = lanelet.distance[closest_vertex_index]
             lat_distance = relative_lanelet_side * position_diffs[closest_vertex_index]
             return long_distance, lat_distance
+
+    def _get_curvilinear_coords_over_lanelet(self, lanelet: Lanelet, position):
+        if self.backend == self.Backend.PYCRCCOSY:
+            current_ccosy = self._create_coordinate_system_from_polyline(lanelet.center_vertices)
+            return self._get_curvilinear_coords(current_ccosy, position)
+        else:
+            return self._get_curvilinear_coords(lanelet, position)
 
     @staticmethod
     def _get_goal_face_points(goal_shape: Polygon):
@@ -603,22 +626,25 @@ class Navigator:
             return 0.0
 
         # The most likely current lanelet id by considering the orinetation of the state
-        current_lanelet_id = sorted_current_lanelet_ids[0]
-        current_lanelet = self.lanelet_network.find_lanelet_by_id(current_lanelet_id)
+        current_lanelet_id = sorted_current_lanelet_ids_on_route[0]
 
-        # Calculate the remaining distance in this lanelet
-        current_distance = self._get_curvilinear_coords_over_lanelet(current_lanelet, state.position)
-        current_distance_long = current_distance[0]
-        distance_until_lane_change = current_lanelet.distance[-1] - current_distance_long
-
-        successors_set = set(current_lanelet.successor)
-        route_successors = successors_set.intersection(self.sectionized_environment_set)
+        distance_until_lane_change = 0.0
+        route_successors = {current_lanelet_id}
         while len(route_successors) != 0:
             # Add the length of the current lane
             current_lanelet_id = route_successors.pop()
             current_lanelet = self.lanelet_network.find_lanelet_by_id(current_lanelet_id)
+            try:
+                if distance_until_lane_change == 0.0:
+                    # Calculate the remaining distance in this lanelet
+                    current_distance = self._get_curvilinear_coords_over_lanelet(current_lanelet, state.position)
+                    current_distance_long = current_distance[0]
+                    distance_until_lane_change = current_lanelet.distance[-1] - current_distance_long
+                else:
+                    distance_until_lane_change += current_lanelet.distance[-1]
 
-            distance_until_lane_change += current_lanelet.distance[-1]
+            except ValueError:
+                pass
 
             successors_set = set(current_lanelet.successor)
             route_successors = successors_set.intersection(self.sectionized_environment_set)
