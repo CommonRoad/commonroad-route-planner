@@ -10,7 +10,7 @@ import networkx as nx
 import numpy as np
 from commonroad.planning.goal import GoalRegion
 from commonroad.planning.planning_problem import PlanningProblem
-from commonroad.scenario.lanelet import Lanelet, LaneletType, LaneletNetwork
+from commonroad.scenario.lanelet import Lanelet, LaneletType
 from commonroad.scenario.scenario import Scenario
 from commonroad.scenario.trajectory import State
 
@@ -577,8 +577,6 @@ class Navigator:
         """
         Get the longitudinal and latitudinal distance from the ego vehicle to the goal.
         :param ego_vehicle_state: state of the ego vehicle
-        :param curvi_cosy: Trapezoid coordinate system to calculate easily the longitudinal and lateral distance
-        :param planning_problem: The planning problem to be solved
         :return: longitudinal distance, latitudinal distance
         """
         # If the route is survival, then return zero
