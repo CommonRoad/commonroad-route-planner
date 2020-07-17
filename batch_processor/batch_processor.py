@@ -3,7 +3,6 @@ import os
 import time
 
 import matplotlib as mpl
-from commonroad.scenario.lanelet import LaneletType
 from commonroad.visualization.plot_helper import set_non_blocking
 
 from commonroad_route_planner.route_planner import RoutePlanner
@@ -16,7 +15,7 @@ except ImportError:
     import matplotlib.pyplot as plt
 
 from commonroad.visualization.draw_dispatch_cr import draw_object
-from commonroad_route_planner.util import plot_found_routes, draw_initial_state, plot_route_environment
+from commonroad_route_planner.util import draw_initial_state, plot_found_routes, plot_route_environment, plot_navigation
 
 from HelperFunctions import get_existing_scenarios, load_config_file, get_existing_scenario_ids, \
     load_scenarios, initialize_logger, execute_search, load_pickle_scenarios, get_existing_pickle_scenarios, \
@@ -116,13 +115,26 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
         route_planner = RoutePlanner(scenario, planning_problem, backend=RoutePlanner.Backend.NETWORKX_REVERSED)
 
         route_candidates = route_planner.get_route_candidates()
-        print(f"Found route candidates: {route_candidates}")
+        # print(f"Found route candidates: {route_candidates}")
 
         route_obj = route_candidates.get_most_likely_route_by_orientation()
         # plot_found_routes(scenario, planning_problem, [route_obj.route])
 
         route_environment = route_obj.get_sectionized_environment()
         # plot_route_environment(scenario, planning_problem, route_environment)
+
+        # Navigator
+        navigator = route_obj.get_navigator()
+
+        states = [planning_problem.initial_state]
+
+        distances_until_lane_change = [navigator.get_lane_change_distance(state) for state in states]
+        long_lat_distances = [navigator.get_long_lat_distance_to_goal(state) for state in states]
+
+        # print(f"Distances until lane change: {distances_until_lane_change}")
+        # print(f"Long-lat distances: {long_lat_distances}")
+
+        # plot_navigation(scenario, planning_problem, navigator.ccosy_list)
 
     except IndexError as error:
         search_time = time.perf_counter() - time1
