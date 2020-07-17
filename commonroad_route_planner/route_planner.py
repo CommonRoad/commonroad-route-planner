@@ -336,7 +336,7 @@ class Navigator:
         self.sectionized_environment_set = set([item for sublist in self.sectionized_environment for item in sublist])
         self.ccosy_list = self._get_route_cosy()
         self.num_of_lane_changes = len(self.ccosy_list)
-        self.merged_section_lengthes = np.array([self._get_length(curvi_cosy) for curvi_cosy in self.ccosy_list])
+        self.merged_section_length_list = np.array([self._get_length(curvi_cosy) for curvi_cosy in self.ccosy_list])
 
         # ==================== #
         #         Goal         #
@@ -530,7 +530,7 @@ class Navigator:
 
     def _get_goal_polygon(self, goal: GoalRegion) -> Polygon:
         """
-        Get the goal postion as Polygon
+        Get the goal position as Polygon
         :param goal: the goal given as a GoalRegion
         :return: Polygon of the goal position
         """
@@ -593,11 +593,11 @@ class Navigator:
 
                     (min_distance_long, min_distance_lat) = np.maximum(np.minimum(0.0, max_distance), min_distance)
                 else:
-                    (min_distance_long, min_distance_lat) = self.merged_section_lengthes[cosy_idx] - ego_curvi_coord[0], \
+                    (min_distance_long, min_distance_lat) = self.merged_section_length_list[cosy_idx] - ego_curvi_coord[0], \
                                                             ego_curvi_coord[1]
                     current_section_idx = cosy_idx + 1
                     while current_section_idx != self.num_of_lane_changes - 1:
-                        min_distance_long += self.merged_section_lengthes[current_section_idx]
+                        min_distance_long += self.merged_section_length_list[current_section_idx]
                         current_section_idx += 1
 
                     min_distance_long += self.goal_curvi_minimal_coord[0]
@@ -623,7 +623,7 @@ class Navigator:
         if len(sorted_current_lanelet_ids_on_route) == 0:
             return 0.0
 
-        # The most likely current lanelet id by considering the orinetation of the state
+        # The most likely current lanelet id by considering the orientation of the state
         current_lanelet_id = sorted_current_lanelet_ids_on_route[0]
 
         distance_until_lane_change = 0.0
