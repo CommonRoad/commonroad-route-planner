@@ -351,7 +351,10 @@ class Navigator:
             goal_face_coords = self._get_goal_face_points(self._get_goal_polygon(self.planning_problem.goal))
             self.goal_curvi_face_coords = [self._get_safe_curvilinear_coords(self.ccosy_list[-1], g) for g in
                                            goal_face_coords]
-            self.goal_curvi_minimal_coord = np.min(self.goal_curvi_face_coords, axis=0)
+            min_distance = np.min(self.goal_curvi_face_coords, axis=0)
+            max_distance = np.max(self.goal_curvi_face_coords, axis=0)
+
+            self.goal_curvi_minimal_coord = np.maximum(np.minimum(0.0, max_distance), min_distance)
 
     def _get_route_cosy(self) -> Union[pycrccosy.TrapezoidCoordinateSystem, List[Lanelet]]:
         # Merge reference route
