@@ -432,7 +432,7 @@ class Navigator:
             bounding_segments = [segment_list[0], segment_list[-1]]
 
             rel_positions = position - np.array([segment.pt_1 for segment in bounding_segments])
-            distances = np.linalg.norm(rel_positions)
+            distances = np.linalg.norm(rel_positions, axis=1)
 
             if distances[0] < distances[1]:
                 nearest_idx = 0
@@ -452,7 +452,7 @@ class Navigator:
 
             bounding_center_vertices = np.array([lanelet.center_vertices[0], lanelet.center_vertices[-1]])
             rel_positions = position - bounding_center_vertices
-            distances = np.linalg.norm(rel_positions)
+            distances = np.linalg.norm(rel_positions, axis=1)
 
             if distances[0] < distances[1]:
                 long_dist = 0
