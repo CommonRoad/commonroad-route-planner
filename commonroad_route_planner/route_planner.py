@@ -349,12 +349,11 @@ class Navigator:
         if self.route.type == RouteType.UNIQUE:
 
             goal_face_coords = self._get_goal_face_points(self._get_goal_polygon(self.planning_problem.goal))
-            self.goal_curvi_face_coords = [self._get_safe_curvilinear_coords(self.ccosy_list[-1], g) for g in
-                                           goal_face_coords]
-            min_distance = np.min(self.goal_curvi_face_coords, axis=0)
-            max_distance = np.max(self.goal_curvi_face_coords, axis=0)
+            self.goal_curvi_face_coords = np.array([(self._get_safe_curvilinear_coords(self.ccosy_list[-1], g))[0]
+                                                    for g in goal_face_coords])
 
-            self.goal_curvi_minimal_coord = np.maximum(np.minimum(0.0, max_distance), min_distance)
+            self.goal_min_curvi_coords = np.min(self.goal_curvi_face_coords, axis=0)
+            self.goal_max_curvi_coord = np.max(self.goal_curvi_face_coords, axis=0)
 
     def _get_route_cosy(self) -> Union[pycrccosy.TrapezoidCoordinateSystem, List[Lanelet]]:
         # Merge reference route
@@ -424,7 +423,8 @@ class Navigator:
 
     def _get_safe_curvilinear_coords(self, ccosy, position: np.ndarray):
         try:
-            return self._get_curvilinear_coords(ccosy, position)
+            rel_pos_to_domain = 0
+            return self._get_curvilinear_coords(ccosy, position), rel_pos_to_domain
         except ValueError:
             return self._project_out_of_domain(ccosy, position)
 
@@ -438,17 +438,20 @@ class Navigator:
             distances = np.linalg.norm(rel_positions, axis=1)
 
             if distances[0] < distances[1]:
+                rel_pos_to_domain = -1
                 nearest_idx = 0
                 long_dist = 0
             else:
-                nearest_idx = 0
+                rel_pos_to_domain = 1
+                nearest_idx = 1
                 long_dist = ccosy.get_length()
 
             nearest_segment = bounding_segments[nearest_idx]
             rel_position = rel_positions[nearest_idx]
 
-            long_dist = long_dist + np.dot(nearest_segment.normal, rel_position)
-            lat_dist = np.dot(nearest_segment.tangent, rel_position)
+            long_dist = long_dist + np.dot(nearest_segment.tangent, rel_position)
+            lat_dist = np.dot(nearest_segment.normal, rel_position)
+
 
         else:
             lanelet = ccosy
@@ -458,22 +461,24 @@ class Navigator:
             distances = np.linalg.norm(rel_positions, axis=1)
 
             if distances[0] < distances[1]:
+                rel_pos_to_domain = -1
                 long_dist = 0
                 nearest_vertex = bounding_center_vertices[0, :]
-                tangent_vector = lanelet.left_vertices[0] - nearest_vertex
-                normal_vector = lanelet.center_vertices[1] - nearest_vertex
+                normal_vector = lanelet.left_vertices[0] - nearest_vertex
+                tangent_vector = lanelet.center_vertices[1] - nearest_vertex
                 rel_position = rel_positions[0]
             else:
+                rel_pos_to_domain = 1
                 long_dist = lanelet.distance[-1]
                 nearest_vertex = bounding_center_vertices[1, :]
-                tangent_vector = lanelet.left_vertices[-1] - nearest_vertex
-                normal_vector = lanelet.center_vertices[-2] - nearest_vertex
+                normal_vector = lanelet.left_vertices[-1] - nearest_vertex
+                tangent_vector = lanelet.center_vertices[-2] - nearest_vertex
                 rel_position = rel_positions[1]
 
             long_dist = long_dist + np.dot(normal_vector, rel_position)
             lat_dist = np.dot(tangent_vector, rel_position)
 
-        return long_dist, lat_dist
+        return np.array([long_dist, lat_dist]), rel_pos_to_domain
 
     def _get_curvilinear_coords(self, ccosy, position: np.ndarray):
         if self.backend == self.Backend.PYCRCCOSY:
@@ -587,29 +592,34 @@ class Navigator:
             return 0.0, 0.0
 
         for cosy_idx, curvi_cosy in enumerate(self.ccosy_list):
-            try:
-                ego_curvi_coord = self._get_curvilinear_coords(curvi_cosy, ego_vehicle_state.position)
-                if cosy_idx == self.num_of_lane_changes - 1:
-                    relative_distances = np.array(self.goal_curvi_face_coords) - np.array(ego_curvi_coord)
-                    min_distance = np.min(relative_distances, axis=0)
-                    max_distance = np.max(relative_distances, axis=0)
 
-                    (min_distance_long, min_distance_lat) = np.maximum(np.minimum(0.0, max_distance), min_distance)
-                else:
-                    (min_distance_long, min_distance_lat) = self.merged_section_length_list[cosy_idx] - ego_curvi_coord[0], \
-                                                            ego_curvi_coord[1]
-                    current_section_idx = cosy_idx + 1
-                    while current_section_idx != self.num_of_lane_changes - 1:
-                        min_distance_long += self.merged_section_length_list[current_section_idx]
-                        current_section_idx += 1
+            ego_curvi_coords, rel_pos_to_domain = self._get_safe_curvilinear_coords(curvi_cosy, ego_vehicle_state.position)
 
-                    min_distance_long += self.goal_curvi_minimal_coord[0]
-                    min_distance_lat += self.goal_curvi_minimal_coord[1]
+            is_last_section = (cosy_idx == self.num_of_lane_changes - 1)
+            if rel_pos_to_domain == 1 and not is_last_section:
+                continue
 
-                return min_distance_long, min_distance_lat
+            if is_last_section:
+                relative_distances = self.goal_curvi_face_coords - ego_curvi_coords
+                min_distance = np.min(relative_distances, axis=0)
+                max_distance = np.max(relative_distances, axis=0)
 
-            except ValueError:
-                pass
+                (min_distance_long, min_distance_lat) = np.maximum(np.minimum(0.0, max_distance), min_distance)
+            else:
+                min_distance_long = self.merged_section_length_list[cosy_idx] - ego_curvi_coords[0]
+                current_section_idx = cosy_idx + 1
+                while current_section_idx != self.num_of_lane_changes - 1:
+                    min_distance_long += self.merged_section_length_list[current_section_idx]
+                    current_section_idx += 1
+
+                relative_lat_distances = self.goal_curvi_face_coords[:,1] - ego_curvi_coords[1]
+                min_distance = np.min(relative_lat_distances, axis=0)
+                max_distance = np.max(relative_lat_distances, axis=0)
+
+                min_distance_long += self.goal_min_curvi_coords[0]
+                min_distance_lat = np.maximum(np.minimum(0.0, max_distance), min_distance)
+
+            return min_distance_long, min_distance_lat
 
         raise ValueError("Unable to project the ego vehicle on the global cosy")
 
