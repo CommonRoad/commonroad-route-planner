@@ -581,7 +581,7 @@ class Navigator:
         merged_polygon = merge_polygons(polygons)
         return merged_polygon
 
-    def get_long_lat_distance_to_goal(self, ego_vehicle_state: State) -> Tuple[float, float]:
+    def get_long_lat_distance_to_goal(self, ego_vehicle_state_position: np.ndarray) -> Tuple[float, float]:
         """
         Get the longitudinal and latitudinal distance from the ego vehicle to the goal.
         :param ego_vehicle_state: state of the ego vehicle
@@ -593,7 +593,7 @@ class Navigator:
 
         for cosy_idx, curvi_cosy in enumerate(self.ccosy_list):
 
-            ego_curvi_coords, rel_pos_to_domain = self._get_safe_curvilinear_coords(curvi_cosy, ego_vehicle_state.position)
+            ego_curvi_coords, rel_pos_to_domain = self._get_safe_curvilinear_coords(curvi_cosy, ego_vehicle_state_position)
 
             is_last_section = (cosy_idx == self.num_of_lane_changes - 1)
             if rel_pos_to_domain == 1 and not is_last_section:
