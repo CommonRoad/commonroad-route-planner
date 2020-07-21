@@ -8,6 +8,7 @@ from typing import List, Union, Generator, Set, Tuple
 
 import networkx as nx
 import numpy as np
+from commonroad.geometry.shape import Shape
 from commonroad.planning.goal import GoalRegion
 from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import Lanelet, LaneletType
@@ -47,7 +48,7 @@ def relative_orientation(from_angle1_in_rad, to_angle2_in_rad):
     return phi
 
 
-def get_lanelet_orientation_at_state(lanelet: Lanelet, state: State):
+def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
     """
     Approximates the lanelet orientation with the two closest point to the given state
     # TODO optimize more for speed
@@ -62,7 +63,7 @@ def get_lanelet_orientation_at_state(lanelet: Lanelet, state: State):
     position_diff = []
     for idx in range(len(center_vertices) - 1):
         vertex1 = center_vertices[idx]
-        position_diff.append(np.linalg.norm(state.position - vertex1))
+        position_diff.append(np.linalg.norm(position - vertex1))
 
     closest_vertex_index = position_diff.index(min(position_diff))
 
@@ -72,42 +73,27 @@ def get_lanelet_orientation_at_state(lanelet: Lanelet, state: State):
     return np.arctan2(direction_vector[1], direction_vector[0])
 
 
-def get_sorted_lanelet_ids_by_state(scenario: Scenario, state: State) -> List[int]:
+def sorted_lanelet_ids(lanelet_ids: List[int], orientation: float, position: np.ndarray, scenario: Scenario) -> List[int]:
     """
-    Get the lanelet of the state of an object at the specific time step.
-    :param state:
-    :param scenario: commonroad scenario
-    :return: lanelet id, if the obstacle is out of lanelet boundary (no lanelet is found, therefore return the
-    lanelet id of last time step)
+    return the lanelets sorted by relative orientation to the position and orientation given
     """
 
-    # output list
-    lanelet_id_list = scenario.lanelet_network.find_lanelet_by_position([state.position])
-    if len(lanelet_id_list) != 0:
-        # it only returns 1 element because only 1 point is given as argument (^ there)
-        lanelet_id_list = lanelet_id_list[0]
+    if len(lanelet_ids) <= 1:
+        return lanelet_ids
     else:
-        return list()
-
-    if len(lanelet_id_list) == 1:
-        return lanelet_id_list
-    elif len(lanelet_id_list) > 1:
-
-        lanelet_id_list = np.array(lanelet_id_list)
+        lanelet_id_list = np.array(lanelet_ids)
 
         def get_lanelet_relative_orientation(lanelet_id):
             lanelet = scenario.lanelet_network.find_lanelet_by_id(lanelet_id)
-            lanelet_orientation = get_lanelet_orientation_at_state(lanelet, state)
-            return np.abs(relative_orientation(lanelet_orientation, state.orientation))
+            lanelet_orientation = lanelet_orientation_at_position(lanelet, position)
+            return np.abs(relative_orientation(lanelet_orientation, orientation))
 
         orientation_differences = np.array(list(map(get_lanelet_relative_orientation, lanelet_id_list)))
         sorted_indices = np.argsort(orientation_differences)
         return list(lanelet_id_list[sorted_indices])
-    else:
-        return []
 
 
-def get_sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int]:
+def sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int]:
     """
     Get the lanelet id of the goal
     :param goal:
@@ -128,10 +114,15 @@ def get_sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List
     if goal.state_list is not None and len(goal.state_list) != 0:
         if len(goal.state_list) > 1:
             raise ValueError("More than one goal state is not supported yet!")
-        goal_shape = goal.state_list[0]
-        goal_orientation = np.mean([goal_shape.orientation.start, goal_shape.orientation.end])
-        goal_state = State(position=goal_shape.position.center, orientation=goal_orientation)
-        return get_sorted_lanelet_ids_by_state(scenario, goal_state)
+        goal_state = goal.state_list[0]
+        goal_orientation: float = (goal_state.orientation.start, goal_state.orientation.end)/2
+        goal_shape: Shape = goal_state.position
+        return sorted_lanelet_ids(
+            scenario.lanelet_network.find_lanelet_by_shape(goal_shape),
+            goal_orientation,
+            goal_shape.shapely_polygon.centroid,
+            scenario
+        )
 
     raise NotImplementedError("Whole lanelet as goal must be implemented here!")
 
@@ -290,8 +281,14 @@ class RouteCandidates:
             return Route(self.scenario, self.planning_problem, self.route_candidates[0], self.route_type,
                          self.allowed_lanelet_ids)
 
-        sorted_initial_lanelet_ids = get_sorted_lanelet_ids_by_state(self.scenario, self.planning_problem.initial_state)
-        sorted_goal_lanelet_ids = get_sorted_lanelet_ids_by_goal(self.scenario, self.planning_problem.goal)
+        current_state = self.planning_problem.initial_state
+        sorted_initial_lanelet_ids = sorted_lanelet_ids(
+            self.scenario.lanelet_network.find_lanelet_by_position([current_state.position])[0],
+            current_state.orientation,
+            current_state.position,
+            self.scenario
+        )
+        sorted_goal_lanelet_ids = sorted_lanelet_ids_by_goal(self.scenario, self.planning_problem.goal)
 
         candidates_goal_lanelet_ids = np.array([route_candidate[-1] for route_candidate in self.route_candidates])
 
@@ -623,18 +620,28 @@ class Navigator:
 
         raise ValueError("Unable to project the ego vehicle on the global cosy")
 
-    def get_lane_change_distance(self, state: State) -> float:
+    def get_lane_change_distance(self, state: State, active_lanelets: List[int] = None) -> float:
         # If the route is survival, then return zero
         if self.route.type == RouteType.SURVIVAL:
             return 0.0
+        if active_lanelets is None:
+            active_lanelets = self.scenario.lanelet_network.find_lanelet_by_position([state.position])[0]
 
-        sorted_current_lanelet_ids = get_sorted_lanelet_ids_by_state(self.scenario, state)
-        sorted_current_lanelet_ids_on_route = [current_lanelet_id for current_lanelet_id in sorted_current_lanelet_ids
-                                               if current_lanelet_id in self.sectionized_environment_set]
-
+        current_lanelet_ids_on_route = [
+            current_lanelet_id
+            for current_lanelet_id in active_lanelets
+            if current_lanelet_id in self.sectionized_environment_set
+        ]
         # The state is not on the route, instant lane change is required
-        if len(sorted_current_lanelet_ids_on_route) == 0:
+        if len(current_lanelet_ids_on_route) == 0:
             return 0.0
+
+        sorted_current_lanelet_ids_on_route = sorted_lanelet_ids(
+            current_lanelet_ids_on_route,
+            state.orientation,
+            state.position,
+            self.scenario
+        )
 
         # The most likely current lanelet id by considering the orientation of the state
         current_lanelet_id = sorted_current_lanelet_ids_on_route[0]
