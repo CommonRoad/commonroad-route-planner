@@ -175,8 +175,8 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
             fig.gca().autoscale()
 
             # draw ego vehicle - with a collision object - uses commonroad_cc.visualizer
-                try:
-                    draw_initial_state(planning_problem)
+            try:
+                draw_initial_state(planning_problem)
             except AssertionError as error:
                 print(error)
 
@@ -199,9 +199,9 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
                         'zorder': 30  # put it higher in the plot, to make it visible
                     }})
 
-                    # TODO: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
-                    plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b", zorder=30, scalex=False,
-                             scaley=False)
+                # TODO: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
+                plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b", zorder=30, scalex=False,
+                         scaley=False)
 
                 # saving solved solutions
                 # output_folder
