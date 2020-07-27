@@ -15,7 +15,7 @@ except ImportError:
     import matplotlib.pyplot as plt
 
 from commonroad.visualization.draw_dispatch_cr import draw_object
-from commonroad_route_planner.util import draw_initial_state, plot_found_routes, plot_route_environment, plot_navigation
+from commonroad_route_planner.util import draw_state, plot_found_routes, plot_route_environment, draw_navigator
 
 from HelperFunctions import get_existing_scenarios, load_config_file, get_existing_scenario_ids, \
     load_scenarios, initialize_logger, execute_search, load_pickle_scenarios, get_existing_pickle_scenarios, \
@@ -129,7 +129,7 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
         states = [planning_problem.initial_state]
 
         distances_until_lane_change = [navigator.get_lane_change_distance(state) for state in states]
-        long_lat_distances = [navigator.get_long_lat_distance_to_goal(state) for state in states]
+        long_lat_distances = [navigator.get_long_lat_distance_to_goal(state.position) for state in states]
 
         # print(f"Distances until lane change: {distances_until_lane_change}")
         # print(f"Long-lat distances: {long_lat_distances}")
@@ -175,8 +175,8 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
             fig.gca().autoscale()
 
             # draw ego vehicle - with a collision object - uses commonroad_cc.visualizer
-                try:
-                    draw_initial_state(planning_problem)
+            try:
+                draw_state(planning_problem)
             except AssertionError as error:
                 print(error)
 
@@ -199,9 +199,9 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
                         'zorder': 30  # put it higher in the plot, to make it visible
                     }})
 
-                    # TODO: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
-                    plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b", zorder=30, scalex=False,
-                             scaley=False)
+                # TODO: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
+                plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b", zorder=30, scalex=False,
+                         scaley=False)
 
                 # saving solved solutions
                 # output_folder

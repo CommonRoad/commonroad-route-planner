@@ -1,13 +1,14 @@
 import numpy as np
+import matplotlib.pyplot as plt
 from commonroad.scenario.trajectory import State
 
-from commonroad_route_planner.util import plot_found_routes, plot_route_environment, plot_navigation
+from commonroad_route_planner.util import plot_found_routes, plot_route_environment, draw_navigator, draw_state
 from commonroad.common.file_reader import CommonRoadFileReader
 from commonroad_route_planner.route_planner import RoutePlanner
 
 
 if __name__ == "__main__":
-    scenario_path = 'example_scenarios/USA_US101-32_1_T-1.xml'
+    scenario_path = 'example_scenarios/USA_Peach-2_1_T-1.xml'
 
     print(f"Loading scenario {scenario_path}")
 
@@ -42,13 +43,13 @@ if __name__ == "__main__":
     states = [planning_problem.initial_state]
 
     distances_until_lane_change = [navigator.get_lane_change_distance(state) for state in states]
-    long_lat_distances = [navigator.get_long_lat_distance_to_goal(state) for state in states]
+    long_lat_distances = [navigator.get_long_lat_distance_to_goal(state.position) for state in states]
     print(f"Distances until lane change: {distances_until_lane_change}")
     print(f"Long-lat distances: {long_lat_distances}")
 
-    plot_navigation(scenario,planning_problem,navigator.ccosy_list)
+    draw_navigator(navigator)
+    plt.show()
 
-    # you can get the envrionment of the found route
-    route_environment = route.get_sectionized_environment()
-
-    # plot_route_environment(scenario, planning_problem, route_environment)
+    # state_to_draw = State(position=np.array([-6.5, 20]), orientation=np.pi / 2)
+    # draw_state(state_to_draw)
+    # plt.show()
