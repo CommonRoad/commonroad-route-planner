@@ -15,7 +15,7 @@ except ImportError:
     import matplotlib.pyplot as plt
 
 from commonroad.visualization.draw_dispatch_cr import draw_object
-from commonroad_route_planner.util import draw_initial_state, plot_found_routes, plot_route_environment, plot_navigation
+from commonroad_route_planner.util import draw_initial_state, plot_found_routes, plot_route_environment, draw_navigator
 
 from HelperFunctions import get_existing_scenarios, load_config_file, get_existing_scenario_ids, \
     load_scenarios, initialize_logger, execute_search, load_pickle_scenarios, get_existing_pickle_scenarios, \
