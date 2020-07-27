@@ -73,7 +73,8 @@ def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
     return np.arctan2(direction_vector[1], direction_vector[0])
 
 
-def sorted_lanelet_ids(lanelet_ids: List[int], orientation: float, position: np.ndarray, scenario: Scenario) -> List[int]:
+def sorted_lanelet_ids(lanelet_ids: List[int], orientation: float, position: np.ndarray, scenario: Scenario)\
+        -> List[int]:
     """
     return the lanelets sorted by relative orientation to the position and orientation given
     """
@@ -115,12 +116,12 @@ def sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int
         if len(goal.state_list) > 1:
             raise ValueError("More than one goal state is not supported yet!")
         goal_state = goal.state_list[0]
-        goal_orientation: float = (goal_state.orientation.start, goal_state.orientation.end)/2
+        goal_orientation: float = (goal_state.orientation.start + goal_state.orientation.end) / 2
         goal_shape: Shape = goal_state.position
         return sorted_lanelet_ids(
             scenario.lanelet_network.find_lanelet_by_shape(goal_shape),
             goal_orientation,
-            goal_shape.shapely_polygon.centroid,
+            np.array(goal_shape.shapely_object.centroid),
             scenario
         )
 
@@ -219,8 +220,8 @@ class Route:
 
         return adjacent_list
 
-    def _get_sectionized_environment_from_route(self, route: List[int], is_opposite_direction_allowed: bool = False) -> \
-            Union[None, List[List[int]]]:
+    def _get_sectionized_environment_from_route(self, route: List[int], is_opposite_direction_allowed: bool = False)\
+            -> Union[None, List[List[int]]]:
         """
         Creates sectionized environment from a given route.
         :param route: The route as a list of lanelet ids
@@ -248,8 +249,9 @@ class Route:
 
     def get_sectionized_environment(self, is_opposite_direction_allowed: bool = False):
         if self._sectionized_environment is None:
-            self._sectionized_environment = self._get_sectionized_environment_from_route(self.route,
-                                                                                         is_opposite_direction_allowed=is_opposite_direction_allowed)
+            self._sectionized_environment = \
+               self._get_sectionized_environment_from_route(self.route,
+                                                            is_opposite_direction_allowed=is_opposite_direction_allowed)
 
         return self._sectionized_environment
 
@@ -308,7 +310,8 @@ class RouteCandidates:
         return None
 
     def __repr__(self):
-        return f"{len(self.route_candidates)} routeCandidates of scenario {self.scenario.benchmark_id}, planning problem {self.planning_problem.planning_problem_id}"
+        return f"{len(self.route_candidates)} routeCandidates of scenario {self.scenario.benchmark_id}, " \
+               f"planning problem {self.planning_problem.planning_problem_id}"
 
     def __str__(self):
         return self.__repr__()
@@ -331,6 +334,7 @@ class Navigator:
         self.route = route
         self.sectionized_environment = self.route.get_sectionized_environment()
         self.sectionized_environment_set = set([item for sublist in self.sectionized_environment for item in sublist])
+        self.merged_route_lanelets = None
         self.ccosy_list = self._get_route_cosy()
         self.num_of_lane_changes = len(self.ccosy_list)
         self.merged_section_length_list = np.array([self._get_length(curvi_cosy) for curvi_cosy in self.ccosy_list])
@@ -344,7 +348,6 @@ class Navigator:
 
     def _initialize_goal(self):
         if self.route.type == RouteType.UNIQUE:
-
             goal_face_coords = self._get_goal_face_points(self._get_goal_polygon(self.planning_problem.goal))
             self.goal_curvi_face_coords = np.array([(self._get_safe_curvilinear_coords(self.ccosy_list[-1], g))[0]
                                                     for g in goal_face_coords])
@@ -354,7 +357,7 @@ class Navigator:
 
     def _get_route_cosy(self) -> Union[pycrccosy.TrapezoidCoordinateSystem, List[Lanelet]]:
         # Merge reference route
-        merged_lanelets = []
+        self.merged_route_lanelets = []
 
         # Append predecessor of the initial to ensure that the goal state is not out of the projection domain
         initial_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[0])
@@ -370,7 +373,7 @@ class Navigator:
             # If the lanelet is the end of a section, then change section
             if next_lanelet_id not in lanelet.successor:
                 if current_merged_lanelet is not None:
-                    merged_lanelets.append(current_merged_lanelet)
+                    self.merged_route_lanelets.append(current_merged_lanelet)
                     current_merged_lanelet = None
             else:
                 if current_merged_lanelet is None:
@@ -391,14 +394,14 @@ class Navigator:
             successor_lanelet = self.lanelet_network.find_lanelet_by_id(successors_of_goal[0])
             current_merged_lanelet = Lanelet.merge_lanelets(current_merged_lanelet, successor_lanelet)
 
-        merged_lanelets.append(current_merged_lanelet)
+        self.merged_route_lanelets.append(current_merged_lanelet)
 
         if self.backend == self.Backend.APPROXIMATE:
             # If ccosy is not installed using temporary method for approximate calculations
-            return merged_lanelets
+            return self.merged_route_lanelets
         else:
             return [self._create_coordinate_system_from_polyline(merged_lanelet.center_vertices)
-                    for merged_lanelet in merged_lanelets]
+                    for merged_lanelet in self.merged_route_lanelets]
 
     @staticmethod
     def _create_coordinate_system_from_polyline(polyline):
@@ -448,7 +451,6 @@ class Navigator:
 
             long_dist = long_dist + np.dot(nearest_segment.tangent, rel_position)
             lat_dist = np.dot(nearest_segment.normal, rel_position)
-
 
         else:
             lanelet = ccosy
@@ -524,8 +526,8 @@ class Navigator:
         :param goal_shape: shape of the goal area
         :return: tuples of x,y coordinates of the middle points of each face of the goal region
         """
-        assert isinstance(goal_shape, Polygon), f"Only single Polygon is supported, but {type(goal_shape)} was given, " \
-                                                f"Use a planning problem with contiguous goal region"
+        assert isinstance(goal_shape, Polygon), f"Only single Polygon is supported, but {type(goal_shape)} was given," \
+                                                f" Use a planning problem with contiguous goal region"
 
         goal_coords = [np.array(x) for x in zip(*goal_shape.exterior.coords.xy)]
 
@@ -581,7 +583,7 @@ class Navigator:
     def get_long_lat_distance_to_goal(self, ego_vehicle_state_position: np.ndarray) -> Tuple[float, float]:
         """
         Get the longitudinal and latitudinal distance from the ego vehicle to the goal.
-        :param ego_vehicle_state: state of the ego vehicle
+        :param ego_vehicle_state_position: position of the ego vehicle
         :return: longitudinal distance, latitudinal distance
         """
         # If the route is survival, then return zero
@@ -590,7 +592,8 @@ class Navigator:
 
         for cosy_idx, curvi_cosy in enumerate(self.ccosy_list):
 
-            ego_curvi_coords, rel_pos_to_domain = self._get_safe_curvilinear_coords(curvi_cosy, ego_vehicle_state_position)
+            ego_curvi_coords, rel_pos_to_domain = self._get_safe_curvilinear_coords(curvi_cosy,
+                                                                                    ego_vehicle_state_position)
 
             is_last_section = (cosy_idx == self.num_of_lane_changes - 1)
             if rel_pos_to_domain == 1 and not is_last_section:
@@ -609,7 +612,7 @@ class Navigator:
                     min_distance_long += self.merged_section_length_list[current_section_idx]
                     current_section_idx += 1
 
-                relative_lat_distances = self.goal_curvi_face_coords[:,1] - ego_curvi_coords[1]
+                relative_lat_distances = self.goal_curvi_face_coords[:, 1] - ego_curvi_coords[1]
                 min_distance = np.min(relative_lat_distances, axis=0)
                 max_distance = np.max(relative_lat_distances, axis=0)
 
@@ -846,8 +849,8 @@ class RoutePlanner:
         if hasattr(self.planning_problem.initial_state, 'position'):
             start_position = self.planning_problem.initial_state.position
             # noinspection PyTypeChecker
-            all_startLanelet_ids = self.lanelet_network.find_lanelet_by_position([start_position])[0]
-            self.startLanelet_ids = list(self._filter_allowed_lanelet_ids(all_startLanelet_ids))
+            all_start_lanelet_ids = self.lanelet_network.find_lanelet_by_position([start_position])[0]
+            self.startLanelet_ids = list(self._filter_allowed_lanelet_ids(all_start_lanelet_ids))
             if len(self.startLanelet_ids) > 1:
                 self.logger.info("More start lanelet ids - some of it can results in an unsuccessful search")
         else:
