@@ -580,7 +580,57 @@ class Navigator:
         merged_polygon = merge_polygons(polygons)
         return merged_polygon
 
+    def get_state_curvi_coords(self, ego_vehicle_state_position: np.ndarray):
+        for cosy_idx, curvi_cosy in enumerate(self.ccosy_list):
+
+            ego_curvi_coords, rel_pos_to_domain = self._get_safe_curvilinear_coords(curvi_cosy,
+                                                                                    ego_vehicle_state_position)
+
+            is_last_section = (cosy_idx == self.num_of_lane_changes - 1)
+            if rel_pos_to_domain == 1 and not is_last_section:
+                continue
+
+            return ego_curvi_coords, cosy_idx
+
+        raise ValueError("Unable to project the ego vehicle on the global cosy")
+
     def get_long_lat_distance_to_goal(self, ego_vehicle_state_position: np.ndarray) -> Tuple[float, float]:
+        """
+        Get the longitudinal and latitudinal distance from the ego vehicle to the goal.
+        :param ego_vehicle_state_position: position of the ego vehicle
+        :return: longitudinal distance, latitudinal distance
+        """
+        # If the route is survival, then return zero
+        if self.route.type == RouteType.SURVIVAL:
+            return 0.0, 0.0
+
+        ego_curvi_coords, cosy_idx = self.get_state_curvi_coords(ego_vehicle_state_position)
+
+        is_last_section = (cosy_idx == self.num_of_lane_changes - 1)
+
+        if is_last_section:
+            relative_distances = self.goal_curvi_face_coords - ego_curvi_coords
+            min_distance = np.min(relative_distances, axis=0)
+            max_distance = np.max(relative_distances, axis=0)
+
+            (min_distance_long, min_distance_lat) = np.maximum(np.minimum(0.0, max_distance), min_distance)
+        else:
+            min_distance_long = self.merged_section_length_list[cosy_idx] - ego_curvi_coords[0]
+            current_section_idx = cosy_idx + 1
+            while current_section_idx != self.num_of_lane_changes - 1:
+                min_distance_long += self.merged_section_length_list[current_section_idx]
+                current_section_idx += 1
+
+            relative_lat_distances = self.goal_curvi_face_coords[:, 1] - ego_curvi_coords[1]
+            min_distance = np.min(relative_lat_distances, axis=0)
+            max_distance = np.max(relative_lat_distances, axis=0)
+
+            min_distance_long += self.goal_min_curvi_coords[0]
+            min_distance_lat = np.maximum(np.minimum(0.0, max_distance), min_distance)
+
+        return min_distance_long, min_distance_lat
+
+    def get_long_lat_distance_to_goal_center(self, ego_vehicle_state_position: np.ndarray) -> Tuple[float, float]:
         """
         Get the longitudinal and latitudinal distance from the ego vehicle to the goal.
         :param ego_vehicle_state_position: position of the ego vehicle
