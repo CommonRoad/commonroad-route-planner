@@ -1,10 +1,13 @@
 import errno
 import os
+import sys
 import time
 
 import matplotlib as mpl
 from commonroad.visualization.plot_helper import set_non_blocking
 
+commonroad_route_planner_root = "./"
+sys.path.append(os.path.join(commonroad_route_planner_root))
 from commonroad_route_planner.route_planner import RoutePlanner
 
 try:
