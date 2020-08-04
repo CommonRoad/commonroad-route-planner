@@ -9,4 +9,4 @@ commonroad_route_planner.egg-info/
 
 dist/
 
-solutions/
+solutions/logs

@@ -1,3 +1,12 @@
+__author__ = "Daniel Tar, Peter Kocsis"
+__copyright__ = ""
+__credits__ = [""]
+__version__ = "~0.8.0"
+__maintainer__ = "Daniel Tar"
+__email__ = "daniel.tar@tum.de, peter.kocsis@tum.de"
+__status__ = "Under Development"
+
+
 import logging
 import os
 import sys
@@ -54,7 +63,7 @@ def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
     # TODO optimize more for speed
 
     :param lanelet: Lanelet on which the orientation at the given state should be calculated
-    :param state: State where the lanelet's orientation should be calculated
+    :param position: Position where the lanelet's orientation should be calculated
     :return: An orientation in interval [-pi,pi]
     """
 
@@ -118,6 +127,9 @@ def sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int
         goal_state = goal.state_list[0]
         goal_orientation: float = (goal_state.orientation.start + goal_state.orientation.end) / 2
         goal_shape: Shape = goal_state.position
+        # the goal shape has always a shapley object -> because it is a rectangle
+        # every shape has a shapely_object but ShapeGroup
+        # noinspection PyUnresolvedReferences
         return sorted_lanelet_ids(
             scenario.lanelet_network.find_lanelet_by_shape(goal_shape),
             goal_orientation,
@@ -580,7 +592,7 @@ class Navigator:
         merged_polygon = merge_polygons(polygons)
         return merged_polygon
 
-    def get_state_curvi_coords(self, ego_vehicle_state_position: np.ndarray):
+    def get_position_curvi_coords(self, ego_vehicle_state_position: np.ndarray):
         for cosy_idx, curvi_cosy in enumerate(self.ccosy_list):
 
             ego_curvi_coords, rel_pos_to_domain = self._get_safe_curvilinear_coords(curvi_cosy,
@@ -604,7 +616,7 @@ class Navigator:
         if self.route.type == RouteType.SURVIVAL:
             return 0.0, 0.0
 
-        ego_curvi_coords, cosy_idx = self.get_state_curvi_coords(ego_vehicle_state_position)
+        ego_curvi_coords, cosy_idx = self.get_position_curvi_coords(ego_vehicle_state_position)
 
         is_last_section = (cosy_idx == self.num_of_lane_changes - 1)
 
@@ -898,6 +910,7 @@ class RoutePlanner:
         # Removing duplicates and reset to none if no lanelet IDs found
         if len(self.goal_lanelet_ids) != 0:
             # remove duplicates and sort in ascending order
+            # noinspection PyTypeChecker
             self.goal_lanelet_ids = sorted(list(dict.fromkeys(self.goal_lanelet_ids)))
         else:
             self.goal_lanelet_ids = None
