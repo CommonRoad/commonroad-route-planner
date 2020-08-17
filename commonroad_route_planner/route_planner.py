@@ -443,26 +443,42 @@ class Navigator:
     def _project_out_of_domain(self, ccosy, position: np.ndarray):
         if self.backend == self.Backend.PYCRCCOSY:
 
-            segment_list = ccosy.get_segment_list()
-            bounding_segments = [segment_list[0], segment_list[-1]]
-
-            rel_positions = position - np.array([segment.pt_1 for segment in bounding_segments])
+            bounding_points = np.array([ccosy_convert_to cartesian(0,0), ccosy_convert_to cartesian(ccosy_length,0)])
+            rel_positions = position - np.array([bounding_point for bounding_point in bounding_points])
             distances = np.linalg.norm(rel_positions, axis=1)
 
             if distances[0] < distances[1]:
+                # Nearer to the first bounding point
                 rel_pos_to_domain = -1
-                nearest_idx = 0
-                long_dist = 0
+                long_dist = np.dot(ccosy_tangent(0), rel_position)
+                lat_dist = np.dot(ccosy_normal(0), rel_position)
             else:
+                # Nearer to the last bounding point
                 rel_pos_to_domain = 1
-                nearest_idx = 1
-                long_dist = ccosy.get_length()
+                long_dist = ccosy_length + np.dot(ccosy_tangent(ccosy_length), rel_position)
+                lat_dist = np.dot(ccosy_normal(ccosy_length), rel_position)
 
-            nearest_segment = bounding_segments[nearest_idx]
-            rel_position = rel_positions[nearest_idx]
 
-            long_dist = long_dist + np.dot(nearest_segment.tangent, rel_position)
-            lat_dist = np.dot(nearest_segment.normal, rel_position)
+            # segment_list = ccosy.get_segment_list()
+            # bounding_segments = [segment_list[0], segment_list[-1]]
+            #
+            # rel_positions = position - np.array([segment.pt_1 for segment in bounding_segments])
+            # distances = np.linalg.norm(rel_positions, axis=1)
+            #
+            # if distances[0] < distances[1]:
+            #     rel_pos_to_domain = -1
+            #     nearest_idx = 0
+            #     long_dist = 0
+            # else:
+            #     rel_pos_to_domain = 1
+            #     nearest_idx = 1
+            #     long_dist = ccosy.get_length()
+            #
+            # nearest_segment = bounding_segments[nearest_idx]
+            # rel_position = rel_positions[nearest_idx]
+            #
+            # long_dist = long_dist + np.dot(nearest_segment.tangent, rel_position)
+            # lat_dist = np.dot(nearest_segment.normal, rel_position)
 
         else:
             lanelet = ccosy
