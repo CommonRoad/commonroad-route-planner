@@ -16,7 +16,7 @@ from typing import List, Union, Generator, Set, Tuple
 
 import networkx as nx
 import numpy as np
-from commonroad.geometry.shape import Shape
+from commonroad.geometry.shape import Shape, Rectangle
 from commonroad.planning.goal import GoalRegion
 from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import Lanelet, LaneletType
@@ -124,8 +124,18 @@ def sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int
         if len(goal.state_list) > 1:
             raise ValueError("More than one goal state is not supported yet!")
         goal_state = goal.state_list[0]
-        goal_orientation: float = (goal_state.orientation.start + goal_state.orientation.end) / 2
-        goal_shape: Shape = goal_state.position
+
+        if hasattr(goal_state, "orientation"):
+            goal_orientation: float = (goal_state.orientation.start + goal_state.orientation.end) / 2
+        else:
+            goal_orientation = 0.0
+            warnings.warn("The goal state has no <orientation> attribute! It is set to 0.0")
+
+        if hasattr(goal_state, "position"):
+            goal_shape: Shape = goal_state.position
+        else:
+            goal_shape: Shape = Rectangle(length=0.01, width=0.01)
+
         # the goal shape has always a shapley object -> because it is a rectangle
         # every shape has a shapely_object but ShapeGroup
         # noinspection PyUnresolvedReferences
@@ -290,7 +300,9 @@ class RouteCandidates:
 
     def get_most_likely_route_by_orientation(self) -> Union[Route, None]:
         # handling the survival scenarios and where only one path found
-        if len(self.route_candidates) == 1:
+        # if there are more survival route in a scenario (ambiguity in getting the lanelet by position)
+        # then return the first one (with index 0)
+        if len(self.route_candidates) == 1 or self.route_type == RouteType.SURVIVAL:
             return Route(self.scenario, self.planning_problem, self.route_candidates[0], self.route_type,
                          self.allowed_lanelet_ids)
 
