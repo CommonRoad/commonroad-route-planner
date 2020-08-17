@@ -6,7 +6,6 @@ __maintainer__ = "Daniel Tar"
 __email__ = "daniel.tar@tum.de, peter.kocsis@tum.de"
 __status__ = "Under Development"
 
-
 import logging
 import os
 import sys
@@ -37,9 +36,9 @@ except ModuleNotFoundError as exp:
 
 
 class _LaneletNode:
-    def __init__(self, laneletID: int, lanelet: Lanelet, cost: float, current_length: int):
+    def __init__(self, lanelet_id: int, lanelet: Lanelet, cost: float, current_length: int):
         # it must be id because of the implementation of the priority queue
-        self.id = laneletID
+        self.id = lanelet_id
         self.lanelet = lanelet
         self.parent_node = None
         self.cost = cost
@@ -82,7 +81,7 @@ def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
     return np.arctan2(direction_vector[1], direction_vector[0])
 
 
-def sorted_lanelet_ids(lanelet_ids: List[int], orientation: float, position: np.ndarray, scenario: Scenario)\
+def sorted_lanelet_ids(lanelet_ids: List[int], orientation: float, position: np.ndarray, scenario: Scenario) \
         -> List[int]:
     """
     return the lanelets sorted by relative orientation to the position and orientation given
@@ -232,7 +231,7 @@ class Route:
 
         return adjacent_list
 
-    def _get_sectionized_environment_from_route(self, route: List[int], is_opposite_direction_allowed: bool = False)\
+    def _get_sectionized_environment_from_route(self, route: List[int], is_opposite_direction_allowed: bool = False) \
             -> Union[None, List[List[int]]]:
         """
         Creates sectionized environment from a given route.
@@ -262,8 +261,8 @@ class Route:
     def get_sectionized_environment(self, is_opposite_direction_allowed: bool = False):
         if self._sectionized_environment is None:
             self._sectionized_environment = \
-               self._get_sectionized_environment_from_route(self.route,
-                                                            is_opposite_direction_allowed=is_opposite_direction_allowed)
+                self._get_sectionized_environment_from_route(self.route,
+                                                             is_opposite_direction_allowed=is_opposite_direction_allowed)
 
         return self._sectionized_environment
 
@@ -367,7 +366,7 @@ class Navigator:
             self.goal_min_curvi_coords = np.min(self.goal_curvi_face_coords, axis=0)
             self.goal_max_curvi_coord = np.max(self.goal_curvi_face_coords, axis=0)
 
-    def _get_route_cosy(self) -> Union[pycrccosy.TrapezoidCoordinateSystem, List[Lanelet]]:
+    def _get_route_cosy(self) -> Union[pycrccosy.CurvilinearCoordinateSystem, List[Lanelet]]:
         # Merge reference route
         self.merged_route_lanelets = []
 
@@ -424,11 +423,11 @@ class Navigator:
             # make sure that the original vertices are all contained
             if not np.all(np.isclose(polyline[-1], last_point)):
                 polyline = np.append(polyline, [last_point], axis=0)
-        return pycrccosy.TrapezoidCoordinateSystem(polyline)
+        return pycrccosy.CurvilinearCoordinateSystem(polyline)
 
     def _get_length(self, ccosy):
         if self.backend == self.Backend.PYCRCCOSY:
-            return ccosy.get_length()
+            return ccosy.length()
         else:
             lanelet = ccosy
             return lanelet.distance[-1]
@@ -440,24 +439,37 @@ class Navigator:
         except ValueError:
             return self._project_out_of_domain(ccosy, position)
 
-    def _project_out_of_domain(self, ccosy, position: np.ndarray):
+    def _project_out_of_domain(self, ccosy: pycrccosy.CurvilinearCoordinateSystem, position: np.ndarray):
         if self.backend == self.Backend.PYCRCCOSY:
+            eps = 0.00000001
+            ccosy_length = ccosy.length()
+            curvi_coords_of_projection_domain = np.array(ccosy.curvilinear_projection_domain())
 
-            bounding_points = np.array([ccosy_convert_to cartesian(0,0), ccosy_convert_to cartesian(ccosy_length,0)])
+            tmp_points = np.array(ccosy.projection_domain())
+            import matplotlib.pyplot as plt
+            plt.plot(tmp_points[:, 0], tmp_points[:, 1], "b-", linewidth=3, zorder=35)
+            plt.plot(curvi_coords_of_projection_domain[:, 0], curvi_coords_of_projection_domain[:, 1], "g-",
+                     linewidth=3, zorder=36)
+
+            longitudinal_min, normal_min = np.min(curvi_coords_of_projection_domain, axis=0) + eps
+            longitudinal_max, normal_max = np.max(curvi_coords_of_projection_domain, axis=0) - eps
+            normal_center = (normal_min + normal_max) / 2
+            bounding_points = np.array(
+                [ccosy.convert_to_cartesian_coords(longitudinal_min, normal_center),
+                 ccosy.convert_to_cartesian_coords(longitudinal_max, normal_center)])
             rel_positions = position - np.array([bounding_point for bounding_point in bounding_points])
             distances = np.linalg.norm(rel_positions, axis=1)
 
             if distances[0] < distances[1]:
                 # Nearer to the first bounding point
                 rel_pos_to_domain = -1
-                long_dist = np.dot(ccosy_tangent(0), rel_position)
-                lat_dist = np.dot(ccosy_normal(0), rel_position)
+                long_dist = np.dot(ccosy.tangent(longitudinal_min), rel_positions[0])
+                lat_dist = np.dot(ccosy.normal(longitudinal_min), rel_positions[0])
             else:
                 # Nearer to the last bounding point
                 rel_pos_to_domain = 1
-                long_dist = ccosy_length + np.dot(ccosy_tangent(ccosy_length), rel_position)
-                lat_dist = np.dot(ccosy_normal(ccosy_length), rel_position)
-
+                long_dist = ccosy_length + np.dot(ccosy.tangent(longitudinal_max), rel_positions[1])
+                lat_dist = np.dot(ccosy.normal(longitudinal_max), rel_positions[1])
 
             # segment_list = ccosy.get_segment_list()
             # bounding_segments = [segment_list[0], segment_list[-1]]
