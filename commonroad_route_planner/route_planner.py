@@ -302,7 +302,12 @@ class RouteCandidates:
         # handling the survival scenarios and where only one path found
         # if there are more survival route in a scenario (ambiguity in getting the lanelet by position)
         # then return the first one (with index 0)
-        if len(self.route_candidates) == 1 or self.route_type == RouteType.SURVIVAL:
+        if self.route_type == RouteType.SURVIVAL:
+            if len(self.route_candidates) > 1:
+                warnings.warn(
+                    "There are MULTIPLE survival route, but we are returning the 1st one (with index 0) from the "
+                    "route candidates")
+
             return Route(self.scenario, self.planning_problem, self.route_candidates[0], self.route_type,
                          self.allowed_lanelet_ids)
 
