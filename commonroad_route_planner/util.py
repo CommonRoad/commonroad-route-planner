@@ -1,8 +1,9 @@
 import warnings
-from typing import List
+from typing import List, Union
 
 import matplotlib as mpl
 import numpy as np
+from commonroad.scenario.lanelet import Lanelet
 
 from commonroad_route_planner.route_planner import Navigator
 
@@ -24,7 +25,7 @@ try:
     import pycrccosy
     import commonroad_ccosy.visualization.draw_dispatch
 except ModuleNotFoundError as exp:
-    warnings.warn(f"Xou won't be able to draw the navigation, {exp}")
+    warnings.warn(f"You won't be able to draw the navigation, {exp}")
 
 
 def draw_state(state: State, fig_num=None, color='red'):
