@@ -179,7 +179,7 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
 
             # draw ego vehicle - with a collision object - uses commonroad_cc.visualizer
             try:
-                draw_state(planning_problem)
+                draw_state(planning_problem.initial_state)
             except AssertionError as error:
                 print(error)
 
@@ -189,18 +189,18 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
                     'center_bound_color': '#3232ff',  # color of the found route
                     'draw_stop_line': False,
                     'stop_line_color': '#ff0000',
-                        'draw_line_markings': True,
-                        'draw_left_bound': False,
-                        'draw_right_bound': False,
-                        'draw_center_bound': True,
-                        'draw_border_vertices': False,
-                        'draw_start_and_direction': True,
-                        'show_label': False,
-                        'draw_linewidth': 2,
-                        'fill_lanelet': False,
-                        'facecolor': '#c7c7c7',
-                        'zorder': 30  # put it higher in the plot, to make it visible
-                    }})
+                    'draw_line_markings': True,
+                    'draw_left_bound': False,
+                    'draw_right_bound': False,
+                    'draw_center_bound': True,
+                    'draw_border_vertices': False,
+                    'draw_start_and_direction': True,
+                    'show_label': False,
+                    'draw_linewidth': 2,
+                    'fill_lanelet': False,
+                    'facecolor': '#c7c7c7',
+                    'zorder': 30  # put it higher in the plot, to make it visible
+                }})
 
                 # TODO: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
                 plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b", zorder=30, scalex=False,

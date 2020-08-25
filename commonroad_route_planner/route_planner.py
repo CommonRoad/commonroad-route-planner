@@ -441,7 +441,7 @@ class Navigator:
 
     def _project_out_of_domain(self, ccosy: pycrccosy.CurvilinearCoordinateSystem, position: np.ndarray):
         if self.backend == self.Backend.PYCRCCOSY:
-            eps = 0.00000001
+            eps = 0.0001
             ccosy_length = ccosy.length()
             curvi_coords_of_projection_domain = np.array(ccosy.curvilinear_projection_domain())
 
