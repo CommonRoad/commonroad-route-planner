@@ -22,6 +22,7 @@ from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import Lanelet, LaneletType
 from commonroad.scenario.scenario import Scenario
 from commonroad.scenario.trajectory import State
+from commonroad.visualization.draw_dispatch_cr import draw_object
 
 from commonroad_route_planner.priority_queue import PriorityQueue
 
@@ -272,7 +273,8 @@ class Route:
         if self._sectionized_environment is None:
             self._sectionized_environment = \
                 self._get_sectionized_environment_from_route(self.route,
-                                                             is_opposite_direction_allowed=is_opposite_direction_allowed)
+                                                             is_opposite_direction_allowed=
+                                                             is_opposite_direction_allowed)
 
         return self._sectionized_environment
 
@@ -345,6 +347,7 @@ class RouteCandidates:
         return self.__repr__()
 
 
+# noinspection PyUnresolvedReferences
 class Navigator:
     class Backend(Enum):
         PYCRCCOSY = 'pycrccosy'
@@ -388,13 +391,14 @@ class Navigator:
         self.merged_route_lanelets = []
 
         # Append predecessor of the initial to ensure that the goal state is not out of the projection domain
-        initial_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[0])
-        predecessors_lanelet = initial_lanelet.predecessor
-        if predecessors_lanelet is not None and len(predecessors_lanelet) != 0:
-            predecessor_lanelet = self.lanelet_network.find_lanelet_by_id(predecessors_lanelet[0])
-            current_merged_lanelet = predecessor_lanelet
-        else:
-            current_merged_lanelet = None
+        # initial_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[0])
+        # predecessors_lanelet = initial_lanelet.predecessor
+        # if predecessors_lanelet is not None and len(predecessors_lanelet) != 0:
+        #     predecessor_lanelet = self.lanelet_network.find_lanelet_by_id(predecessors_lanelet[0])
+        #     current_merged_lanelet = predecessor_lanelet
+        # else:
+        #     current_merged_lanelet = None
+        current_merged_lanelet = None
 
         for current_lanelet_id, next_lanelet_id in zip(self.route.route[:-1], self.route.route[1:]):
             lanelet = self.lanelet_network.find_lanelet_by_id(current_lanelet_id)
@@ -416,13 +420,45 @@ class Navigator:
             current_merged_lanelet = goal_lanelet
 
         # Append successor of the goal to ensure that the goal state is not out of the projection domain
-        goal_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[-1])
-        successors_of_goal = goal_lanelet.successor
-        if successors_of_goal is not None and len(successors_of_goal) != 0:
-            successor_lanelet = self.lanelet_network.find_lanelet_by_id(successors_of_goal[0])
-            current_merged_lanelet = Lanelet.merge_lanelets(current_merged_lanelet, successor_lanelet)
+        # goal_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[-1])
+        # successors_of_goal = goal_lanelet.successor
+        # if successors_of_goal is not None and len(successors_of_goal) != 0:
+        #     successor_lanelet = self.lanelet_network.find_lanelet_by_id(successors_of_goal[0])
+        #     current_merged_lanelet = Lanelet.merge_lanelets(current_merged_lanelet, successor_lanelet)
 
         self.merged_route_lanelets.append(current_merged_lanelet)
+
+        # TODO remove
+
+        import matplotlib.pyplot as plt
+        plt.clf()
+        draw_object(self.scenario)
+        draw_object(self.planning_problem)
+        plt.gca().autoscale()
+        plt.gca().axis('equal')
+
+        draw_object(self.merged_route_lanelets, draw_params={'lanelet': {
+            # 'left_bound_color': '#0de309',
+            # 'right_bound_color': '#0de309',
+            # 'center_bound_color': '#0de309',
+            'unique_colors': False,  # colorizes center_vertices and labels of each lanelet differently
+            'draw_stop_line': True,
+            'stop_line_color': '#ffffff',
+            'draw_line_markings': True,
+            'draw_left_bound': True,
+            'draw_right_bound': True,
+            'draw_center_bound': False,
+            'draw_border_vertices': False,
+            'draw_start_and_direction': True,
+            'show_label': False,
+            'draw_linewidth': 0.5,
+            'fill_lanelet': True,
+            'facecolor': '#128c01'
+        }})
+
+        # plt.plot(tmp_points[:, 0], tmp_points[:, 1], "b-", linewidth=3, zorder=35)
+        # plt.plot(curvi_coords_of_projection_domain[:, 0], curvi_coords_of_projection_domain[:, 1], "g-",
+        #          linewidth=3, zorder=36)
 
         if self.backend == self.Backend.APPROXIMATE:
             # If ccosy is not installed using temporary method for approximate calculations
@@ -432,7 +468,7 @@ class Navigator:
                     for merged_lanelet in self.merged_route_lanelets]
 
     @staticmethod
-    def _create_coordinate_system_from_polyline(polyline):
+    def _create_coordinate_system_from_polyline(polyline) -> pycrccosy.CurvilinearCoordinateSystem:
         if len(polyline) <= 4:
             last_point = polyline[-1]
             length = np.linalg.norm(polyline[-1] - polyline[0])
@@ -449,14 +485,25 @@ class Navigator:
             lanelet = ccosy
             return lanelet.distance[-1]
 
-    def _get_safe_curvilinear_coords(self, ccosy, position: np.ndarray):
+    def _get_safe_curvilinear_coords(self, ccosy, position: np.ndarray) -> Tuple[np.ndarray, int]:
+        import matplotlib.pyplot as plt
+        plt.plot(position[0], position[1], "o", markersize=4, zorder=35)
+
         try:
             rel_pos_to_domain = 0
-            return self._get_curvilinear_coords(ccosy, position), rel_pos_to_domain
+            long_lat_distance = self._get_curvilinear_coords(ccosy, position)
         except ValueError:
-            return self._project_out_of_domain(ccosy, position)
+            long_lat_distance, rel_pos_to_domain = self._project_out_of_domain(ccosy, position)
 
-    def _project_out_of_domain(self, ccosy: pycrccosy.CurvilinearCoordinateSystem, position: np.ndarray):
+        plt.annotate("Long: {:.3f}, Lat: {:.3f}".format(long_lat_distance[0], long_lat_distance[1]),  # this is the text
+                     position,  # this is the point to label
+                     textcoords="offset points",  # how to position the text
+                     xytext=(10, 15),  # distance from text to points (x,y)
+                     ha='left', zorder=40)
+
+        return np.array(long_lat_distance), rel_pos_to_domain
+
+    def _project_out_of_domain(self, ccosy, position: np.ndarray) -> Tuple[np.ndarray, int]:
         if self.backend == self.Backend.PYCRCCOSY:
             eps = 0.0001
             ccosy_length = ccosy.length()
@@ -464,9 +511,9 @@ class Navigator:
 
             tmp_points = np.array(ccosy.projection_domain())
             import matplotlib.pyplot as plt
-            plt.plot(tmp_points[:, 0], tmp_points[:, 1], "b-", linewidth=3, zorder=35)
-            plt.plot(curvi_coords_of_projection_domain[:, 0], curvi_coords_of_projection_domain[:, 1], "g-",
-                     linewidth=3, zorder=36)
+            plt.plot(tmp_points[:, 0], tmp_points[:, 1], "-", linewidth=3, zorder=35)
+            # plt.plot(curvi_coords_of_projection_domain[:, 0], curvi_coords_of_projection_domain[:, 1], "g-",
+            #          linewidth=3, zorder=36)
 
             longitudinal_min, normal_min = np.min(curvi_coords_of_projection_domain, axis=0) + eps
             longitudinal_max, normal_max = np.max(curvi_coords_of_projection_domain, axis=0) - eps
@@ -480,13 +527,13 @@ class Navigator:
             if distances[0] < distances[1]:
                 # Nearer to the first bounding point
                 rel_pos_to_domain = -1
-                long_dist = np.dot(ccosy.tangent(longitudinal_min), rel_positions[0])
-                lat_dist = np.dot(ccosy.normal(longitudinal_min), rel_positions[0])
+                long_dist = longitudinal_min + np.dot(ccosy.tangent(longitudinal_min), rel_positions[0])
+                lat_dist = normal_center + np.dot(ccosy.normal(longitudinal_min), rel_positions[0])
             else:
                 # Nearer to the last bounding point
                 rel_pos_to_domain = 1
-                long_dist = ccosy_length + np.dot(ccosy.tangent(longitudinal_max), rel_positions[1])
-                lat_dist = np.dot(ccosy.normal(longitudinal_max), rel_positions[1])
+                long_dist = longitudinal_max + np.dot(ccosy.tangent(longitudinal_max), rel_positions[1])
+                lat_dist = normal_center + np.dot(ccosy.normal(longitudinal_max), rel_positions[1])
 
             # segment_list = ccosy.get_segment_list()
             # bounding_segments = [segment_list[0], segment_list[-1]]
@@ -536,7 +583,7 @@ class Navigator:
 
         return np.array([long_dist, lat_dist]), rel_pos_to_domain
 
-    def _get_curvilinear_coords(self, ccosy, position: np.ndarray):
+    def _get_curvilinear_coords(self, ccosy, position: np.ndarray) -> np.ndarray:
         if self.backend == self.Backend.PYCRCCOSY:
             return ccosy.convert_to_curvilinear_coords(position[0], position[1])
         else:
@@ -563,7 +610,7 @@ class Navigator:
 
             long_distance = lanelet.distance[closest_vertex_index]
             lat_distance = relative_lanelet_side * position_diffs[closest_vertex_index]
-            return long_distance, lat_distance
+            return np.array([long_distance, lat_distance])
 
     def _get_curvilinear_coords_over_lanelet(self, lanelet: Lanelet, position):
         if self.backend == self.Backend.PYCRCCOSY:
