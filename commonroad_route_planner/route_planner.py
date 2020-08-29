@@ -367,6 +367,13 @@ class Navigator:
         self.sectionized_environment_set = set([item for sublist in self.sectionized_environment for item in sublist])
         self.merged_route_lanelets = None
         self.ccosy_list = self._get_route_cosy()
+
+        import matplotlib.pyplot as plt
+        plt.suptitle(self.scenario.benchmark_id, fontsize=20)
+        for projection_domain in [ccosy.projection_domain() for ccosy in self.ccosy_list]:
+            projection_domain = np.array(projection_domain)
+            plt.plot(projection_domain[:, 0], projection_domain[:, 1], 'r-', zorder=35)
+
         self.num_of_lane_changes = len(self.ccosy_list)
         self.merged_section_length_list = np.array([self._get_length(curvi_cosy) for curvi_cosy in self.ccosy_list])
 
@@ -437,24 +444,11 @@ class Navigator:
         plt.gca().autoscale()
         plt.gca().axis('equal')
 
-        draw_object(self.merged_route_lanelets, draw_params={'lanelet': {
-            # 'left_bound_color': '#0de309',
-            # 'right_bound_color': '#0de309',
-            # 'center_bound_color': '#0de309',
-            'unique_colors': False,  # colorizes center_vertices and labels of each lanelet differently
-            'draw_stop_line': True,
-            'stop_line_color': '#ffffff',
-            'draw_line_markings': True,
-            'draw_left_bound': True,
-            'draw_right_bound': True,
-            'draw_center_bound': False,
-            'draw_border_vertices': False,
-            'draw_start_and_direction': True,
-            'show_label': False,
-            'draw_linewidth': 0.5,
-            'fill_lanelet': True,
-            'facecolor': '#128c01'
-        }})
+        print(self.merged_route_lanelets)
+
+        for lanelet in self.merged_route_lanelets:
+            plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b-", zorder=40,
+                     scalex=False, scaley=False)
 
         # plt.plot(tmp_points[:, 0], tmp_points[:, 1], "b-", linewidth=3, zorder=35)
         # plt.plot(curvi_coords_of_projection_domain[:, 0], curvi_coords_of_projection_domain[:, 1], "g-",
@@ -495,11 +489,11 @@ class Navigator:
         except ValueError:
             long_lat_distance, rel_pos_to_domain = self._project_out_of_domain(ccosy, position)
 
-        plt.annotate("Long: {:.3f}, Lat: {:.3f}".format(long_lat_distance[0], long_lat_distance[1]),  # this is the text
-                     position,  # this is the point to label
-                     textcoords="offset points",  # how to position the text
-                     xytext=(10, 15),  # distance from text to points (x,y)
-                     ha='left', zorder=40)
+        # plt.annotate("Long: {:.3f}, Lat: {:.3f}".format(long_lat_distance[0], long_lat_distance[1]),  # this is the text
+        #              position,  # this is the point to label
+        #              textcoords="offset points",  # how to position the text
+        #              xytext=(10, 15),  # distance from text to points (x,y)
+        #              ha='left', zorder=40)
 
         return np.array(long_lat_distance), rel_pos_to_domain
 
@@ -509,9 +503,9 @@ class Navigator:
             ccosy_length = ccosy.length()
             curvi_coords_of_projection_domain = np.array(ccosy.curvilinear_projection_domain())
 
-            tmp_points = np.array(ccosy.projection_domain())
-            import matplotlib.pyplot as plt
-            plt.plot(tmp_points[:, 0], tmp_points[:, 1], "-", linewidth=3, zorder=35)
+            # tmp_points = np.array(ccosy.projection_domain())
+            # import matplotlib.pyplot as plt
+            # plt.plot(tmp_points[:, 0], tmp_points[:, 1], "b-", zorder=35)
             # plt.plot(curvi_coords_of_projection_domain[:, 0], curvi_coords_of_projection_domain[:, 1], "g-",
             #          linewidth=3, zorder=36)
 
