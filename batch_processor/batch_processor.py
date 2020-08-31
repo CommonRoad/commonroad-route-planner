@@ -2,8 +2,10 @@ import errno
 import os
 import sys
 import time
+import numpy as np
 
 import matplotlib as mpl
+from commonroad.scenario.trajectory import State
 from commonroad.visualization.plot_helper import set_non_blocking
 
 commonroad_route_planner_root = "./"
@@ -128,14 +130,8 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
 
         # Navigator
         navigator = route_obj.get_navigator()
-        # projection_domain = np.array([ccosy.projection_domain() for ccosy in navigator.ccosy_list][0])
-        # plt.plot(projection_domain[:, 0], projection_domain[:, 1], '-b', zorder=35)
-        # plt.autoscale()
-        # plt.axis('equal')
-        # plt.show()
 
-        # states = [planning_problem.initial_state]
-
+        # Test States
         states = [State(position=np.array([12, 26]), orientation=np.pi),
                   State(position=np.array([20, 19]), orientation=np.pi),
                   State(position=np.array([-7.6, 57]), orientation=np.pi / 2),
@@ -147,7 +143,6 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
         # print(f"Distances until lane change: {distances_until_lane_change}")
         # print(f"Long-lat distances: {long_lat_distances}")
 
-        # plot_navigation(scenario, planning_problem, navigator.ccosy_list)
         # draw_navigator(navigator)
     except IndexError as error:
         search_time = time.perf_counter() - time1
@@ -174,68 +169,47 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
         logger.debug(msg + "\tpath FOUND to goal lanelet: [{}]".format(goal_lanelet_id))
         scenarios_path_found.append(scenario_id)
         if plot_and_save_scenarios:
-            # fig = plt.figure(num=0, figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
-            # fig.clf()
-            # fig.suptitle(scenario.benchmark_id, fontsize=20)
-            # fig.gca().axis('equal')
-            # handles = {}  # collects handles of obstacle patches, plotted by matplotlib
-            # plot_limits = get_plot_limits(route_obj.route, scenario, border=15)
-            #
-            # # plot the lanelet network and the planning problem
-            # draw_object(scenario, handles=handles, plot_limits=plot_limits,
-            #             draw_params={'lanelet': {'show_label': False}})
-            # draw_object(planning_problem, handles=handles, plot_limits=plot_limits)
-            # fig.gca().autoscale()
-            #
-            # # draw ego vehicle - with a collision object - uses commonroad_cc.visualizer
-            # try:
-            #     draw_state(planning_problem.initial_state)
-            # except AssertionError as error:
-            #     print(error)
-            #
-            # for route_lanelet_id in route_obj.route:
-            #     lanelet = scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
-            #     draw_object(lanelet, handles=handles, plot_limits=plot_limits, draw_params={'lanelet': {
-            #         'center_bound_color': '#3232ff',  # color of the found route
-            #         'draw_stop_line': False,
-            #         'stop_line_color': '#ff0000',
-            #         'draw_line_markings': True,
-            #         'draw_left_bound': False,
-            #         'draw_right_bound': False,
-            #         'draw_center_bound': True,
-            #         'draw_border_vertices': False,
-            #         'draw_start_and_direction': True,
-            #         'show_label': False,
-            #         'draw_linewidth': 2,
-            #         'fill_lanelet': False,
-            #         'facecolor': '#c7c7c7',
-            #         'zorder': 30  # put it higher in the plot, to make it visible
-            #     }})
-            #
-            #     # TODO: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
-            #     plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b", zorder=30, scalex=False,
-            #              scaley=False)
+            fig = plt.figure(num=0, figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
+            fig.clf()
+            fig.suptitle(scenario.benchmark_id, fontsize=20)
+            fig.gca().axis('equal')
+            handles = {}  # collects handles of obstacle patches, plotted by matplotlib
+            plot_limits = get_plot_limits(route_obj.route, scenario, border=15)
 
-            draw_navigator(navigator)
-            plt.suptitle(scenario.benchmark_id, fontsize=20)
-            for projection_domain in [ccosy.projection_domain() for ccosy in navigator.ccosy_list]:
-                projection_domain = np.array(projection_domain)
-                plt.plot(projection_domain[:, 0], projection_domain[:, 1], 'r-', zorder=35)
+            # plot the lanelet network and the planning problem
+            draw_object(scenario, handles=handles, plot_limits=plot_limits,
+                        draw_params={'lanelet': {'show_label': False}})
+            draw_object(planning_problem, handles=handles, plot_limits=plot_limits)
+            fig.gca().autoscale()
 
-            # states = [State(position=np.array([12, 26]), orientation=np.pi),
-            #           State(position=np.array([20, 19]), orientation=np.pi),
-            #           State(position=np.array([-7.6, 57]), orientation=np.pi / 2),
-            #           planning_problem.initial_state]
-            # distances_until_lane_change = [navigator.get_lane_change_distance(state) for state in states]
-            # long_lat_distances = [navigator.get_long_lat_distance_to_goal(state.position) for state in states]
-            # for state in states:
-            #     long_lat_distance = navigator.get_long_lat_distance_to_goal(state.position)
-            #     plt.annotate("Long: {:.3f}, Lat: {:.3f}".format(long_lat_distance[0], long_lat_distance[1]),  # this is the text
-            #                  state.position,  # this is the point to label
-            #                  textcoords="offset points",  # how to position the text
-            #                  xytext=(10, 15),  # distance from text to points (x,y)
-            #                  ha='left', zorder=40)
-            # print(f"Long-lat distances: {long_lat_distances}")
+            # draw ego vehicle - with a collision object - uses commonroad_cc.visualizer
+            try:
+                draw_state(planning_problem.initial_state)
+            except AssertionError as error:
+                print(error)
+
+            for route_lanelet_id in route_obj.route:
+                lanelet = scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
+                draw_object(lanelet, handles=handles, plot_limits=plot_limits, draw_params={'lanelet': {
+                    'center_bound_color': '#3232ff',  # color of the found route
+                    'draw_stop_line': False,
+                    'stop_line_color': '#ff0000',
+                    'draw_line_markings': True,
+                    'draw_left_bound': False,
+                    'draw_right_bound': False,
+                    'draw_center_bound': True,
+                    'draw_border_vertices': False,
+                    'draw_start_and_direction': True,
+                    'show_label': False,
+                    'draw_linewidth': 2,
+                    'fill_lanelet': False,
+                    'facecolor': '#c7c7c7',
+                    'zorder': 30  # put it higher in the plot, to make it visible
+                }})
+
+                # TODO: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
+                plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b", zorder=30, scalex=False,
+                         scaley=False)
 
             # saving solved solutions
             # output_folder

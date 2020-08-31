@@ -407,12 +407,6 @@ class Navigator:
         self.merged_route_lanelets = None
         self.ccosy_list = self._get_route_cosy()
 
-        import matplotlib.pyplot as plt
-        plt.suptitle(self.scenario.benchmark_id, fontsize=20)
-        for projection_domain in [ccosy.projection_domain() for ccosy in self.ccosy_list]:
-            projection_domain = np.array(projection_domain)
-            plt.plot(projection_domain[:, 0], projection_domain[:, 1], 'r-', zorder=35)
-
         self.num_of_lane_changes = len(self.ccosy_list)
         self.merged_section_length_list = np.array([self._get_length(curvi_cosy) for curvi_cosy in self.ccosy_list])
 
@@ -474,25 +468,6 @@ class Navigator:
 
         self.merged_route_lanelets.append(current_merged_lanelet)
 
-        # TODO remove
-
-        import matplotlib.pyplot as plt
-        plt.clf()
-        draw_object(self.scenario)
-        draw_object(self.planning_problem)
-        plt.gca().autoscale()
-        plt.gca().axis('equal')
-
-        print(len(self.merged_route_lanelets))
-
-        for lanelet in self.merged_route_lanelets:
-            plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b-", zorder=40,
-                     scalex=False, scaley=False)
-
-        # plt.plot(tmp_points[:, 0], tmp_points[:, 1], "b-", linewidth=3, zorder=35)
-        # plt.plot(curvi_coords_of_projection_domain[:, 0], curvi_coords_of_projection_domain[:, 1], "g-",
-        #          linewidth=3, zorder=36)
-
         if self.backend == self.Backend.APPROXIMATE:
             # If ccosy is not installed using temporary method for approximate calculations
             return self.merged_route_lanelets
@@ -535,8 +510,6 @@ class Navigator:
             return lanelet.distance[-1]
 
     def _get_safe_curvilinear_coords(self, ccosy, position: np.ndarray) -> Tuple[np.ndarray, int]:
-        import matplotlib.pyplot as plt
-        plt.plot(position[0], position[1], "o", markersize=4, zorder=35)
 
         try:
             rel_pos_to_domain = 0
@@ -544,25 +517,12 @@ class Navigator:
         except ValueError:
             long_lat_distance, rel_pos_to_domain = self._project_out_of_domain(ccosy, position)
 
-        # plt.annotate("Long: {:.3f}, Lat: {:.3f}".format(long_lat_distance[0], long_lat_distance[1]),  # this is the text
-        #              position,  # this is the point to label
-        #              textcoords="offset points",  # how to position the text
-        #              xytext=(10, 15),  # distance from text to points (x,y)
-        #              ha='left', zorder=40)
-
         return np.array(long_lat_distance), rel_pos_to_domain
 
     def _project_out_of_domain(self, ccosy, position: np.ndarray) -> Tuple[np.ndarray, int]:
         if self.backend == self.Backend.PYCRCCOSY:
             eps = 0.0001
-            ccosy_length = ccosy.length()
             curvi_coords_of_projection_domain = np.array(ccosy.curvilinear_projection_domain())
-
-            # tmp_points = np.array(ccosy.projection_domain())
-            # import matplotlib.pyplot as plt
-            # plt.plot(tmp_points[:, 0], tmp_points[:, 1], "b-", zorder=35)
-            # plt.plot(curvi_coords_of_projection_domain[:, 0], curvi_coords_of_projection_domain[:, 1], "g-",
-            #          linewidth=3, zorder=36)
 
             longitudinal_min, normal_min = np.min(curvi_coords_of_projection_domain, axis=0) + eps
             longitudinal_max, normal_max = np.max(curvi_coords_of_projection_domain, axis=0) - eps
@@ -583,27 +543,6 @@ class Navigator:
                 rel_pos_to_domain = 1
                 long_dist = longitudinal_max + np.dot(ccosy.tangent(longitudinal_max), rel_positions[1])
                 lat_dist = normal_center + np.dot(ccosy.normal(longitudinal_max), rel_positions[1])
-
-            # segment_list = ccosy.get_segment_list()
-            # bounding_segments = [segment_list[0], segment_list[-1]]
-            #
-            # rel_positions = position - np.array([segment.pt_1 for segment in bounding_segments])
-            # distances = np.linalg.norm(rel_positions, axis=1)
-            #
-            # if distances[0] < distances[1]:
-            #     rel_pos_to_domain = -1
-            #     nearest_idx = 0
-            #     long_dist = 0
-            # else:
-            #     rel_pos_to_domain = 1
-            #     nearest_idx = 1
-            #     long_dist = ccosy.get_length()
-            #
-            # nearest_segment = bounding_segments[nearest_idx]
-            # rel_position = rel_positions[nearest_idx]
-            #
-            # long_dist = long_dist + np.dot(nearest_segment.tangent, rel_position)
-            # lat_dist = np.dot(nearest_segment.normal, rel_position)
 
         else:
             lanelet = ccosy
@@ -664,10 +603,6 @@ class Navigator:
     def _get_curvilinear_coords_over_lanelet(self, lanelet: Lanelet, position):
         if self.backend == self.Backend.PYCRCCOSY:
             current_ccosy = self._create_coordinate_system_from_polyline(lanelet.center_vertices)
-
-            import matplotlib.pyplot as plt
-            projection_domain = np.array(current_ccosy.projection_domain())
-            plt.plot(projection_domain[:, 0], projection_domain[:, 1], '-', zorder=35)
 
             return self._get_curvilinear_coords(current_ccosy, position)
         else:
