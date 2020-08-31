@@ -128,8 +128,18 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
 
         # Navigator
         navigator = route_obj.get_navigator()
+        # projection_domain = np.array([ccosy.projection_domain() for ccosy in navigator.ccosy_list][0])
+        # plt.plot(projection_domain[:, 0], projection_domain[:, 1], '-b', zorder=35)
+        # plt.autoscale()
+        # plt.axis('equal')
+        # plt.show()
 
-        states = [planning_problem.initial_state]
+        # states = [planning_problem.initial_state]
+
+        states = [State(position=np.array([12, 26]), orientation=np.pi),
+                  State(position=np.array([20, 19]), orientation=np.pi),
+                  State(position=np.array([-7.6, 57]), orientation=np.pi / 2),
+                  planning_problem.initial_state]
 
         distances_until_lane_change = [navigator.get_lane_change_distance(state) for state in states]
         long_lat_distances = [navigator.get_long_lat_distance_to_goal(state.position) for state in states]
@@ -212,10 +222,11 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
                 projection_domain = np.array(projection_domain)
                 plt.plot(projection_domain[:, 0], projection_domain[:, 1], 'r-', zorder=35)
 
-            states = [State(position=np.array([12, 26]), orientation=np.pi),
-                      State(position=np.array([20, 19]), orientation=np.pi),
-                      State(position=np.array([-7.6, 57]), orientation=np.pi / 2),
-                      planning_problem.initial_state]
+            # states = [State(position=np.array([12, 26]), orientation=np.pi),
+            #           State(position=np.array([20, 19]), orientation=np.pi),
+            #           State(position=np.array([-7.6, 57]), orientation=np.pi / 2),
+            #           planning_problem.initial_state]
+            # distances_until_lane_change = [navigator.get_lane_change_distance(state) for state in states]
             # long_lat_distances = [navigator.get_long_lat_distance_to_goal(state.position) for state in states]
             # for state in states:
             #     long_lat_distance = navigator.get_long_lat_distance_to_goal(state.position)
