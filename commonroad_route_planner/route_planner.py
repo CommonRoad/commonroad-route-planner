@@ -28,7 +28,8 @@ from commonroad_route_planner.priority_queue import PriorityQueue
 
 try:
     import pycrccosy
-    from commonroad_ccosy.geometry.util import resample_polyline
+    from commonroad_ccosy.geometry.util import resample_polyline, chaikins_corner_cutting, \
+        compute_curvature_from_polyline
     import commonroad.geometry.shape as cr_shape
     from shapely.ops import cascaded_union
     from shapely.geometry import LineString, Point, Polygon
@@ -56,6 +57,30 @@ def relative_orientation(from_angle1_in_rad, to_angle2_in_rad):
 
     return phi
 
+
+def chaikins_corner_cutting2(coords, refinements=2):
+    coords = np.array(coords)
+
+    for _ in range(refinements):
+        L = coords.repeat(2, axis=0)
+        R = np.empty_like(L)
+        R[0] = L[0]
+        R[2::2] = L[1:-1:2]
+        R[1:-1:2] = L[2::2]
+        R[-1] = L[-1]
+        coords = L * 0.75 + R * 0.25
+
+    return coords
+
+
+def resample_polyline_with_length_check(polyline):
+    length = np.linalg.norm(polyline[-1] - polyline[0])
+    if length > 2.0:
+        polyline = resample_polyline(polyline, 1.0)
+    else:
+        polyline = resample_polyline(polyline, length / 10.0)
+
+    return polyline
 
 def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
     """
@@ -347,7 +372,6 @@ class RouteCandidates:
         return self.__repr__()
 
 
-# noinspection PyUnresolvedReferences
 class Navigator:
     class Backend(Enum):
         PYCRCCOSY = 'pycrccosy'
@@ -444,7 +468,7 @@ class Navigator:
         plt.gca().autoscale()
         plt.gca().axis('equal')
 
-        print(self.merged_route_lanelets)
+        print(len(self.merged_route_lanelets))
 
         for lanelet in self.merged_route_lanelets:
             plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b-", zorder=40,
@@ -463,13 +487,29 @@ class Navigator:
 
     @staticmethod
     def _create_coordinate_system_from_polyline(polyline) -> pycrccosy.CurvilinearCoordinateSystem:
-        if len(polyline) <= 4:
-            last_point = polyline[-1]
+
+        polyline = resample_polyline_with_length_check(polyline)
+
+        abs_curvature = abs(compute_curvature_from_polyline(polyline))
+        max_curvature = max(abs_curvature)
+        infinite_loop_counter = 0
+        while max_curvature > 0.1:
+            polyline = np.array(chaikins_corner_cutting(polyline))
+
             length = np.linalg.norm(polyline[-1] - polyline[0])
-            polyline = resample_polyline(polyline, length / 4.0)
-            # make sure that the original vertices are all contained
-            if not np.all(np.isclose(polyline[-1], last_point)):
-                polyline = np.append(polyline, [last_point], axis=0)
+            if length > 2.0:
+                polyline = resample_polyline(polyline, 1.0)
+            else:
+                polyline = resample_polyline(polyline, length / 10.0)
+
+            abs_curvature = abs(compute_curvature_from_polyline(polyline))
+            max_curvature = max(abs_curvature)
+
+            infinite_loop_counter += 1
+
+            if infinite_loop_counter > 20:
+                break
+
         return pycrccosy.CurvilinearCoordinateSystem(polyline)
 
     def _get_length(self, ccosy):
@@ -609,6 +649,11 @@ class Navigator:
     def _get_curvilinear_coords_over_lanelet(self, lanelet: Lanelet, position):
         if self.backend == self.Backend.PYCRCCOSY:
             current_ccosy = self._create_coordinate_system_from_polyline(lanelet.center_vertices)
+
+            import matplotlib.pyplot as plt
+            projection_domain = np.array(current_ccosy.projection_domain())
+            plt.plot(projection_domain[:, 0], projection_domain[:, 1], '-', zorder=35)
+
             return self._get_curvilinear_coords(current_ccosy, position)
         else:
             return self._get_curvilinear_coords(lanelet, position)
