@@ -73,6 +73,20 @@ def chaikins_corner_cutting2(coords, refinements=2):
     return coords
 
 
+def compute_polyline_length(polyline: np.ndarray) -> float:
+    """
+    Computes the path length s of a given polyline
+    :param polyline: The polyline
+    :return: The path length of the polyline
+    """
+    assert isinstance(polyline, np.ndarray) and polyline.ndim == 2 and len(
+        polyline[:, 0]) > 2, 'Polyline malformed for path length computation p={}'.format(polyline)
+
+    distance_between_points = np.diff(polyline, axis=0)
+    # noinspection PyTypeChecker
+    return np.sum(np.sqrt(np.sum(distance_between_points ** 2, axis=1)))
+
+
 def resample_polyline_with_length_check(polyline):
     length = np.linalg.norm(polyline[-1] - polyline[0])
     if length > 2.0:
@@ -81,6 +95,7 @@ def resample_polyline_with_length_check(polyline):
         polyline = resample_polyline(polyline, length / 10.0)
 
     return polyline
+
 
 def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
     """
@@ -494,10 +509,10 @@ class Navigator:
         max_curvature = max(abs_curvature)
         infinite_loop_counter = 0
         while max_curvature > 0.1:
-            polyline = np.array(chaikins_corner_cutting(polyline))
+            polyline = np.array(chaikins_corner_cutting2(polyline))
 
-            length = np.linalg.norm(polyline[-1] - polyline[0])
-            if length > 2.0:
+            length = compute_polyline_length(polyline)
+            if length > 10:
                 polyline = resample_polyline(polyline, 1.0)
             else:
                 polyline = resample_polyline(polyline, length / 10.0)
