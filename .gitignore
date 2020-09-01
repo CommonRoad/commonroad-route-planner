@@ -10,3 +10,7 @@ commonroad_route_planner.egg-info/
 dist/
 
 solutions/logs
+
+solutions/figs/new_ccosy_projection_domain/
+
+solutions/figs/new_improved_ccosy_projection_domain/

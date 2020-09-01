@@ -6,7 +6,6 @@ __maintainer__ = "Daniel Tar"
 __email__ = "daniel.tar@tum.de, peter.kocsis@tum.de"
 __status__ = "Under Development"
 
-
 import logging
 import os
 import sys
@@ -17,18 +16,20 @@ from typing import List, Union, Generator, Set, Tuple
 
 import networkx as nx
 import numpy as np
-from commonroad.geometry.shape import Shape
+from commonroad.geometry.shape import Shape, Rectangle
 from commonroad.planning.goal import GoalRegion
 from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import Lanelet, LaneletType
 from commonroad.scenario.scenario import Scenario
 from commonroad.scenario.trajectory import State
+from commonroad.visualization.draw_dispatch_cr import draw_object
 
 from commonroad_route_planner.priority_queue import PriorityQueue
 
 try:
     import pycrccosy
-    from commonroad_ccosy.geometry.util import resample_polyline
+    from commonroad_ccosy.geometry.util import resample_polyline, chaikins_corner_cutting, \
+        compute_curvature_from_polyline
     import commonroad.geometry.shape as cr_shape
     from shapely.ops import cascaded_union
     from shapely.geometry import LineString, Point, Polygon
@@ -37,9 +38,9 @@ except ModuleNotFoundError as exp:
 
 
 class _LaneletNode:
-    def __init__(self, laneletID: int, lanelet: Lanelet, cost: float, current_length: int):
+    def __init__(self, lanelet_id: int, lanelet: Lanelet, cost: float, current_length: int):
         # it must be id because of the implementation of the priority queue
-        self.id = laneletID
+        self.id = lanelet_id
         self.lanelet = lanelet
         self.parent_node = None
         self.cost = cost
@@ -55,6 +56,45 @@ def relative_orientation(from_angle1_in_rad, to_angle2_in_rad):
         phi -= (2 * np.pi)
 
     return phi
+
+
+def chaikins_corner_cutting2(coords, refinements=2):
+    coords = np.array(coords)
+
+    for _ in range(refinements):
+        L = coords.repeat(2, axis=0)
+        R = np.empty_like(L)
+        R[0] = L[0]
+        R[2::2] = L[1:-1:2]
+        R[1:-1:2] = L[2::2]
+        R[-1] = L[-1]
+        coords = L * 0.75 + R * 0.25
+
+    return coords
+
+
+def compute_polyline_length(polyline: np.ndarray) -> float:
+    """
+    Computes the path length s of a given polyline
+    :param polyline: The polyline
+    :return: The path length of the polyline
+    """
+    assert isinstance(polyline, np.ndarray) and polyline.ndim == 2 and len(
+        polyline[:, 0]) > 2, 'Polyline malformed for path length computation p={}'.format(polyline)
+
+    distance_between_points = np.diff(polyline, axis=0)
+    # noinspection PyTypeChecker
+    return np.sum(np.sqrt(np.sum(distance_between_points ** 2, axis=1)))
+
+
+def resample_polyline_with_length_check(polyline):
+    length = np.linalg.norm(polyline[-1] - polyline[0])
+    if length > 2.0:
+        polyline = resample_polyline(polyline, 1.0)
+    else:
+        polyline = resample_polyline(polyline, length / 10.0)
+
+    return polyline
 
 
 def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
@@ -82,7 +122,7 @@ def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
     return np.arctan2(direction_vector[1], direction_vector[0])
 
 
-def sorted_lanelet_ids(lanelet_ids: List[int], orientation: float, position: np.ndarray, scenario: Scenario)\
+def sorted_lanelet_ids(lanelet_ids: List[int], orientation: float, position: np.ndarray, scenario: Scenario) \
         -> List[int]:
     """
     return the lanelets sorted by relative orientation to the position and orientation given
@@ -125,8 +165,18 @@ def sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int
         if len(goal.state_list) > 1:
             raise ValueError("More than one goal state is not supported yet!")
         goal_state = goal.state_list[0]
-        goal_orientation: float = (goal_state.orientation.start + goal_state.orientation.end) / 2
-        goal_shape: Shape = goal_state.position
+
+        if hasattr(goal_state, "orientation"):
+            goal_orientation: float = (goal_state.orientation.start + goal_state.orientation.end) / 2
+        else:
+            goal_orientation = 0.0
+            warnings.warn("The goal state has no <orientation> attribute! It is set to 0.0")
+
+        if hasattr(goal_state, "position"):
+            goal_shape: Shape = goal_state.position
+        else:
+            goal_shape: Shape = Rectangle(length=0.01, width=0.01)
+
         # the goal shape has always a shapley object -> because it is a rectangle
         # every shape has a shapely_object but ShapeGroup
         # noinspection PyUnresolvedReferences
@@ -232,7 +282,7 @@ class Route:
 
         return adjacent_list
 
-    def _get_sectionized_environment_from_route(self, route: List[int], is_opposite_direction_allowed: bool = False)\
+    def _get_sectionized_environment_from_route(self, route: List[int], is_opposite_direction_allowed: bool = False) \
             -> Union[None, List[List[int]]]:
         """
         Creates sectionized environment from a given route.
@@ -262,8 +312,9 @@ class Route:
     def get_sectionized_environment(self, is_opposite_direction_allowed: bool = False):
         if self._sectionized_environment is None:
             self._sectionized_environment = \
-               self._get_sectionized_environment_from_route(self.route,
-                                                            is_opposite_direction_allowed=is_opposite_direction_allowed)
+                self._get_sectionized_environment_from_route(self.route,
+                                                             is_opposite_direction_allowed=
+                                                             is_opposite_direction_allowed)
 
         return self._sectionized_environment
 
@@ -291,7 +342,14 @@ class RouteCandidates:
 
     def get_most_likely_route_by_orientation(self) -> Union[Route, None]:
         # handling the survival scenarios and where only one path found
-        if len(self.route_candidates) == 1:
+        # if there are more survival route in a scenario (ambiguity in getting the lanelet by position)
+        # then return the first one (with index 0)
+        if self.route_type == RouteType.SURVIVAL:
+            if len(self.route_candidates) > 1:
+                warnings.warn(
+                    "There are MULTIPLE survival route, but we are returning the 1st one (with index 0) from the "
+                    "route candidates")
+
             return Route(self.scenario, self.planning_problem, self.route_candidates[0], self.route_type,
                          self.allowed_lanelet_ids)
 
@@ -348,6 +406,7 @@ class Navigator:
         self.sectionized_environment_set = set([item for sublist in self.sectionized_environment for item in sublist])
         self.merged_route_lanelets = None
         self.ccosy_list = self._get_route_cosy()
+
         self.num_of_lane_changes = len(self.ccosy_list)
         self.merged_section_length_list = np.array([self._get_length(curvi_cosy) for curvi_cosy in self.ccosy_list])
 
@@ -367,18 +426,19 @@ class Navigator:
             self.goal_min_curvi_coords = np.min(self.goal_curvi_face_coords, axis=0)
             self.goal_max_curvi_coord = np.max(self.goal_curvi_face_coords, axis=0)
 
-    def _get_route_cosy(self) -> Union[pycrccosy.TrapezoidCoordinateSystem, List[Lanelet]]:
+    def _get_route_cosy(self) -> Union[pycrccosy.CurvilinearCoordinateSystem, List[Lanelet]]:
         # Merge reference route
         self.merged_route_lanelets = []
 
         # Append predecessor of the initial to ensure that the goal state is not out of the projection domain
-        initial_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[0])
-        predecessors_lanelet = initial_lanelet.predecessor
-        if predecessors_lanelet is not None and len(predecessors_lanelet) != 0:
-            predecessor_lanelet = self.lanelet_network.find_lanelet_by_id(predecessors_lanelet[0])
-            current_merged_lanelet = predecessor_lanelet
-        else:
-            current_merged_lanelet = None
+        # initial_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[0])
+        # predecessors_lanelet = initial_lanelet.predecessor
+        # if predecessors_lanelet is not None and len(predecessors_lanelet) != 0:
+        #     predecessor_lanelet = self.lanelet_network.find_lanelet_by_id(predecessors_lanelet[0])
+        #     current_merged_lanelet = predecessor_lanelet
+        # else:
+        #     current_merged_lanelet = None
+        current_merged_lanelet = None
 
         for current_lanelet_id, next_lanelet_id in zip(self.route.route[:-1], self.route.route[1:]):
             lanelet = self.lanelet_network.find_lanelet_by_id(current_lanelet_id)
@@ -400,11 +460,11 @@ class Navigator:
             current_merged_lanelet = goal_lanelet
 
         # Append successor of the goal to ensure that the goal state is not out of the projection domain
-        goal_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[-1])
-        successors_of_goal = goal_lanelet.successor
-        if successors_of_goal is not None and len(successors_of_goal) != 0:
-            successor_lanelet = self.lanelet_network.find_lanelet_by_id(successors_of_goal[0])
-            current_merged_lanelet = Lanelet.merge_lanelets(current_merged_lanelet, successor_lanelet)
+        # goal_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[-1])
+        # successors_of_goal = goal_lanelet.successor
+        # if successors_of_goal is not None and len(successors_of_goal) != 0:
+        #     successor_lanelet = self.lanelet_network.find_lanelet_by_id(successors_of_goal[0])
+        #     current_merged_lanelet = Lanelet.merge_lanelets(current_merged_lanelet, successor_lanelet)
 
         self.merged_route_lanelets.append(current_merged_lanelet)
 
@@ -416,53 +476,73 @@ class Navigator:
                     for merged_lanelet in self.merged_route_lanelets]
 
     @staticmethod
-    def _create_coordinate_system_from_polyline(polyline):
-        if len(polyline) <= 4:
-            last_point = polyline[-1]
-            length = np.linalg.norm(polyline[-1] - polyline[0])
-            polyline = resample_polyline(polyline, length / 4.0)
-            # make sure that the original vertices are all contained
-            if not np.all(np.isclose(polyline[-1], last_point)):
-                polyline = np.append(polyline, [last_point], axis=0)
-        return pycrccosy.TrapezoidCoordinateSystem(polyline)
+    def _create_coordinate_system_from_polyline(polyline) -> pycrccosy.CurvilinearCoordinateSystem:
+
+        polyline = resample_polyline_with_length_check(polyline)
+
+        abs_curvature = abs(compute_curvature_from_polyline(polyline))
+        max_curvature = max(abs_curvature)
+        infinite_loop_counter = 0
+        while max_curvature > 0.1:
+            polyline = np.array(chaikins_corner_cutting2(polyline))
+
+            length = compute_polyline_length(polyline)
+            if length > 10:
+                polyline = resample_polyline(polyline, 1.0)
+            else:
+                polyline = resample_polyline(polyline, length / 10.0)
+
+            abs_curvature = abs(compute_curvature_from_polyline(polyline))
+            max_curvature = max(abs_curvature)
+
+            infinite_loop_counter += 1
+
+            if infinite_loop_counter > 20:
+                break
+
+        return pycrccosy.CurvilinearCoordinateSystem(polyline)
 
     def _get_length(self, ccosy):
         if self.backend == self.Backend.PYCRCCOSY:
-            return ccosy.get_length()
+            return ccosy.length()
         else:
             lanelet = ccosy
             return lanelet.distance[-1]
 
-    def _get_safe_curvilinear_coords(self, ccosy, position: np.ndarray):
+    def _get_safe_curvilinear_coords(self, ccosy, position: np.ndarray) -> Tuple[np.ndarray, int]:
+
         try:
             rel_pos_to_domain = 0
-            return self._get_curvilinear_coords(ccosy, position), rel_pos_to_domain
+            long_lat_distance = self._get_curvilinear_coords(ccosy, position)
         except ValueError:
-            return self._project_out_of_domain(ccosy, position)
+            long_lat_distance, rel_pos_to_domain = self._project_out_of_domain(ccosy, position)
 
-    def _project_out_of_domain(self, ccosy, position: np.ndarray):
+        return np.array(long_lat_distance), rel_pos_to_domain
+
+    def _project_out_of_domain(self, ccosy, position: np.ndarray) -> Tuple[np.ndarray, int]:
         if self.backend == self.Backend.PYCRCCOSY:
+            eps = 0.0001
+            curvi_coords_of_projection_domain = np.array(ccosy.curvilinear_projection_domain())
 
-            segment_list = ccosy.get_segment_list()
-            bounding_segments = [segment_list[0], segment_list[-1]]
-
-            rel_positions = position - np.array([segment.pt_1 for segment in bounding_segments])
+            longitudinal_min, normal_min = np.min(curvi_coords_of_projection_domain, axis=0) + eps
+            longitudinal_max, normal_max = np.max(curvi_coords_of_projection_domain, axis=0) - eps
+            normal_center = (normal_min + normal_max) / 2
+            bounding_points = np.array(
+                [ccosy.convert_to_cartesian_coords(longitudinal_min, normal_center),
+                 ccosy.convert_to_cartesian_coords(longitudinal_max, normal_center)])
+            rel_positions = position - np.array([bounding_point for bounding_point in bounding_points])
             distances = np.linalg.norm(rel_positions, axis=1)
 
             if distances[0] < distances[1]:
+                # Nearer to the first bounding point
                 rel_pos_to_domain = -1
-                nearest_idx = 0
-                long_dist = 0
+                long_dist = longitudinal_min + np.dot(ccosy.tangent(longitudinal_min), rel_positions[0])
+                lat_dist = normal_center + np.dot(ccosy.normal(longitudinal_min), rel_positions[0])
             else:
+                # Nearer to the last bounding point
                 rel_pos_to_domain = 1
-                nearest_idx = 1
-                long_dist = ccosy.get_length()
-
-            nearest_segment = bounding_segments[nearest_idx]
-            rel_position = rel_positions[nearest_idx]
-
-            long_dist = long_dist + np.dot(nearest_segment.tangent, rel_position)
-            lat_dist = np.dot(nearest_segment.normal, rel_position)
+                long_dist = longitudinal_max + np.dot(ccosy.tangent(longitudinal_max), rel_positions[1])
+                lat_dist = normal_center + np.dot(ccosy.normal(longitudinal_max), rel_positions[1])
 
         else:
             lanelet = ccosy
@@ -491,7 +571,7 @@ class Navigator:
 
         return np.array([long_dist, lat_dist]), rel_pos_to_domain
 
-    def _get_curvilinear_coords(self, ccosy, position: np.ndarray):
+    def _get_curvilinear_coords(self, ccosy, position: np.ndarray) -> np.ndarray:
         if self.backend == self.Backend.PYCRCCOSY:
             return ccosy.convert_to_curvilinear_coords(position[0], position[1])
         else:
@@ -518,11 +598,12 @@ class Navigator:
 
             long_distance = lanelet.distance[closest_vertex_index]
             lat_distance = relative_lanelet_side * position_diffs[closest_vertex_index]
-            return long_distance, lat_distance
+            return np.array([long_distance, lat_distance])
 
     def _get_curvilinear_coords_over_lanelet(self, lanelet: Lanelet, position):
         if self.backend == self.Backend.PYCRCCOSY:
             current_ccosy = self._create_coordinate_system_from_polyline(lanelet.center_vertices)
+
             return self._get_curvilinear_coords(current_ccosy, position)
         else:
             return self._get_curvilinear_coords(lanelet, position)

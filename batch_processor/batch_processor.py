@@ -2,8 +2,10 @@ import errno
 import os
 import sys
 import time
+import numpy as np
 
 import matplotlib as mpl
+from commonroad.scenario.trajectory import State
 from commonroad.visualization.plot_helper import set_non_blocking
 
 commonroad_route_planner_root = "./"
@@ -129,7 +131,11 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
         # Navigator
         navigator = route_obj.get_navigator()
 
-        states = [planning_problem.initial_state]
+        # Test States
+        states = [State(position=np.array([12, 26]), orientation=np.pi),
+                  State(position=np.array([20, 19]), orientation=np.pi),
+                  State(position=np.array([-7.6, 57]), orientation=np.pi / 2),
+                  planning_problem.initial_state]
 
         distances_until_lane_change = [navigator.get_lane_change_distance(state) for state in states]
         long_lat_distances = [navigator.get_long_lat_distance_to_goal(state.position) for state in states]
@@ -137,8 +143,7 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
         # print(f"Distances until lane change: {distances_until_lane_change}")
         # print(f"Long-lat distances: {long_lat_distances}")
 
-        # plot_navigation(scenario, planning_problem, navigator.ccosy_list)
-
+        # draw_navigator(navigator)
     except IndexError as error:
         search_time = time.perf_counter() - time1
         scenarios_exception.append(scenario_id)
@@ -179,7 +184,7 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
 
             # draw ego vehicle - with a collision object - uses commonroad_cc.visualizer
             try:
-                draw_state(planning_problem)
+                draw_state(planning_problem.initial_state)
             except AssertionError as error:
                 print(error)
 
@@ -189,40 +194,40 @@ for idx, (scenario, planning_problem_set) in enumerate(load_scenarios(scenarios_
                     'center_bound_color': '#3232ff',  # color of the found route
                     'draw_stop_line': False,
                     'stop_line_color': '#ff0000',
-                        'draw_line_markings': True,
-                        'draw_left_bound': False,
-                        'draw_right_bound': False,
-                        'draw_center_bound': True,
-                        'draw_border_vertices': False,
-                        'draw_start_and_direction': True,
-                        'show_label': False,
-                        'draw_linewidth': 2,
-                        'fill_lanelet': False,
-                        'facecolor': '#c7c7c7',
-                        'zorder': 30  # put it higher in the plot, to make it visible
-                    }})
+                    'draw_line_markings': True,
+                    'draw_left_bound': False,
+                    'draw_right_bound': False,
+                    'draw_center_bound': True,
+                    'draw_border_vertices': False,
+                    'draw_start_and_direction': True,
+                    'show_label': False,
+                    'draw_linewidth': 2,
+                    'fill_lanelet': False,
+                    'facecolor': '#c7c7c7',
+                    'zorder': 30  # put it higher in the plot, to make it visible
+                }})
 
                 # TODO: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
                 plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b", zorder=30, scalex=False,
                          scaley=False)
 
-                # saving solved solutions
-                # output_folder
-                output_folder = configs["output_path"]
+            # saving solved solutions
+            # output_folder
+            output_folder = configs["output_path"]
 
-                relative_path = existing_scenario_ids_paths_dict[scenario_id]
-                list_from_relative_path = os.path.normpath(relative_path).split(os.path.sep)
+            relative_path = existing_scenario_ids_paths_dict[scenario_id]
+            list_from_relative_path = os.path.normpath(relative_path).split(os.path.sep)
 
-                remove_first = len(os.path.normpath(scenarios_root_folder).split(os.path.sep))
-                rel_path_to_scenario_from_root = os.path.join(*list_from_relative_path[remove_first:])
+            remove_first = len(os.path.normpath(scenarios_root_folder).split(os.path.sep))
+            rel_path_to_scenario_from_root = os.path.join(*list_from_relative_path[remove_first:])
 
-                output_folder = os.path.join(output_folder, rel_path_to_scenario_from_root)
-                # if directory not exists create it
-                os.makedirs(output_folder, exist_ok=True)
+            output_folder = os.path.join(output_folder, rel_path_to_scenario_from_root)
+            # if directory not exists create it
+            os.makedirs(output_folder, exist_ok=True)
 
-                output_file = os.path.join(output_folder, "fig_{}_goal_ID_{}.png".format(scenario_id, goal_lanelet_id))
-                plt.savefig(output_file)
-                # logger.debug("{} 's solution saved out".format(scenario_id))
+            output_file = os.path.join(output_folder, "fig_{}_goal_ID_{}.png".format(scenario_id, goal_lanelet_id))
+            plt.savefig(output_file)
+            # logger.debug("{} 's solution saved out".format(scenario_id))
 
     counter += 1
 
