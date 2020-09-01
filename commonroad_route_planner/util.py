@@ -1,8 +1,9 @@
 import warnings
-from typing import List
+from typing import List, Union
 
 import matplotlib as mpl
 import numpy as np
+from commonroad.scenario.lanelet import Lanelet
 
 from commonroad_route_planner.route_planner import Navigator
 
@@ -20,11 +21,11 @@ from commonroad.prediction.prediction import TrajectoryPrediction
 from commonroad.scenario.trajectory import Trajectory, State
 from commonroad.visualization.draw_dispatch_cr import draw_object
 
-try:
-    import pycrccosy
-    import commonroad_ccosy.visualization.draw_dispatch
-except ModuleNotFoundError as exp:
-    warnings.warn(f"Xou won't be able to draw the navigation, {exp}")
+# try:
+#     import pycrccosy
+#     import commonroad_ccosy.visualization.draw_dispatch
+# except ModuleNotFoundError as exp:
+#     warnings.warn(f"You won't be able to draw the navigation, {exp}")
 
 
 def draw_state(state: State, fig_num=None, color='red'):
@@ -48,7 +49,7 @@ def draw_scenario(scenario: Scenario, planning_problem: PlanningProblem, initial
     inch_in_cm = 2.54
     figsize = [60, 30]
 
-    fig = plt.figure(figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
+    fig = plt.figure(num=0, figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
     fig.clf()
     fig.gca().axis('equal')
 
@@ -178,5 +179,3 @@ def draw_navigator(navigator: Navigator):
             'fill_lanelet': True,
             'facecolor': '#128c01'
         }})
-
-
