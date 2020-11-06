@@ -22,7 +22,6 @@ from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import Lanelet, LaneletType
 from commonroad.scenario.scenario import Scenario
 from commonroad.scenario.trajectory import State
-from commonroad.visualization.draw_dispatch_cr import draw_object
 
 from commonroad_route_planner.priority_queue import PriorityQueue
 
