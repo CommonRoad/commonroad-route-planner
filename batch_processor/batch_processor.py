@@ -238,7 +238,7 @@ def setup_and_run(configs, logger, scenarios_root_folder, scenario_ids):
 
         counter += 1
 
-    plt.show()
+    # plt.show()
     list_result_sceanrios.append(scenarios_path_found)
     list_result_sceanrios.append(scenarios_path_not_found)
     list_result_sceanrios.append(scenarios_exception)
