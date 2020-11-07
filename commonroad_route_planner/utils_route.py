@@ -1,0 +1,152 @@
+import warnings
+from typing import List
+
+import numpy as np
+from commonroad.geometry.shape import Shape, Rectangle
+from commonroad.planning.goal import GoalRegion
+from commonroad.scenario.lanelet import Lanelet
+from commonroad.scenario.scenario import Scenario
+try:
+    from commonroad_ccosy.geometry.util import resample_polyline
+except ModuleNotFoundError as exp:
+    pass
+
+
+def relative_orientation(from_angle1_in_rad, to_angle2_in_rad):
+    phi = (to_angle2_in_rad - from_angle1_in_rad) % (2 * np.pi)
+    if phi > np.pi:
+        phi -= (2 * np.pi)
+
+    return phi
+
+
+def chaikins_corner_cutting2(coords, refinements=2):
+    coords = np.array(coords)
+
+    for _ in range(refinements):
+        L = coords.repeat(2, axis=0)
+        R = np.empty_like(L)
+        R[0] = L[0]
+        R[2::2] = L[1:-1:2]
+        R[1:-1:2] = L[2::2]
+        R[-1] = L[-1]
+        coords = L * 0.75 + R * 0.25
+
+    return coords
+
+
+def compute_polyline_length(polyline: np.ndarray) -> float:
+    """
+    Computes the path length s of a given polyline
+    :param polyline: The polyline
+    :return: The path length of the polyline
+    """
+    assert isinstance(polyline, np.ndarray) and polyline.ndim == 2 and len(
+        polyline[:, 0]) > 2, 'Polyline malformed for path length computation p={}'.format(polyline)
+
+    distance_between_points = np.diff(polyline, axis=0)
+    # noinspection PyTypeChecker
+    return np.sum(np.sqrt(np.sum(distance_between_points ** 2, axis=1)))
+
+
+def resample_polyline_with_length_check(polyline):
+    length = np.linalg.norm(polyline[-1] - polyline[0])
+    if length > 2.0:
+        polyline = resample_polyline(polyline, 1.0)
+    else:
+        polyline = resample_polyline(polyline, length / 10.0)
+
+    return polyline
+
+
+def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
+    """
+    Approximates the lanelet orientation with the two closest point to the given state
+    # TODO optimize more for speed
+
+    :param lanelet: Lanelet on which the orientation at the given state should be calculated
+    :param position: Position where the lanelet's orientation should be calculated
+    :return: An orientation in interval [-pi,pi]
+    """
+
+    center_vertices = lanelet.center_vertices
+
+    position_diff = []
+    for idx in range(len(center_vertices) - 1):
+        vertex1 = center_vertices[idx]
+        position_diff.append(np.linalg.norm(position - vertex1))
+
+    closest_vertex_index = position_diff.index(min(position_diff))
+
+    vertex1 = center_vertices[closest_vertex_index, :]
+    vertex2 = center_vertices[closest_vertex_index + 1, :]
+    direction_vector = vertex2 - vertex1
+    return np.arctan2(direction_vector[1], direction_vector[0])
+
+
+def sorted_lanelet_ids(lanelet_ids: List[int], orientation: float, position: np.ndarray, scenario: Scenario) \
+        -> List[int]:
+    """
+    return the lanelets sorted by relative orientation to the position and orientation given
+    """
+
+    if len(lanelet_ids) <= 1:
+        return lanelet_ids
+    else:
+        lanelet_id_list = np.array(lanelet_ids)
+
+        def get_lanelet_relative_orientation(lanelet_id):
+            lanelet = scenario.lanelet_network.find_lanelet_by_id(lanelet_id)
+            lanelet_orientation = lanelet_orientation_at_position(lanelet, position)
+            return np.abs(relative_orientation(lanelet_orientation, orientation))
+
+        orientation_differences = np.array(list(map(get_lanelet_relative_orientation, lanelet_id_list)))
+        sorted_indices = np.argsort(orientation_differences)
+        return list(lanelet_id_list[sorted_indices])
+
+
+def sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int]:
+    """
+    Get the lanelet id of the goal
+    :param goal:
+    :param scenario: commonroad scenario
+    :return: lanelet id, if the obstacle is out of lanelet boundary (no lanelet is found, therefore return the
+    lanelet id of last time step)
+    """
+    if hasattr(goal, 'lanelets_of_goal_position') and goal.lanelets_of_goal_position is not None:
+        goal_lanelet_id_batch_list = list(goal.lanelets_of_goal_position.values())
+        goal_lanelet_id_list = [item for sublist in goal_lanelet_id_batch_list for item in sublist]
+        goal_lanelet_id_set = set(goal_lanelet_id_list)
+        goal_lanelets = [scenario.lanelet_network.find_lanelet_by_id(goal_lanelet_id) for goal_lanelet_id in
+                         goal_lanelet_id_list]
+        goal_lanelets_with_successor = np.array(
+            [1.0 if len(set(goal_lanelet.successor).intersection(goal_lanelet_id_set)) > 0 else 0.0 for goal_lanelet
+             in goal_lanelets])
+        return [x for _, x in sorted(zip(goal_lanelets_with_successor, goal_lanelet_id_list))]
+    if goal.state_list is not None and len(goal.state_list) != 0:
+        if len(goal.state_list) > 1:
+            raise ValueError("More than one goal state is not supported yet!")
+        goal_state = goal.state_list[0]
+
+        if hasattr(goal_state, "orientation"):
+            goal_orientation: float = (goal_state.orientation.start + goal_state.orientation.end) / 2
+        else:
+            goal_orientation = 0.0
+            warnings.warn("The goal state has no <orientation> attribute! It is set to 0.0")
+
+        if hasattr(goal_state, "position"):
+            goal_shape: Shape = goal_state.position
+        else:
+            goal_shape: Shape = Rectangle(length=0.01, width=0.01)
+
+        # the goal shape has always a shapley object -> because it is a rectangle
+        # every shape has a shapely_object but ShapeGroup
+        # noinspection PyUnresolvedReferences
+        return sorted_lanelet_ids(
+            scenario.lanelet_network.find_lanelet_by_shape(goal_shape),
+            goal_orientation,
+            np.array(goal_shape.shapely_object.centroid),
+            scenario
+        )
+
+    raise NotImplementedError("Whole lanelet as goal must be implemented here!")

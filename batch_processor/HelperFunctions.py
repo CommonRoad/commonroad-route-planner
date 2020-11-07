@@ -20,7 +20,7 @@ from commonroad.common.file_reader import CommonRoadFileReader
 from commonroad.planning.planning_problem import PlanningProblemSet
 from commonroad.scenario.scenario import Scenario
 
-from commonroad_route_planner.route_planner import RoutePlanner
+from commonroad_route_planner.RoutePlanner import RoutePlanner
 
 
 def load_config_file(filename) -> dict:
@@ -153,7 +153,7 @@ def load_pickle_scenarios(root_dir, scenario_ids):
 def execute_search(scenario, planning_problem, backend="priority_queue"):
     route_planner = RoutePlanner(scenario, planning_problem, backend=backend)
 
-    return route_planner.search_alg()
+    return route_planner.plan_routes()
 
 
 def get_last_time_step_in_scenario(scenario: Scenario):

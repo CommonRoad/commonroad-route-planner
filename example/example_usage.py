@@ -2,9 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from commonroad.scenario.trajectory import State
 
-from commonroad_route_planner.util import plot_found_routes, plot_route_environment, draw_navigator, draw_state
+from commonroad_route_planner.utils_visualization import plot_found_routes, plot_route_environment, draw_navigator, draw_state
 from commonroad.common.file_reader import CommonRoadFileReader
-from commonroad_route_planner.route_planner import RoutePlanner
+from commonroad_route_planner.RoutePlanner import RoutePlanner
 
 
 if __name__ == "__main__":
@@ -25,14 +25,14 @@ if __name__ == "__main__":
 
     route_planner = RoutePlanner(scenario, planning_problem, backend=RoutePlanner.Backend.NETWORKX_REVERSED)
 
-    route_candidates = route_planner.get_route_candidates()
+    route_candidates = route_planner.plan_routes()
     print(f"Found route candidates: {route_candidates}")
 
     route = route_candidates.get_most_likely_route_by_orientation()
     # plot_found_routes(scenario, planning_problem, [route.route])
 
     # Query the distance until lane change is required
-    navigator = route.get_navigator()
+    navigator = route.navigator
 
     # states = [planning_problem.initial_state,
     #           State(position=np.array([-6.5, 6.5]), orientation=np.pi),
