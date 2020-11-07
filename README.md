@@ -20,9 +20,9 @@ python setup.py install
 
 You can find an example under `example/example_usage.py`:
 ```python
-from commonroad_route_planner.util import plot_found_routes
+from commonroad_route_planner.utils_visualization import plot_found_routes
 from commonroad.common.file_reader import CommonRoadFileReader
-from commonroad_route_planner.route_planner import RoutePlanner
+from commonroad_route_planner.RoutePlanner import RoutePlanner
 
 
 if __name__ == "__main__":
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     planning_problem = list(planning_problem_set.planning_problem_dict.values())[planning_problem_idx]
 
     route_planner = RoutePlanner(scenario, planning_problem, backend="networkx")
-    routes = route_planner.search_alg()
+    routes = route_planner.plan_routes()
 
     plot_found_routes(scenario, planning_problem, routes)
 ```

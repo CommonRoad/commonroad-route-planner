@@ -18,10 +18,10 @@ except ImportError:
 
 from commonroad.scenario.trajectory import State
 
-from commonroad_route_planner.route_planner import RoutePlanner
+from commonroad_route_planner.RoutePlanner import RoutePlanner
 
 from commonroad.visualization.draw_dispatch_cr import draw_object
-from commonroad_route_planner.util import draw_state
+from commonroad_route_planner.utils_visualization import draw_state
 
 import HelperFunctions as hf
 
@@ -120,13 +120,11 @@ def setup_and_run(configs, logger, scenarios_root_folder, scenario_ids):
 
         base_msg = "{:3}/{}\t[{:<20}]\t ".format(counter, num_of_scenarios_to_solve, scenario_id)
 
-        routes = None
         time1 = time.perf_counter()
         try:
-
             route_planner = RoutePlanner(scenario, planning_problem, backend=RoutePlanner.Backend.NETWORKX_REVERSED)
 
-            route_candidates = route_planner.get_route_candidates()
+            route_candidates = route_planner.find_route_candidates()
             # print(f"Found route candidates: {route_candidates}")
 
             route_obj = route_candidates.get_most_likely_route_by_orientation()
