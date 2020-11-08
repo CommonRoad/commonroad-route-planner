@@ -129,7 +129,7 @@ def plot_route_environment(scenario: Scenario, planning_problem: PlanningProblem
 def draw_navigator(navigator):
     handles = draw_scenario(navigator.scenario, navigator.planning_problem, initial_state_color='#ed9d98')
 
-    for ctn, section in enumerate(navigator.sectionalized_environment):
+    for ctn, section in enumerate(navigator.list_sections):
 
         for route_lanelet_id in section:
             lanelet = navigator.scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)

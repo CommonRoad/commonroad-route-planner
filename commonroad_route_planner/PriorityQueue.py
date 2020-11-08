@@ -2,24 +2,19 @@ import heapq
 from typing import List
 
 
-# TODO: considering to use queue.PriorityQueue - synchronized - for branching multiple nodes with multiple processes
-
-
-# ================================================= #
-#            Priority Queue Implementation          #
-# ================================================= #
 class PriorityQueue:
     """
     Class implements a priority queue
     """
 
+    # todo: considering to use queue.PriorityQueue - synchronized - for branching multiple nodes with multiple processes
     def __init__(self):
         self.elements = []
         self.count = 0
 
     def is_empty(self):
         """
-        Test whether the queue is empty. Returns true if the queue is empty.
+        Returns true if the queue is empty.
         """
 
         return len(self.elements) == 0
