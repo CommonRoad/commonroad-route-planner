@@ -2,7 +2,7 @@ from typing import List
 
 import matplotlib as mpl
 
-# from commonroad_route_planner.RoutePlanner import Navigator
+from commonroad_route_planner.Route import Navigator, Route
 
 try:
     mpl.use('Qt5Agg')
@@ -125,8 +125,7 @@ def plot_route_environment(scenario: Scenario, planning_problem: PlanningProblem
     plt.show()
 
 
-# def draw_navigator(navigator: Navigator):
-def draw_navigator(navigator):
+def draw_navigator(navigator: Navigator):
     handles = draw_scenario(navigator.scenario, navigator.planning_problem, initial_state_color='#ed9d98')
 
     for ctn, section in enumerate(navigator.list_sections):
@@ -171,3 +170,32 @@ def draw_navigator(navigator):
             'fill_lanelet': True,
             'facecolor': '#128c01'
         }})
+
+
+def draw_route(route: Route, draw_route_lanelets=False, draw_reference_path=False):
+    handles = draw_scenario(route.scenario, route.planning_problem, initial_state_color='#ed9d98')
+
+    if draw_route_lanelets:
+        for id_lanelet in route.list_ids_lanelets:
+            lanelet = route.scenario.lanelet_network.find_lanelet_by_id(id_lanelet)
+            draw_object(lanelet, handles=handles, draw_params={'lanelet': {
+                # 'left_bound_color': '#0de309',
+                # 'right_bound_color': '#0de309',
+                # 'center_bound_color': '#0de309',
+                'unique_colors': False,  # colorizes center_vertices and labels of each lanelet differently
+                'draw_stop_line': False,
+                'stop_line_color': '#ffffff',
+                'draw_line_markings': False,
+                'draw_left_bound': False,
+                'draw_right_bound': False,
+                'draw_center_bound': False,
+                'draw_border_vertices': False,
+                'draw_start_and_direction': False,
+                'show_label': False,
+                'draw_linewidth': 0.5,
+                'fill_lanelet': True,
+                'facecolor': '#00b8cc'
+            }})
+
+    if draw_reference_path:
+        plt.plot(route.reference_path[:, 0], route.reference_path[:, 1], '-m', linewidth=2, zorder=31)

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from commonroad.common.file_reader import CommonRoadFileReader
 
 from commonroad_route_planner.RoutePlanner import RoutePlanner
-from commonroad_route_planner.utils_visualization import draw_navigator
+from commonroad_route_planner.utils_visualization import draw_route
 
 if __name__ == "__main__":
     scenario_path = 'example_scenarios/USA_Peach-2_1_T-1.xml'
@@ -21,17 +21,20 @@ if __name__ == "__main__":
     print(f"Found route candidates: {route_planner.num_route_candidates}")
 
     # retrieve the best route by orientation metric
-    route = route_planner.retrieve_best_route_by_orientation()
-
-    # obtain the navigator object of the route
-    navigator = route.navigator
-
-    # Query the distance until lane change is required
-    states = [planning_problem.initial_state]
-    distances_until_lane_change = [navigator.get_lane_change_distance(state) for state in states]
-    long_lat_distances = [navigator.get_long_lat_distance_to_goal(state.position) for state in states]
-    print(f"Distances until lane change: {distances_until_lane_change}")
-    print(f"Long-lat distances: {long_lat_distances}")
-
-    draw_navigator(navigator)
+    # route = route_planner.retrieve_best_route_by_orientation()
+    routes, _ = route_planner.retrieve_all_routes()
+    route = routes[0]
+    draw_route(route, draw_route_lanelets=True, draw_reference_path=True)
     plt.show()
+
+    # # obtain the navigator object of the route
+    # navigator = route.navigator
+    #
+    # # Query the distance until lane change is required
+    # states = [planning_problem.initial_state]
+    # distances_until_lane_change = [navigator.get_lane_change_distance(state) for state in states]
+    # long_lat_distances = [navigator.get_long_lat_distance_to_goal(state.position) for state in states]
+    # print(f"Distances until lane change: {distances_until_lane_change}")
+    # print(f"Long-lat distances: {long_lat_distances}")
+    #
+    # draw_navigator(navigator)

@@ -3,7 +3,7 @@ __copyright__ = ""
 __credits__ = [""]
 __version__ = "~0.8.0"
 __maintainer__ = "Daniel Tar"
-__email__ = "daniel.tar@tum.de, peter.kocsis@tum.de"
+__email__ = "daniel.tar@tum.de, peter.kocsis@tum.de, edmond.irani@tum.de"
 __status__ = "Under Development"
 
 import logging
