@@ -179,22 +179,21 @@ def draw_route(route: Route, draw_route_lanelets=False, draw_reference_path=Fals
         for id_lanelet in route.list_ids_lanelets:
             lanelet = route.scenario.lanelet_network.find_lanelet_by_id(id_lanelet)
             draw_object(lanelet, handles=handles, draw_params={'lanelet': {
-                # 'left_bound_color': '#0de309',
-                # 'right_bound_color': '#0de309',
-                # 'center_bound_color': '#0de309',
                 'unique_colors': False,  # colorizes center_vertices and labels of each lanelet differently
                 'draw_stop_line': False,
                 'stop_line_color': '#ffffff',
-                'draw_line_markings': False,
+                'draw_line_markings': True,
                 'draw_left_bound': False,
                 'draw_right_bound': False,
-                'draw_center_bound': False,
+                'draw_center_bound': True,
                 'draw_border_vertices': False,
-                'draw_start_and_direction': False,
+                'draw_start_and_direction': True,
                 'show_label': False,
-                'draw_linewidth': 0.5,
+                'draw_linewidth': 1,
                 'fill_lanelet': True,
-                'facecolor': '#00b8cc'
+                'facecolor': '#00b8cc',  # color for filling
+                'zorder': 30,  # put it higher in the plot, to make it visible
+                'center_bound_color': '#3232ff',  # color of the found route with arrow
             }})
 
     if draw_reference_path:
