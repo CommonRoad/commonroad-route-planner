@@ -6,10 +6,6 @@ from commonroad.geometry.shape import Shape, Rectangle
 from commonroad.planning.goal import GoalRegion
 from commonroad.scenario.lanelet import Lanelet
 from commonroad.scenario.scenario import Scenario
-try:
-    from commonroad_ccosy.geometry.util import resample_polyline
-except ModuleNotFoundError as exp:
-    pass
 
 
 def relative_orientation(from_angle1_in_rad, to_angle2_in_rad):
@@ -20,24 +16,32 @@ def relative_orientation(from_angle1_in_rad, to_angle2_in_rad):
     return phi
 
 
-def chaikins_corner_cutting2(coords, refinements=2):
-    coords = np.array(coords)
+def chaikins_corner_cutting(polyline: np.ndarray, num_refinements: int = 6) -> np.ndarray:
+    """
+    Chaikin's corner cutting algorithm smooths a polyline by replacing each original point with two new points.
+    The new points are at 1/4 and 3/4 along the way of an edge.
 
-    for _ in range(refinements):
-        L = coords.repeat(2, axis=0)
+    :param polyline: polyline with 2D points
+    :param num_refinements: how many times to apply the chaikins corner cutting algorithm. setting to 6 is smooth enough
+                            for most cases
+    :return: smoothed polyline
+    """
+    for _ in range(num_refinements):
+        L = polyline.repeat(2, axis=0)
         R = np.empty_like(L)
         R[0] = L[0]
         R[2::2] = L[1:-1:2]
         R[1:-1:2] = L[2::2]
         R[-1] = L[-1]
-        coords = L * 0.75 + R * 0.25
+        polyline = L * 0.75 + R * 0.25
 
-    return coords
+    return polyline
 
 
 def compute_polyline_length(polyline: np.ndarray) -> float:
     """
-    Computes the path length s of a given polyline
+    Computes the path length of a given polyline.
+
     :param polyline: The polyline
     :return: The path length of the polyline
     """
@@ -49,14 +53,55 @@ def compute_polyline_length(polyline: np.ndarray) -> float:
     return np.sum(np.sqrt(np.sum(distance_between_points ** 2, axis=1)))
 
 
-def resample_polyline_with_length_check(polyline):
+def resample_polyline_with_length_check(polyline, step=2):
     length = np.linalg.norm(polyline[-1] - polyline[0])
-    if length > 2.0:
-        polyline = resample_polyline(polyline, 1.0)
+    if length > step:
+        polyline = resample_polyline(polyline, step)
     else:
         polyline = resample_polyline(polyline, length / 10.0)
 
     return polyline
+
+
+def resample_polyline(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
+    """
+    Resamples the input polyline with the specified step size in euclidean distance. The distances between each
+    pair of consecutive vertices are examined. If it is larger than the step size, a new sample is added in between.
+
+    :param polyline: polyline with 2D points
+    :param step: minimum distance between each consecutive pairs of vertices
+    :return: resampled polyline
+    """
+    if len(polyline) < 2:
+        return np.array(polyline)
+
+    polyline_new = [polyline[0]]
+
+    current_idx = 0
+    current_position = step
+    current_distance = np.linalg.norm(polyline[0] - polyline[1])
+
+    # iterate through all pairs of vertices of the polyline
+    while current_idx < len(polyline) - 1:
+        if current_position <= current_distance:
+            # add new sample and increase current position
+            ratio = current_position / current_distance
+            polyline_new.append((1 - ratio) * polyline[current_idx] +
+                                ratio * polyline[current_idx + 1])
+            current_position += step
+
+        else:
+            # move on to the next pair of vertices
+            current_idx += 1
+            # if we are out of vertices, then break
+            if current_idx >= len(polyline) - 1:
+                break
+            # deduct the distance of previous vertices from the position
+            current_position = current_position - current_distance
+            # compute new distances of vertices
+            current_distance = np.linalg.norm(polyline[current_idx + 1] - polyline[current_idx])
+
+    return np.array(polyline_new)
 
 
 def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
@@ -84,7 +129,8 @@ def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
     return np.arctan2(direction_vector[1], direction_vector[0])
 
 
-def sort_lanelet_ids_by_orientation(list_ids_lanelets: List[int], orientation: float, position: np.ndarray, scenario: Scenario) \
+def sort_lanelet_ids_by_orientation(list_ids_lanelets: List[int], orientation: float, position: np.ndarray,
+                                    scenario: Scenario) \
         -> List[int]:
     """
     returns the lanelets sorted by relative orientation to the position and orientation given
@@ -153,3 +199,22 @@ def sort_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int]:
         )
 
     raise NotImplementedError("Whole lanelet as goal must be implemented here!")
+
+def compute_curvature_from_polyline(polyline: np.ndarray) -> np.ndarray:
+    """
+    Computes the curvature of a given polyline
+
+    :param polyline: The polyline for the curvature computation
+    :return: The curvature of the polyline
+    """
+    assert isinstance(polyline, np.ndarray) and polyline.ndim == 2 and len(
+        polyline[:, 0]) > 2, 'Polyline malformed for curvature computation p={}'.format(polyline)
+    x_d = np.gradient(polyline[:, 0])
+    x_dd = np.gradient(x_d)
+    y_d = np.gradient(polyline[:, 1])
+    y_dd = np.gradient(y_d)
+
+    # compute curvature
+    curvature = (x_d * y_dd - x_dd * y_d) / ((x_d ** 2 + y_d ** 2) ** (3. / 2.))
+
+    return curvature
