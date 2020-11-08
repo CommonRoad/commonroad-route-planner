@@ -98,16 +98,17 @@ class BatchProcessor:
 
             time1 = time.perf_counter()
             try:
+                # create route planner
                 route_planner = RoutePlanner(scenario, planning_problem, backend=RoutePlanner.Backend.NETWORKX_REVERSED)
+                # route candidate holder holds all feasible route candidates
+                route_planner.plan_routes()
 
-                route_candidates = route_planner.plan_routes()
-                # print(f"Found route candidates: {route_candidates}")
-
-                route_obj = route_candidates.retrieve_best_route_by_orientation()
+                # retrieve the best route by orientation metric
+                route = route_planner.retrieve_best_route_by_orientation()
                 # plot_found_routes(scenario, planning_problem, [route_obj.route])
 
                 # Navigator
-                navigator = route_obj.navigator
+                navigator = route.navigator
 
                 # Test States
                 states = [State(position=np.array([12, 26]), orientation=np.pi),
@@ -131,12 +132,12 @@ class BatchProcessor:
                 search_time = time.perf_counter() - time1
                 msg = base_msg + "search took\t{:10.4f}\tms\t".format(search_time * 1000)
 
-                if len(route_obj.list_ids_lanelets) == 0:
+                if len(route.list_ids_lanelets) == 0:
                     self.logger.warning(msg + "path NOT FOUND")
                     scenarios_path_not_found.append(scenario_id)
                     continue
 
-                goal_lanelet_id = route_obj.list_ids_lanelets[-1]
+                goal_lanelet_id = route.list_ids_lanelets[-1]
                 self.logger.debug(msg + "\tpath FOUND to goal lanelet: [{}]".format(goal_lanelet_id))
                 scenarios_path_found.append(scenario_id)
                 if plot_and_save_scenarios:
@@ -145,7 +146,7 @@ class BatchProcessor:
                     fig.suptitle(scenario.benchmark_id, fontsize=20)
                     fig.gca().axis('equal')
                     handles = {}  # collects handles of obstacle patches, plotted by matplotlib
-                    plot_limits = hf.get_plot_limits(route_obj.list_ids_lanelets, scenario, border=15)
+                    plot_limits = hf.get_plot_limits(route.list_ids_lanelets, scenario, border=15)
 
                     # plot the lanelet network and the planning problem
                     draw_object(scenario, handles=handles, plot_limits=plot_limits,
@@ -159,7 +160,7 @@ class BatchProcessor:
                     except AssertionError as error:
                         print(error)
 
-                    for route_lanelet_id in route_obj.list_ids_lanelets:
+                    for route_lanelet_id in route.list_ids_lanelets:
                         lanelet = scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
                         draw_object(lanelet, handles=handles, plot_limits=plot_limits, draw_params={'lanelet': {
                             'center_bound_color': '#3232ff',  # color of the found route
