@@ -11,7 +11,7 @@ import os
 import warnings
 from datetime import datetime
 from enum import Enum
-from typing import List, Union, Generator, Set
+from typing import List, Generator, Set, Union, Tuple
 
 import networkx as nx
 import numpy as np
@@ -19,8 +19,9 @@ from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import Lanelet, LaneletType
 from commonroad.scenario.scenario import Scenario
 
-from commonroad_route_planner.Queue import PriorityQueue
-from commonroad_route_planner.Route import RouteType, Route, RouteCandidateHolder
+from commonroad_route_planner.PriorityQueue import PriorityQueue
+from commonroad_route_planner.Route import RouteType, Route
+from utils_route import sort_lanelet_ids_by_orientation, sort_lanelet_ids_by_goal
 
 try:
     import pycrccosy
@@ -44,8 +45,10 @@ class RoutePlanner:
 
     class Backend(Enum):
         """
-        three options for constructing the routes: NETWORKX and NETWORKX_REVERSED will use built-in functions from
-        the package networkx, PRIORITY_QUEUE will use A-star search to find routes
+        three options for constructing the routes:
+            NETWORKX: uses built-in functions from the networkx package, tends to change lane late
+            NETWORKX_REVERSED: uses built-in functions from the networkx package, tends to change lane early
+            PRIORITY_QUEUE: uses A-star search to find routes, lane changing maneuver depends on the heuristic cost
         """
         NETWORKX = "networkx"
         NETWORKX_REVERSED = "networkx_reversed"
@@ -83,7 +86,7 @@ class RoutePlanner:
                  planning_problem: PlanningProblem,
                  set_types_lanelets_forbidden: List[LaneletType] = None,
                  allow_diagonal=False,
-                 backend=None,
+                 backend: Backend = Backend.NETWORKX,
                  log_to_console=False,
                  log_to_file=False):
         """
@@ -111,7 +114,6 @@ class RoutePlanner:
         self.planning_problem = planning_problem
 
         # initialize class attributes of RouteCandidateHolder and Route
-        RouteCandidateHolder.initialize(scenario=scenario, planning_problem=planning_problem)
         Route.initialize(scenario=scenario, planning_problem=planning_problem)
 
         if set_types_lanelets_forbidden is None:
@@ -154,7 +156,7 @@ class RoutePlanner:
 
             elif self.backend == RoutePlanner.Backend.NETWORKX_REVERSED:
                 if self.allow_diagonal:
-                    self.logger.warning("Diagonal node connection not tested")
+                    self.logger.warning("Diagonal node connection not implemented")
                     self.digraph = self._create_reversed_graph_from_lanelet_network_lane_change()
                 else:
                     self.digraph = self._create_reversed_graph_from_lanelet_network()
@@ -162,15 +164,12 @@ class RoutePlanner:
                 if self.allow_diagonal:
                     self.logger.critical("diagonal search with custom backend is not implemented")
 
-                self.frontier = PriorityQueue()
-                self.explored = set()
-            else:
-                raise ValueError(f"The backend {self.backend} is not recognized as supported backend "
-                                 f"for the RoutePlanner")
+        self.list_route_candidates = list()
+        self.num_route_candidates = 0
 
-    def plan_routes(self) -> Union[RouteCandidateHolder, None]:
+    def plan_routes(self):
         """
-        Find all paths to all of the goal lanelet from all the start lanelet using networkx module.
+        Plans all routes from all the start lanelet to all of the goal lanelet.
         If no goal lanelet ID is given then return a survival route.
 
         :return: list of lanelet ids from start to goal.
@@ -183,29 +182,27 @@ class RoutePlanner:
         for id_lanelet_start in self.id_lanelets_start:
             if self.ids_lanelets_goal:
                 # iterate for each possible goal lanelet id
-                for goal_lanelet_id in self.ids_lanelets_goal:
+                for id_lanelet_goal in self.ids_lanelets_goal:
+                    list_ids_lanelets = list()
                     if self.backend == RoutePlanner.Backend.NETWORKX:
-                        list_ids_lanelets = self._find_all_shortest_paths(id_lanelet_start, goal_lanelet_id)
+                        list_ids_lanelets = self._find_routes_networkx(id_lanelet_start, id_lanelet_goal)
 
                     elif self.backend == RoutePlanner.Backend.NETWORKX_REVERSED:
-                        list_ids_lanelets = self._find_shortest_reversed_path(id_lanelet_start, goal_lanelet_id)
+                        list_ids_lanelets = self._find_routes_networkx_reversed(id_lanelet_start, id_lanelet_goal)
 
                     elif self.backend == RoutePlanner.Backend.PRIORITY_QUEUE:
-                        list_ids_lanelets = self._find_path(id_lanelet_start, goal_lanelet_id)
+                        list_ids_lanelets = self._find_routes_priority_queue(id_lanelet_start, id_lanelet_goal)
 
-                    else:
-                        raise ValueError(f"The backend {self.backend} is not recognized as supported backend "
-                                         f"for the RoutePlanner")
-
-                    routes.extend(list_ids_lanelets)
+                    if list_ids_lanelets:
+                        routes.extend(list_ids_lanelets)
             else:
                 # no goal lanelet, find survival route
                 list_ids_lanelets = self._find_survival_route(id_lanelet_start)
                 routes.append(list_ids_lanelets)
 
-        route_candidate = RouteCandidateHolder(routes, self.route_type, self.set_ids_lanelets_permissible)
-
-        return route_candidate
+        self.list_route_candidates = [Route(route, self.route_type, self.set_ids_lanelets_permissible) for route in
+                                      routes if route]
+        self.num_route_candidates = len(self.list_route_candidates)
 
     @staticmethod
     def _filter_lanelets_by_type(list_lanelets_to_filter: List[Lanelet],
@@ -409,7 +406,6 @@ class RoutePlanner:
         :return: created graph from lanelet network with diagonal lane changes
         """
         # todo: test implementation
-
         graph = nx.DiGraph()
         nodes = list()
         edges = list()
@@ -503,165 +499,227 @@ class RoutePlanner:
     def _create_reversed_graph_from_lanelet_network_lane_change(self):
         raise NotImplementedError
 
-    def _find_all_shortest_paths(self, source_lanelet_id: int, target_lanelet_id: int = None) -> List[List]:
+    def _find_routes_networkx(self, id_lanelet_start: int, id_lanelet_goal: int = None) -> List[List]:
         """
-         Find all shortest paths using networkx module
-         :param source_lanelet_id: ID of source lanelet
-         :param target_lanelet_id: ID of goal lanelet
-         :return: list of simple paths with lanelet IDs
-         """
-        if source_lanelet_id is None:
-            raise self.NoSourceLaneletId()
-        if target_lanelet_id is None:
-            self.logger.info("SURVIVAL SCENARIO")
-            return self._find_survival_route(source_lanelet_id)
-        found_paths = list()
-        try:
-            found_paths = list(nx.all_shortest_paths(self.digraph, source=source_lanelet_id, target=target_lanelet_id,
-                                                     weight='weight', method='dijkstra'))
-        except nx.exception.NetworkXNoPath:
-            # it is a normal behaviour because of the overlapping lanelets in a road network
-            self.logger.debug("The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
-                                                                                                     source_lanelet_id))
-        return found_paths
+         Find all shortest paths using networkx module. This tends to change lane late.
 
-    def _find_shortest_reversed_path(self, source_lanelet_id: int, target_lanelet_id: int = None) -> List[List]:
-        """
-         Find the shortest paths reversed using networkx module
-         :param source_lanelet_id: ID of source lanelet
-         :param target_lanelet_id: ID of goal lanelet
-         :return: list of lanelet IDs
+         :param id_lanelet_start: ID of start lanelet
+         :param id_lanelet_goal: ID of goal lanelet
+         :return: list of lists of lanelet IDs
          """
-        if source_lanelet_id is None:
+        list_lanelets = list()
+
+        if id_lanelet_start is None:
             raise self.NoSourceLaneletId()
-        if target_lanelet_id is None:
-            self.logger.info("SURVIVAL SCENARIO")
-            return self._find_survival_route(source_lanelet_id)
-        found_paths = list()
+
+        if id_lanelet_goal is None:
+            self.logger.info("Survival scenario")
+            return self._find_survival_route(id_lanelet_start)
+
         try:
-            found_paths.append(list(nx.shortest_path(self.digraph, source=target_lanelet_id, target=source_lanelet_id,
-                                                     weight='weight', method='dijkstra'))[::-1])
+            list_lanelets = list(nx.all_shortest_paths(self.digraph, source=id_lanelet_start, target=id_lanelet_goal,
+                                                       weight='weight', method='dijkstra'))
         except nx.exception.NetworkXNoPath:
             # it is a normal behaviour because of the overlapping lanelets in a road network
-            self.logger.debug("The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
-                                                                                                     source_lanelet_id))
-        return found_paths
+            self.logger.debug(f"""The goal lanelet with ID [{id_lanelet_goal}] cannot be reached 
+                              from the start lanelet with ID [{id_lanelet_start}]""")
+        return list_lanelets
+
+    def _find_routes_networkx_reversed(self, id_lanelet_start: int, id_lanelet_goal: int = None) -> List[List]:
+        """
+         Find all shortest paths (reversed) using the networkx module. This tends to change lane early.
+
+         :param id_lanelet_start: ID of source lanelet
+         :param id_lanelet_goal: ID of goal lanelet
+         :return: list of lists of lanelet IDs
+         """
+        list_lanelets = list()
+
+        if id_lanelet_start is None:
+            raise self.NoSourceLaneletId()
+
+        if id_lanelet_goal is None:
+            self.logger.info("Survival scenario")
+            return self._find_survival_route(id_lanelet_start)
+
+        try:
+            list_lanelets.append(list(nx.shortest_path(self.digraph, source=id_lanelet_goal, target=id_lanelet_start,
+                                                       weight='weight', method='dijkstra'))[::-1])
+        except nx.exception.NetworkXNoPath:
+            # it is a normal behaviour because of the overlapping lanelets in a road network
+            self.logger.debug(f"""The goal lanelet with ID [{id_lanelet_goal}] cannot be reached 
+                                          from the start lanelet with ID [{id_lanelet_start}]""")
+        return list_lanelets
+
+    def _find_routes_priority_queue(self, id_lanelet_start: int, id_lanelet_goal: int = None) -> List[List]:
+        """
+         Find the shortest paths using own implementation (A-star). Lane change depends on heuristic.
+
+         :param id_lanelet_start: ID of source lanelet
+         :param id_lanelet_goal: ID of goal lanelet
+         :return: list of lists of lanelet IDs
+         """
+        list_lanelets = list()
+
+        if id_lanelet_start is None:
+            raise self.NoSourceLaneletId()
+
+        if id_lanelet_goal is None:
+            self.logger.debug("Survival scenario")
+            list_lanelets.append(self._find_survival_route(id_lanelet_start))
+        else:
+            try:
+                list_lanelets.append(self._find_route_astar(id_lanelet_start, id_lanelet_goal))
+            except self.NoPathFound:
+                # it is a normal behaviour because of the overlapping lanelets in a road network
+                self.logger.debug(f"""The goal lanelet with ID [{id_lanelet_goal}] cannot be reached 
+                                                          from the start lanelet with ID [{id_lanelet_start}]""")
+        return list_lanelets
 
     @staticmethod
-    def _calc_cost(current: Lanelet) -> float:
+    def _calc_cost_travel(current: Lanelet) -> float:
+        # use the length of the lanelet as the travel cost
         return current.distance[-1]
 
     @staticmethod
-    def _calc_heuristic(current: Lanelet, target: Lanelet) -> float:
-        diff = target.center_vertices[0] - current.center_vertices[-1]
+    def _calc_cost_heuristic(lanelet_current: Lanelet, lanelet_goal: Lanelet) -> float:
+        # use the distance between the vertices of the center lines as the heuristic cost
+        diff = lanelet_goal.center_vertices[0] - lanelet_current.center_vertices[-1]
         return np.sqrt(np.dot(diff, diff))
 
     def _add_child(self, parent_node: LaneletNode, next_lanelet_id: int, target: Lanelet, extra_cost: float = 0.0):
         next_lanelet = self.lanelet_network.find_lanelet_by_id(next_lanelet_id)
 
         frontier_lanelet_ids = self.frontier.get_item_ids()
-        cost = extra_cost + parent_node.cost + self._calc_cost(next_lanelet) + self._calc_heuristic(next_lanelet,
-                                                                                                    target)
+        cost = extra_cost + parent_node.cost + self._calc_cost_travel(next_lanelet) + self._calc_cost_heuristic(
+            next_lanelet,
+            target)
 
         node = RoutePlanner.LaneletNode(next_lanelet_id, next_lanelet, cost, parent_node.count + 1)
         node.parent_node = parent_node
 
-        # TODO: check speed
         if (next_lanelet_id not in self.explored) and (next_lanelet_id not in frontier_lanelet_ids):
             self.frontier.put(next_lanelet_id, node, cost)
         elif next_lanelet_id in frontier_lanelet_ids:
             self.frontier.update_item_if_exists(next_lanelet_id, node, cost)
 
-    def _find_astar_path(self, source_lanelet_id, target_lanelet_id: int) -> List:
+    def _find_route_astar(self, id_lanelet_start, id_lanelet_goal: int) -> List:
 
-        if source_lanelet_id not in self.set_ids_lanelets_permissible:
-            raise self.NoPathFound("It is not allowed to drive on the source lanelet, check the type of the lanelet")
+        if id_lanelet_start not in self.set_ids_lanelets_permissible:
+            raise self.NoPathFound("Start lanelet is not in the permissible set. Check its lanelet type.")
 
-        if target_lanelet_id not in self.set_ids_lanelets_permissible:
-            raise self.NoPathFound("It is not allowed to drive on the target lanelet, check the type of the lanelet")
+        if id_lanelet_goal not in self.set_ids_lanelets_permissible:
+            raise self.NoPathFound("Goal lanelet is not in the permissible set. Check its lanelet type.")
 
         self.frontier = PriorityQueue()
         self.explored = set()
 
-        target_lanelet = self.lanelet_network.find_lanelet_by_id(target_lanelet_id)
+        lanelet_current = self.lanelet_network.find_lanelet_by_id(id_lanelet_start)
+        lanelet_goal = self.lanelet_network.find_lanelet_by_id(id_lanelet_goal)
 
-        lanelet = self.lanelet_network.find_lanelet_by_id(source_lanelet_id)
-        node = RoutePlanner.LaneletNode(source_lanelet_id, lanelet,
-                                        self._calc_cost(lanelet) + self._calc_heuristic(lanelet, target_lanelet), 1)
-
+        # in astar search, the cost of a node f is the traveled cost g + heuristic cost h
+        cost_travel = self._calc_cost_travel(lanelet_current)
+        cost_heuristic = self._calc_cost_heuristic(lanelet_current, lanelet_goal)
+        node = RoutePlanner.LaneletNode(id_lanelet_start, lanelet_current, cost_travel + cost_heuristic, 1)
         self.frontier.put(node.id, node, node.cost)
-        while not self.frontier.is_empty():
 
+        # execute the search
+        while not self.frontier.is_empty():
             node: RoutePlanner.LaneletNode = self.frontier.pop()
 
-            # maybe the frontier is not empty but only contains invalid elements
             if node is None:
+                # maybe the frontier is not empty but only contains invalid elements
                 continue
-
-            if node.id == target_lanelet_id:
+            elif node.id == id_lanelet_goal:
+                # reached goal
                 break
-
+            # add node to explored set (close list)
             self.explored.add(node.id)
 
-            # ================= #
-            #    expand node    #
-            # ================= #
-            lanelet = node.lanelet
+            # expand node
+            lanelet_current = node.lanelet
             # add successors
-            for successor_id in lanelet.successor:
-                if successor_id not in self.set_ids_lanelets_permissible:
-                    continue
-                self._add_child(node, successor_id, target_lanelet, node.cost)
+            for id_successor in lanelet_current.successor:
+                if id_successor in self.set_ids_lanelets_permissible:
+                    self._add_child(node, id_successor, lanelet_goal, node.cost)
 
             # if we are changing lanelets then remove the lanelet lengths because it would be added twice
-            lanelet_length = self._calc_cost(lanelet)
+            lanelet_length = self._calc_cost_travel(lanelet_current)
 
             # add left lanelet
-            adj_left_id = lanelet.adj_left
-            if lanelet.adj_left_same_direction and adj_left_id and adj_left_id in self.set_ids_lanelets_permissible:
-                self._add_child(node, adj_left_id, target_lanelet, 1.0 - lanelet_length)
+            adj_left_id = lanelet_current.adj_left
+            if lanelet_current.adj_left_same_direction and adj_left_id and adj_left_id in self.set_ids_lanelets_permissible:
+                self._add_child(node, adj_left_id, lanelet_goal, 1.0 - lanelet_length)
 
                 if self.allow_diagonal:
                     left_lanelet_successor_ids = self.lanelet_network.find_lanelet_by_id(adj_left_id).successor
                     for left_lanelet_successor_id in left_lanelet_successor_ids:
-                        self._add_child(node, left_lanelet_successor_id, target_lanelet, 0.9)
+                        self._add_child(node, left_lanelet_successor_id, lanelet_goal, 0.9)
 
             # add right lanelet
-            adj_right_id = lanelet.adj_right
-            if lanelet.adj_right_same_direction and adj_right_id and adj_right_id in self.set_ids_lanelets_permissible:
-                self._add_child(node, adj_right_id, target_lanelet, 1.0 - lanelet_length)
+            adj_right_id = lanelet_current.adj_right
+            if lanelet_current.adj_right_same_direction and adj_right_id and adj_right_id in self.set_ids_lanelets_permissible:
+                self._add_child(node, adj_right_id, lanelet_goal, 1.0 - lanelet_length)
 
                 if self.allow_diagonal:
                     right_lanelet_successor_ids = self.lanelet_network.find_lanelet_by_id(adj_right_id).successor
                     for right_lanelet_successor_id in right_lanelet_successor_ids:
-                        self._add_child(node, right_lanelet_successor_id, target_lanelet, 0.9)
+                        self._add_child(node, right_lanelet_successor_id, lanelet_goal, 0.9)
         else:
             raise self.NoPathFound(
-                "The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
-                                                                                       source_lanelet_id))
-
-        reverse_path = list()
-
-        while node is not None:
-            reverse_path.append(node.id)
+                "The Target lanelet_id [{}] cannot be reached from Source [{}]".format(id_lanelet_goal,
+                                                                                       id_lanelet_start))
+        list_ids_lanelets_reversed = list()
+        # add ids by looking up to parent node
+        while node:
+            list_ids_lanelets_reversed.append(node.id)
             node = node.parent_node
+        # reverse the list to obtain the correct order from start to goal
+        return list_ids_lanelets_reversed[::-1]
 
-        return reverse_path[::-1]
+    def retrieve_all_routes(self) -> Tuple[List[Route], int]:
+        # returns a list of Route objects and total number of routes
+        return self.list_route_candidates, self.num_route_candidates
 
-    def _find_path(self, source_lanelet_id: int, target_lanelet_id: int = None) -> List[List]:
-        found_paths = list()
-        if source_lanelet_id is None:
-            raise self.NoSourceLaneletId()
+    def retrieve_best_route_by_orientation(self) -> Union[Route, None]:
+        """
+        Retrieves the best route found by some orientation metrics. If it is the survival scenario, then the first
+        route with idx 0 is returned.
+        """
+        if not len(self.list_route_candidates):
+            return None
 
-        if target_lanelet_id is None:
-            self.logger.debug("SURVIVAL SCENARIO")
-            found_paths.append(self._find_survival_route(source_lanelet_id))
+        if self.route_type == RouteType.SURVIVAL:
+            return self.list_route_candidates[0]
+
         else:
-            try:
-                found_paths.append(self._find_astar_path(source_lanelet_id, target_lanelet_id))
-            except self.NoPathFound:
-                # it is a normal behaviour because of the overlapping lanelets in a road network
-                self.logger.debug(
-                    "The Target lanelet_id [{}] cannot be reached from Source [{}]".format(target_lanelet_id,
-                                                                                           source_lanelet_id))
-        return found_paths
+            state_current = self.planning_problem.initial_state
+            # sort the lanelets in the scenario based on their orientation difference with the initial state
+            list_ids_lanelets_initial_sorted = sort_lanelet_ids_by_orientation(
+                self.scenario.lanelet_network.find_lanelet_by_position([state_current.position])[0],
+                state_current.orientation,
+                state_current.position,
+                self.scenario
+            )
+            # sor the lanelets in the scenario based on the goal region metric
+            list_ids_lanelets_goal_sorted = sort_lanelet_ids_by_goal(self.scenario, self.planning_problem.goal)
+
+            list_ids_lanelet_goal_candidates = np.array(
+                [route_candidate.list_ids_lanelets[-1] for route_candidate in self.list_route_candidates])
+
+            for id_lanelet_goal in list_ids_lanelets_goal_sorted:
+                if id_lanelet_goal in list_ids_lanelet_goal_candidates:
+                    list_ids_lanelets_initial_candidates = list()
+                    for route_candidate in self.list_route_candidates:
+                        if route_candidate.list_ids_lanelets[-1] == id_lanelet_goal:
+                            list_ids_lanelets_initial_candidates.append(route_candidate.list_ids_lanelets[0])
+                        else:
+                            list_ids_lanelets_initial_candidates.append(None)
+                    list_ids_lanelets_initial_candidates = np.array(list_ids_lanelets_initial_candidates)
+
+                    for initial_lanelet_id in list_ids_lanelets_initial_sorted:
+                        if initial_lanelet_id in list_ids_lanelets_initial_candidates:
+                            route = self.list_route_candidates[
+                                np.where(list_ids_lanelets_initial_candidates == initial_lanelet_id)[0][0]]
+                            return route
+            return None

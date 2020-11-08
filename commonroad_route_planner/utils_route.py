@@ -62,7 +62,7 @@ def resample_polyline_with_length_check(polyline):
 def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
     """
     Approximates the lanelet orientation with the two closest point to the given state
-    # TODO optimize more for speed
+    # todo: optimize more for speed
 
     :param lanelet: Lanelet on which the orientation at the given state should be calculated
     :param position: Position where the lanelet's orientation should be calculated
@@ -84,16 +84,16 @@ def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
     return np.arctan2(direction_vector[1], direction_vector[0])
 
 
-def sorted_lanelet_ids(lanelet_ids: List[int], orientation: float, position: np.ndarray, scenario: Scenario) \
+def sort_lanelet_ids_by_orientation(list_ids_lanelets: List[int], orientation: float, position: np.ndarray, scenario: Scenario) \
         -> List[int]:
     """
-    return the lanelets sorted by relative orientation to the position and orientation given
+    returns the lanelets sorted by relative orientation to the position and orientation given
     """
 
-    if len(lanelet_ids) <= 1:
-        return lanelet_ids
+    if len(list_ids_lanelets) <= 1:
+        return list_ids_lanelets
     else:
-        lanelet_id_list = np.array(lanelet_ids)
+        lanelet_id_list = np.array(list_ids_lanelets)
 
         def get_lanelet_relative_orientation(lanelet_id):
             lanelet = scenario.lanelet_network.find_lanelet_by_id(lanelet_id)
@@ -105,9 +105,10 @@ def sorted_lanelet_ids(lanelet_ids: List[int], orientation: float, position: np.
         return list(lanelet_id_list[sorted_indices])
 
 
-def sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int]:
+def sort_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int]:
     """
     Get the lanelet id of the goal
+
     :param goal:
     :param scenario: commonroad scenario
     :return: lanelet id, if the obstacle is out of lanelet boundary (no lanelet is found, therefore return the
@@ -123,6 +124,7 @@ def sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int
             [1.0 if len(set(goal_lanelet.successor).intersection(goal_lanelet_id_set)) > 0 else 0.0 for goal_lanelet
              in goal_lanelets])
         return [x for _, x in sorted(zip(goal_lanelets_with_successor, goal_lanelet_id_list))]
+
     if goal.state_list is not None and len(goal.state_list) != 0:
         if len(goal.state_list) > 1:
             raise ValueError("More than one goal state is not supported yet!")
@@ -141,8 +143,9 @@ def sorted_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int
 
         # the goal shape has always a shapley object -> because it is a rectangle
         # every shape has a shapely_object but ShapeGroup
+
         # noinspection PyUnresolvedReferences
-        return sorted_lanelet_ids(
+        return sort_lanelet_ids_by_orientation(
             scenario.lanelet_network.find_lanelet_by_shape(goal_shape),
             goal_orientation,
             np.array(goal_shape.shapely_object.centroid),

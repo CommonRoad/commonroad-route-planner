@@ -15,8 +15,7 @@ from shapely.geometry import Polygon
 from shapely.ops import cascaded_union
 
 from commonroad_route_planner.utils_route import resample_polyline_with_length_check, chaikins_corner_cutting2, \
-    compute_polyline_length, sorted_lanelet_ids
-from commonroad_route_planner.utils_route import sorted_lanelet_ids_by_goal
+    compute_polyline_length, sort_lanelet_ids_by_orientation
 
 try:
     import pycrccosy
@@ -45,12 +44,18 @@ class Route:
         cls.scenario = scenario
         cls.planning_problem = planning_problem
         cls.lanelet_network = scenario.lanelet_network
+        # initialized Navigator class attributes as well
+        Navigator.initialize(scenario, planning_problem)
 
-    def __init__(self, route: List[int], route_type: RouteType, set_ids_lanelets_permissible: Set[int] = None):
-        self.route = route
+    def __init__(self, list_ids_lanelets: List[int], route_type: RouteType,
+                 set_ids_lanelets_permissible: Set[int] = None):
+        # a route is created given the list of lanelet ids from start to goal
+        self.list_ids_lanelets = list_ids_lanelets
         self.type = route_type
 
-        self._sectionalized_environment = None
+        # a section is a list of lanelet ids that are adjacent to a lanelet in the route
+        self.list_sections = list()
+        self.set_ids_lanelets_in_sections = set()
         self.set_ids_lanelets_opposite_direction = set()
 
         if set_ids_lanelets_permissible is None:
@@ -62,7 +67,35 @@ class Route:
     def navigator(self):
         return Navigator(route=self)
 
-    def _get_adjacent_lanelets_list(self, id_lanelet: int, is_opposite_direction_permissible=False) -> list:
+    def retrieve_route_sections(self, is_opposite_direction_allowed: bool = False) -> Union[None, List[List[int]]]:
+        """
+        Retrieves route sections for lanelets in the route. A section is a list of lanelet ids that are adjacent to
+        a given lanelet.
+        """
+        if not self.list_sections:
+            # compute list of sections
+            for id_lanelet in self.list_ids_lanelets:
+                # for every lanelet in the route, get its adjacent lanelets
+                list_ids_lanelets_in_section = self._get_adjacent_lanelets_ids(id_lanelet,
+                                                                               is_opposite_direction_allowed)
+                # add lanelet from the route too
+                list_ids_lanelets_in_section.append(id_lanelet)
+                list_ids_lanelets_in_section.sort()
+
+                if len(self.list_sections) == 0:
+                    self.list_sections.append(list_ids_lanelets_in_section)
+
+                elif self.list_sections[-1] != list_ids_lanelets_in_section:
+                    # only add new sections if it is not the same as the last section
+                    self.list_sections.append(list_ids_lanelets_in_section)
+
+        for section in self.list_sections:
+            for id_lanelet in section:
+                self.set_ids_lanelets_in_sections.add(id_lanelet)
+
+        return self.list_sections
+
+    def _get_adjacent_lanelets_ids(self, id_lanelet: int, is_opposite_direction_permissible=False) -> list:
         """
         Recursively gets adj_left and adj_right lanelets of the given lanelet
 
@@ -126,50 +159,21 @@ class Route:
 
         return list_lanelets_adjacent
 
-    def _get_sectionalized_environment_from_route(self, route: List[int], is_opposite_direction_allowed: bool = False) \
-            -> Union[None, List[List[int]]]:
-        """
-        Creates sectionalized environment from a given route.
-        :param route: The route as a list of lanelet ids
-        :param is_opposite_direction_allowed: Indicates whether it is required to contain one opposite lanelet in the
-                                              environment
-        :return: Returns a sectional environment in a form of list of list of lanelet ids. This environment contains
-                 the environment of the planned route in every time steps.
-        """
-        if route is None:
-            return None
 
-        sections = list()
-        for lanelet_id_in_route in route:
-            lanelet_ids_in_section = self._get_adjacent_lanelets_list(lanelet_id_in_route,
-                                                                      is_opposite_direction_allowed)
-            lanelet_ids_in_section.append(lanelet_id_in_route)
-            lanelet_ids_in_section.sort()
-
-            if len(sections) == 0:
-                sections.append(lanelet_ids_in_section)
-            elif sections[-1] != lanelet_ids_in_section:
-                sections.append(lanelet_ids_in_section)
-
-        return sections
-
-    def get_sectionalized_environment(self, is_opposite_direction_allowed: bool = False):
-        if self._sectionalized_environment is None:
-            self._sectionalized_environment = \
-                self._get_sectionalized_environment_from_route(self.route,
-                                                               is_opposite_direction_allowed=
-                                                               is_opposite_direction_allowed)
-
-        return self._sectionalized_environment
-
-
-class RouteCandidateHolder:
+class Navigator:
     """
-    Class to hold route candidates.
+    Class to navigate the planned route
     """
     scenario = None
     planning_problem = None
     lanelet_network = None
+
+    class Backend(Enum):
+        """
+        todo:
+        """
+        PYCRCCOSY = 'pycrccosy'
+        APPROXIMATE = 'approx'
 
     @classmethod
     def initialize(cls, scenario: Scenario, planning_problem: PlanningProblem):
@@ -177,88 +181,19 @@ class RouteCandidateHolder:
         cls.planning_problem = planning_problem
         cls.lanelet_network = scenario.lanelet_network
 
-    def __init__(self, route_candidates: List[List[int]], route_type: RouteType, allowed_lanelet_ids: Set[int] = None):
-
-        self.route_candidates = route_candidates
-        self.route_type = route_type
-
-        # ==================== #
-        #        Extra         #
-        # ==================== #
-        if allowed_lanelet_ids is None:
-            self.allowed_lanelet_ids = {lanelet.lanelet_id for lanelet in self.lanelet_network.lanelets}
-        else:
-            self.allowed_lanelet_ids = allowed_lanelet_ids
-
-    def get_first_route(self) -> Route:
-        route = self.route_candidates[0]
-        return Route(route, self.route_type, self.allowed_lanelet_ids)
-
-    def get_most_likely_route_by_orientation(self) -> Union[Route, None]:
-        # handling the survival scenarios and where only one path found
-        # if there are more survival route in a scenario (ambiguity in getting the lanelet by position)
-        # then return the first one (with index 0)
-        if self.route_type == RouteType.SURVIVAL:
-            if len(self.route_candidates) > 1:
-                warnings.warn(
-                    "There are MULTIPLE survival route, but we are returning the 1st one (with index 0) from the "
-                    "route candidates")
-
-            return Route(self.route_candidates[0], self.route_type,
-                         self.allowed_lanelet_ids)
-
-        current_state = self.planning_problem.initial_state
-        sorted_initial_lanelet_ids = sorted_lanelet_ids(
-            self.scenario.lanelet_network.find_lanelet_by_position([current_state.position])[0],
-            current_state.orientation,
-            current_state.position,
-            self.scenario
-        )
-        sorted_goal_lanelet_ids = sorted_lanelet_ids_by_goal(self.scenario, self.planning_problem.goal)
-
-        candidates_goal_lanelet_ids = np.array([route_candidate[-1] for route_candidate in self.route_candidates])
-
-        for goal_lanelet_id in sorted_goal_lanelet_ids:
-            if goal_lanelet_id in candidates_goal_lanelet_ids:
-                # candidates_initial_lanelet_ids = [route_candidate[0] for route_candidate in self.route_candidates if
-                #                                   route_candidate[-1] == goal_lanelet_id else None]
-                candidates_initial_lanelet_ids = np.array(
-                    [route_candidate[0] if route_candidate[-1] == goal_lanelet_id else None for route_candidate in
-                     self.route_candidates])
-                for initial_lanelet_id in sorted_initial_lanelet_ids:
-                    if initial_lanelet_id in candidates_initial_lanelet_ids:
-                        route = self.route_candidates[
-                            np.where(candidates_initial_lanelet_ids == initial_lanelet_id)[0][0]]
-                        return Route(route, self.route_type,
-                                     self.allowed_lanelet_ids)
-        return None
-
-    def __repr__(self):
-        return f"{len(self.route_candidates)} routeCandidates of scenario {self.scenario.scenario_id}, " \
-               f"planning problem {self.planning_problem.planning_problem_id}"
-
-    def __str__(self):
-        return self.__repr__()
-
-
-class Navigator:
-    class Backend(Enum):
-        PYCRCCOSY = 'pycrccosy'
-        APPROXIMATE = 'approx'
-
     def __init__(self, route: Route):
+        """
+
+        """
         if 'pycrccosy' in sys.modules:
             self.backend = self.Backend.PYCRCCOSY
         else:
             self.backend = self.Backend.APPROXIMATE
 
-        self.scenario = route.scenario
-        self.lanelet_network = self.scenario.lanelet_network
-        self.planning_problem = route.planning_problem
         self.route = route
-        self.sectionalized_environment = self.route.get_sectionalized_environment()
-        self.sectionalized_environment_set = set(
-            [item for sublist in self.sectionalized_environment for item in sublist])
+        self.list_sections = route.retrieve_route_sections()
+        self.set_ids_lanelets_in_sections = route.set_ids_lanelets_in_sections
+
         self.merged_route_lanelets = None
         self.ccosy_list = self._get_route_cosy()
 
@@ -295,7 +230,8 @@ class Navigator:
         #     current_merged_lanelet = None
         current_merged_lanelet = None
 
-        for current_lanelet_id, next_lanelet_id in zip(self.route.route[:-1], self.route.route[1:]):
+        for current_lanelet_id, next_lanelet_id in zip(self.route.list_ids_lanelets[:-1],
+                                                       self.route.list_ids_lanelets[1:]):
             lanelet = self.lanelet_network.find_lanelet_by_id(current_lanelet_id)
             # If the lanelet is the end of a section, then change section
             if next_lanelet_id not in lanelet.successor:
@@ -308,7 +244,7 @@ class Navigator:
                 else:
                     current_merged_lanelet = Lanelet.merge_lanelets(current_merged_lanelet, lanelet)
 
-        goal_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.route[-1])
+        goal_lanelet = self.lanelet_network.find_lanelet_by_id(self.route.list_ids_lanelets[-1])
         if current_merged_lanelet is not None:
             current_merged_lanelet = Lanelet.merge_lanelets(current_merged_lanelet, goal_lanelet)
         else:
@@ -588,13 +524,13 @@ class Navigator:
         current_lanelet_ids_on_route = [
             current_lanelet_id
             for current_lanelet_id in active_lanelets
-            if current_lanelet_id in self.sectionalized_environment_set
+            if current_lanelet_id in self.set_ids_lanelets_in_sections
         ]
         # The state is not on the route, instant lane change is required
         if len(current_lanelet_ids_on_route) == 0:
             return 0.0
 
-        sorted_current_lanelet_ids_on_route = sorted_lanelet_ids(
+        sorted_current_lanelet_ids_on_route = sort_lanelet_ids_by_orientation(
             current_lanelet_ids_on_route,
             state.orientation,
             state.position,
@@ -623,6 +559,6 @@ class Navigator:
                 pass
 
             successors_set = set(current_lanelet.successor)
-            route_successors = successors_set.intersection(self.sectionalized_environment_set)
+            route_successors = successors_set.intersection(self.set_ids_lanelets_in_sections)
 
         return distance_until_lane_change
