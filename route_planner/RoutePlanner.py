@@ -21,7 +21,7 @@ from commonroad.scenario.scenario import Scenario
 
 from route_planner.PriorityQueue import PriorityQueue
 from route_planner.Route import RouteType, Route
-from utils_route import sort_lanelet_ids_by_orientation, sort_lanelet_ids_by_goal
+from route_planner.utils_route import sort_lanelet_ids_by_orientation, sort_lanelet_ids_by_goal
 
 try:
     import pycrccosy
