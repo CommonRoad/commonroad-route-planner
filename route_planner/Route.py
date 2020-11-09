@@ -15,7 +15,7 @@ import commonroad.geometry.shape as cr_shape
 from shapely.geometry import Polygon
 from shapely.ops import cascaded_union
 
-from commonroad_route_planner.utils_route import resample_polyline_with_length_check, chaikins_corner_cutting, \
+from route_planner.utils_route import resample_polyline_with_length_check, chaikins_corner_cutting, \
     compute_polyline_length, sort_lanelet_ids_by_orientation, resample_polyline, compute_curvature_from_polyline
 
 try:

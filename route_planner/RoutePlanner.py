@@ -19,8 +19,8 @@ from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import Lanelet, LaneletType
 from commonroad.scenario.scenario import Scenario
 
-from commonroad_route_planner.PriorityQueue import PriorityQueue
-from commonroad_route_planner.Route import RouteType, Route
+from route_planner.PriorityQueue import PriorityQueue
+from route_planner.Route import RouteType, Route
 from utils_route import sort_lanelet_ids_by_orientation, sort_lanelet_ids_by_goal
 
 try:
