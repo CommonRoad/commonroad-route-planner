@@ -16,11 +16,13 @@ python setup.py install
 
 ## Usage
 
+### Route planning
+
 You can find an example under `example/example_usage.py`:
 ```python
-from commonroad_route_planner.util import plot_found_routes
+from route_planner.utils_visualization import plot_found_routes
 from commonroad.common.file_reader import CommonRoadFileReader
-from commonroad_route_planner.route_planner import RoutePlanner
+from route_planner.RoutePlanner import RoutePlanner
 
 
 if __name__ == "__main__":
@@ -40,7 +42,7 @@ if __name__ == "__main__":
     planning_problem = list(planning_problem_set.planning_problem_dict.values())[planning_problem_idx]
 
     route_planner = RoutePlanner(scenario, planning_problem, backend="networkx")
-    routes = route_planner.search_alg()
+    routes = route_planner.plan_routes()
 
     plot_found_routes(scenario, planning_problem, routes)
 ```
@@ -48,6 +50,18 @@ if __name__ == "__main__":
 It should give the following result.
 
 ![USA_Peach-2_1_T-1](doc/res/USA_Peach-2_1_T-1.png "USA_Peach-2_1_T-1")
+
+### Extract environment of a route
+
+You can extract the environment from a planned route. It can be helpful in trajectory planning to know, which lanelets are leading to the desired goal.
+
+#### Supported features:
+* `is_opposite_direction_allowed`: Include one lanelet in the opposite direction (can be used for take over)
+
+After running the example under `example/example_usage.py`, you should get the following results:
+
+![USA_Peach-2_1_T-1_sectionized_opposite](doc/res/USA_Peach-2_1_T-1_sectionized_opposite.png "USA_Peach-2_1_T-1_sectionized_opposite")
+![USA_Peach-2_1_T-1_sectionized](doc/res/USA_Peach-2_1_T-1_sectionized.png "USA_Peach-2_1_T-1_sectionized")
 
 ### Backends
 The route planner supports different backends to search the shortest path

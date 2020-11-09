@@ -1,10 +1,13 @@
 import fnmatch
 import logging
 import os
+import pickle
+import time
 from datetime import datetime
 from typing import Tuple
 
 import matplotlib as mpl
+
 try:
     mpl.use('Qt5Agg')
     import matplotlib.pyplot as plt
@@ -17,7 +20,7 @@ from commonroad.common.file_reader import CommonRoadFileReader
 from commonroad.planning.planning_problem import PlanningProblemSet
 from commonroad.scenario.scenario import Scenario
 
-from commonroad_route_planner.route_planner import RoutePlanner
+from route_planner.RoutePlanner import RoutePlanner
 
 
 def load_config_file(filename) -> dict:
@@ -88,8 +91,27 @@ def get_existing_scenarios(root_dir) -> dict:
     return scenarios
 
 
+def get_existing_pickle_scenarios(root_dir) -> dict:
+    scenarios = dict()
+    for path, directories, files in os.walk(root_dir):
+        for scenario in fnmatch.filter(files, "*.pickle"):
+            # res = os.path.normpath(path).split(os.path.sep)
+            # rel_path_to_scenario_from_root = os.path.join(*res[1:])
+            rel_path_to_scenario_from_root = path
+            scenario_name = scenario[:-7]  # chop the '.xml' extension
+            scenarios[scenario_name] = rel_path_to_scenario_from_root
+
+    return scenarios
+
+
 def get_existing_scenario_ids(root_dir) -> list:
     existing_scenarios = get_existing_scenarios(root_dir)
+    scenario_ids = list(existing_scenarios.keys())
+    return scenario_ids
+
+
+def get_existing_pickle_scenario_ids(root_dir) -> list:
+    existing_scenarios = get_existing_pickle_scenarios(root_dir)
     scenario_ids = list(existing_scenarios.keys())
     return scenario_ids
 
@@ -105,15 +127,33 @@ def load_scenario(root_dir, scenario_id) -> Tuple[Scenario, PlanningProblemSet]:
     return scenario, planning_problem_set
 
 
+def load_pickle_scenario(root_dir, scenario_id) -> Tuple[Scenario, PlanningProblemSet]:
+    path_to_scenario = get_existing_pickle_scenarios(root_dir)[scenario_id]
+    scenario_path = os.path.join(path_to_scenario, scenario_id + '.pickle')
+    # load scenario and planning problem set
+    with open(scenario_path, "rb") as pickle_scenario:
+        time1 = time.perf_counter()
+        loaded_scenario_tuple = pickle.load(pickle_scenario)
+        pickle_load_time = (time.perf_counter() - time1) * 1000
+        print("Loading scenario [{:<20}] took\t{:10.4f}\tms".format(scenario_id, pickle_load_time))
+
+    return loaded_scenario_tuple
+
+
 def load_scenarios(root_dir, scenario_ids):
     for scenario_id in scenario_ids:
         yield load_scenario(root_dir, scenario_id)
 
 
+def load_pickle_scenarios(root_dir, scenario_ids):
+    for scenario_id in scenario_ids:
+        yield load_pickle_scenario(root_dir, scenario_id)
+
+
 def execute_search(scenario, planning_problem, backend="priority_queue"):
     route_planner = RoutePlanner(scenario, planning_problem, backend=backend)
 
-    return route_planner.search_alg()
+    return route_planner.plan_routes()
 
 
 def get_last_time_step_in_scenario(scenario: Scenario):
@@ -124,6 +164,33 @@ def get_last_time_step_in_scenario(scenario: Scenario):
             last_time_step = time_step
 
     return last_time_step
+
+
+def get_plot_limits_from_routes(route, scenario, border=15):
+    x_min_values = list()
+    x_max_values = list()
+    y_min_values = list()
+    y_max_values = list()
+    for route_lanelet_id in route.list_ids_lanelets:
+        lanelet = scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
+        x_min_values.append(lanelet.center_vertices[:, 0].min())
+        x_max_values.append(lanelet.center_vertices[:, 0].max())
+        y_min_values.append(lanelet.center_vertices[:, 1].min())
+        y_max_values.append(lanelet.center_vertices[:, 1].max())
+
+    plot_limits = [min(x_min_values) - border, max(x_max_values) + border,
+                   min(y_min_values) - border, max(y_max_values) + border]
+    return plot_limits
+
+
+def get_plot_limits_from_reference_path(route, border=10):
+    x_min = min(route.reference_path[:, 0])
+    x_max = max(route.reference_path[:, 0])
+    y_min = min(route.reference_path[:, 1])
+    y_max = max(route.reference_path[:, 1])
+
+    plot_limits = [x_min - border, x_max + border, y_min - border, y_max + border]
+    return plot_limits
 
 
 def dim(a):
