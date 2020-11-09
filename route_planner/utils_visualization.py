@@ -2,7 +2,7 @@ from typing import List
 
 import matplotlib as mpl
 
-from route_planner.Route import Navigator, Route
+from route_planner.Route import Route
 
 try:
     mpl.use('Qt5Agg')
@@ -53,7 +53,6 @@ def draw_scenario(scenario: Scenario, planning_problem: PlanningProblem, initial
         draw_object(scenario, handles=handles)
 
     draw_object(planning_problem, handles=handles)
-    # fig.gca().autoscale()
 
     draw_state(planning_problem.initial_state, color=initial_state_color)
 
@@ -129,7 +128,7 @@ def plot_route_environment(scenario: Scenario, planning_problem: PlanningProblem
     plt.show()
 
 
-def draw_navigator(navigator: Navigator):
+def draw_navigator(navigator):
     handles = draw_scenario(navigator.scenario, navigator.planning_problem, initial_state_color='#ed9d98')
 
     for ctn, section in enumerate(navigator.list_sections):
@@ -205,13 +204,13 @@ def draw_route(route: Route, draw_route_lanelets=False, draw_reference_path=Fals
         plt.plot(route.reference_path[:, 0], route.reference_path[:, 1], '-m', linewidth=3.5, zorder=31)
 
 
-def get_plot_limits_from_routes(route, scenario, border=15):
+def get_plot_limits_from_routes(route, border=15):
     x_min_values = list()
     x_max_values = list()
     y_min_values = list()
     y_max_values = list()
     for route_lanelet_id in route.list_ids_lanelets:
-        lanelet = scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
+        lanelet = route.scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
         x_min_values.append(lanelet.center_vertices[:, 0].min())
         x_max_values.append(lanelet.center_vertices[:, 0].max())
         y_min_values.append(lanelet.center_vertices[:, 1].min())

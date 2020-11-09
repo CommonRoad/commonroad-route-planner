@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plt
 from commonroad.common.file_reader import CommonRoadFileReader
 
@@ -6,32 +7,34 @@ from route_planner.utils_visualization import draw_route, get_plot_limits_from_r
     get_plot_limits_from_routes
 
 if __name__ == "__main__":
-    scenario_path = '../scenarios/DEU_Gar-3_2_T-1.xml'
+    path_notebook = os.getcwd()
+    path_scenario = os.path.join(path_notebook, "../scenarios/")
+    id_scenario = 'USA_Peach-2_1_T-1'
 
-    # open and read in scenario and planning problem set
-    scenario, planning_problem_set = CommonRoadFileReader(scenario_path).open()
+    # read in scenario and planning problem set
+    scenario, planning_problem_set = CommonRoadFileReader(path_scenario + id_scenario + '.xml').open()
+    # retrieve the first planning problem in the problem set
+    planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
 
-    # retrieve planning problem with given index (for cooperative scenario:0, 1, 2, ..., otherwise: 0)
-    planning_problem_idx = 0
-    planning_problem = list(planning_problem_set.planning_problem_dict.values())[planning_problem_idx]
-
-    # create route planner
+    # instantiate a route planner
     route_planner = RoutePlanner(scenario, planning_problem, backend=RoutePlanner.Backend.NETWORKX_REVERSED)
 
-    # plan routes by calling this function
+    # plan routes
     route_planner.plan_routes()
-    print(f"Feasible route candidates: {route_planner.num_route_candidates}")
 
-    # retrieve the planned routes
-    # option 1: retrieve the best route by orientation metric
-    # route = route_planner.retrieve_best_route_by_orientation()
-    # option 2: retrieve all route and manually select the route by indexing
+    # retrieve a route
+    # option 1: retrieve all routes and manually select a route by its index
     routes, num_route_candidates = route_planner.retrieve_all_routes()
+    print(f"Feasible route candidates: {num_route_candidates}")
+    # the index should not exceed (num_route_candidates - 1)
     route = routes[0]
+
+    # option 2: retrieve the best route by orientation metric
+    # route = route_planner.retrieve_best_route_by_orientation()
 
     # retrieve plot limits for better visualization. we can either use help from the route lanelet or the reference path
     plot_limits = get_plot_limits_from_reference_path(route)
-    # plot_limits = get_plot_limits_from_routes(route, scenario)
+    # plot_limits = get_plot_limits_from_routes(route)
     size_x = 20
     ratio_x_y = (plot_limits[1] - plot_limits[0]) / (plot_limits[3] - plot_limits[2])
     fig = plt.figure(figsize=(size_x, size_x / ratio_x_y))
