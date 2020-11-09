@@ -1,20 +1,18 @@
-# all paths need to be specified relative to file batch_processor
-
-# Logging
+# logging
 log_to_file: True
-log_file_dir: ../solutions/logs
+log_file_dir: ../outputs/logs/
 log_file_name: new_ccosy
 add_timestamp_to_log_file: True
 
 # input directory of your intended CommonRoad scenarios
-# do NOT put a slash at the end
-input_path: ../example/example_scenarios
-# output directory for CommonRoad solution files
-output_path: ../solutions/figs/new_ccosy_projection_domain
+input_path: ../scenarios/
+# output directory for produced figs
+output_path: ../outputs/figs/
+# whether to produce figures of planned routes
+save_to_fig: True
 # overwrite solution file if it already exists
 overwrite: True
-# timeout time for trajectory planner [s]
-# timeout: 120
+
 
 # the list of scenarios in form "- scenario_id"
 # if it is empty then run all scenarios

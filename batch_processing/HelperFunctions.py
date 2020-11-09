@@ -20,7 +20,7 @@ from commonroad.common.file_reader import CommonRoadFileReader
 from commonroad.planning.planning_problem import PlanningProblemSet
 from commonroad.scenario.scenario import Scenario
 
-from commonroad_route_planner.RoutePlanner import RoutePlanner
+from route_planner.RoutePlanner import RoutePlanner
 
 
 def load_config_file(filename) -> dict:
@@ -166,21 +166,30 @@ def get_last_time_step_in_scenario(scenario: Scenario):
     return last_time_step
 
 
-def get_plot_limits(route, scenario, border=15):
-
+def get_plot_limits_from_routes(route, scenario, border=15):
     x_min_values = list()
     x_max_values = list()
     y_min_values = list()
     y_max_values = list()
-    for route_lanelet_id in route:
+    for route_lanelet_id in route.list_ids_lanelets:
         lanelet = scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
         x_min_values.append(lanelet.center_vertices[:, 0].min())
         x_max_values.append(lanelet.center_vertices[:, 0].max())
         y_min_values.append(lanelet.center_vertices[:, 1].min())
         y_max_values.append(lanelet.center_vertices[:, 1].max())
 
-    plot_limits = [min(x_min_values) - border, max(x_max_values) + border, min(y_min_values) - border,
-                   max(y_max_values) + border]
+    plot_limits = [min(x_min_values) - border, max(x_max_values) + border,
+                   min(y_min_values) - border, max(y_max_values) + border]
+    return plot_limits
+
+
+def get_plot_limits_from_reference_path(route, border=10):
+    x_min = min(route.reference_path[:, 0])
+    x_max = max(route.reference_path[:, 0])
+    y_min = min(route.reference_path[:, 1])
+    y_max = max(route.reference_path[:, 1])
+
+    plot_limits = [x_min - border, x_max + border, y_min - border, y_max + border]
     return plot_limits
 
 

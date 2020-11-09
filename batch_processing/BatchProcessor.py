@@ -6,8 +6,8 @@ import time
 commonroad_route_planner_root = "./"
 sys.path.append(os.path.join(commonroad_route_planner_root))
 
-import numpy as np
 import matplotlib as mpl
+import matplotlib.pyplot as plot
 
 try:
     mpl.use('Qt5Agg')
@@ -16,10 +16,8 @@ except ImportError:
     mpl.use('TkAgg')
     import matplotlib.pyplot as plt
 
-from commonroad.scenario.trajectory import State
-from commonroad_route_planner.RoutePlanner import RoutePlanner
-from commonroad.visualization.draw_dispatch_cr import draw_object
-from commonroad_route_planner.utils_visualization import draw_state
+from route_planner.RoutePlanner import RoutePlanner
+from route_planner.utils_visualization import draw_route
 import HelperFunctions as hf
 
 
@@ -74,10 +72,8 @@ class BatchProcessor:
         scenarios_with_initial_state_error = list()
 
         # plotting
-        plot_and_save_scenarios = True
+        save_to_fig = self.configs['save_to_fig']
         plt.style.use('classic')
-        inch_in_cm = 2.54
-        figsize = [60, 30]
 
         counter = 1
         for idx, (scenario, planning_problem_set) in enumerate(
@@ -102,19 +98,19 @@ class BatchProcessor:
                 route_planner = RoutePlanner(scenario, planning_problem, backend=RoutePlanner.Backend.NETWORKX_REVERSED)
                 # route candidate holder holds all feasible route candidates
                 route_planner.plan_routes()
+                self.logger.info(f"Found route candidates: {route_planner.num_route_candidates}")
 
                 # retrieve the best route by orientation metric
                 route = route_planner.retrieve_best_route_by_orientation()
-                # plot_found_routes(scenario, planning_problem, [route_obj.route])
 
-                # Navigator
-                navigator = route.navigator
-
-                # Test States
-                states = [State(position=np.array([12, 26]), orientation=np.pi),
-                          State(position=np.array([20, 19]), orientation=np.pi),
-                          State(position=np.array([-7.6, 57]), orientation=np.pi / 2),
-                          planning_problem.initial_state]
+                # # Navigator
+                # navigator = route.navigator
+                #
+                # # Test States
+                # states = [State(position=np.array([12, 26]), orientation=np.pi),
+                #           State(position=np.array([20, 19]), orientation=np.pi),
+                #           State(position=np.array([-7.6, 57]), orientation=np.pi / 2),
+                #           planning_problem.initial_state]
 
             except IndexError as error:
                 search_time = time.perf_counter() - time1
@@ -140,49 +136,18 @@ class BatchProcessor:
                 goal_lanelet_id = route.list_ids_lanelets[-1]
                 self.logger.debug(msg + "\tpath FOUND to goal lanelet: [{}]".format(goal_lanelet_id))
                 scenarios_path_found.append(scenario_id)
-                if plot_and_save_scenarios:
-                    fig = plt.figure(num=0, figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
-                    fig.clf()
-                    fig.suptitle(scenario.benchmark_id, fontsize=20)
+
+                if save_to_fig:
+                    plot_limits = hf.get_plot_limits_from_reference_path(route)
+                    # plot_limits = hf.get_plot_limits_from_routes(route, scenario)
+                    size_x = 20
+                    ratio_x_y = (plot_limits[1] - plot_limits[0]) / (plot_limits[3] - plot_limits[2])
+                    fig = plt.figure(figsize=(size_x, size_x / ratio_x_y))
                     fig.gca().axis('equal')
-                    handles = {}  # collects handles of obstacle patches, plotted by matplotlib
-                    plot_limits = hf.get_plot_limits(route.list_ids_lanelets, scenario, border=15)
 
-                    # plot the lanelet network and the planning problem
-                    draw_object(scenario, handles=handles, plot_limits=plot_limits,
-                                draw_params={'lanelet': {'show_label': False}})
-                    draw_object(planning_problem, handles=handles, plot_limits=plot_limits)
-                    fig.gca().autoscale()
+                    fig.suptitle(scenario.benchmark_id, fontsize=20)
 
-                    # draw ego vehicle - with a collision object - uses commonroad_cc.visualizer
-                    try:
-                        draw_state(planning_problem.initial_state)
-                    except AssertionError as error:
-                        print(error)
-
-                    for route_lanelet_id in route.list_ids_lanelets:
-                        lanelet = scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
-                        draw_object(lanelet, handles=handles, plot_limits=plot_limits, draw_params={'lanelet': {
-                            'center_bound_color': '#3232ff',  # color of the found route
-                            'draw_stop_line': False,
-                            'stop_line_color': '#ff0000',
-                            'draw_line_markings': True,
-                            'draw_left_bound': False,
-                            'draw_right_bound': False,
-                            'draw_center_bound': True,
-                            'draw_border_vertices': False,
-                            'draw_start_and_direction': True,
-                            'show_label': False,
-                            'draw_linewidth': 2,
-                            'fill_lanelet': False,
-                            'facecolor': '#c7c7c7',
-                            'zorder': 30  # put it higher in the plot, to make it visible
-                        }})
-
-                        # TODO: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
-                        plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b", zorder=30,
-                                 scalex=False,
-                                 scaley=False)
+                    draw_route(route, draw_route_lanelets=True, draw_reference_path=True, plot_limits=plot_limits)
 
                     # saving solved solutions
                     output_folder = self.configs["output_path"]

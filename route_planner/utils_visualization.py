@@ -2,7 +2,7 @@ from typing import List
 
 import matplotlib as mpl
 
-from commonroad_route_planner.Route import Navigator, Route
+from route_planner.Route import Navigator, Route
 
 try:
     mpl.use('Qt5Agg')
@@ -35,21 +35,25 @@ def draw_state(state: State, fig_num=None, color='red'):
                 draw_params={'shape': {'facecolor': f'{color}'}})
 
 
-def draw_scenario(scenario: Scenario, planning_problem: PlanningProblem, initial_state_color='red'):
-    plt.style.use('classic')
-    inch_in_cm = 2.54
-    figsize = [60, 30]
-
-    fig = plt.figure(num=0, figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
-    fig.clf()
-    fig.gca().axis('equal')
+def draw_scenario(scenario: Scenario, planning_problem: PlanningProblem, initial_state_color='red', plot_limits=None):
+    # plt.style.use('classic')
+    # inch_in_cm = 2.54
+    # figsize = [60, 30]
+    #
+    # fig = plt.figure(num=0, figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
+    # fig.clf()
+    # fig.gca().axis('equal')
 
     handles = {}  # collects handles of obstacle patches, plotted by matplotlib
 
     # plot the lanelet network and the planning problem
-    draw_object(scenario, handles=handles)
+    if plot_limits:
+        draw_object(scenario, handles=handles, plot_limits=plot_limits)
+    else:
+        draw_object(scenario, handles=handles)
+
     draw_object(planning_problem, handles=handles)
-    fig.gca().autoscale()
+    # fig.gca().autoscale()
 
     draw_state(planning_problem.initial_state, color=initial_state_color)
 
@@ -172,8 +176,9 @@ def draw_navigator(navigator: Navigator):
         }})
 
 
-def draw_route(route: Route, draw_route_lanelets=False, draw_reference_path=False):
-    handles = draw_scenario(route.scenario, route.planning_problem, initial_state_color='#ed9d98')
+def draw_route(route: Route, draw_route_lanelets=False, draw_reference_path=False, plot_limits=None):
+    handles = draw_scenario(route.scenario, route.planning_problem, initial_state_color='#ed9d98',
+                            plot_limits=plot_limits)
 
     if draw_route_lanelets:
         for id_lanelet in route.list_ids_lanelets:
@@ -197,4 +202,4 @@ def draw_route(route: Route, draw_route_lanelets=False, draw_reference_path=Fals
             }})
 
     if draw_reference_path:
-        plt.plot(route.reference_path[:, 0], route.reference_path[:, 1], '-m', linewidth=2, zorder=31)
+        plt.plot(route.reference_path[:, 0], route.reference_path[:, 1], '-m', linewidth=3.5, zorder=31)

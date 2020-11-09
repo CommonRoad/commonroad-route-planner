@@ -20,9 +20,9 @@ python setup.py install
 
 You can find an example under `example/example_usage.py`:
 ```python
-from commonroad_route_planner.utils_visualization import plot_found_routes
+from route_planner.utils_visualization import plot_found_routes
 from commonroad.common.file_reader import CommonRoadFileReader
-from commonroad_route_planner.RoutePlanner import RoutePlanner
+from route_planner.RoutePlanner import RoutePlanner
 
 
 if __name__ == "__main__":
