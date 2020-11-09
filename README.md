@@ -1,6 +1,6 @@
 # CommonRoad Route Planner
 
-This repository hosts the code base of a commonly used route planner. The basic functionality is to find a sequence of lanelets (route) that leads from the initial lanelet(s)  to the goal lanelet(s) of the planning problem. It also works on survival scenarios (where no goal is specified).
+This repository hosts the code base of a commonly used route planner. The basic functionality is to find a sequence of lanelets (route) that leads from the initial lanelet(s)  to the goal lanelet(s) of the planning problem. It also works on survival scenarios (where no goal is specified). Additionally, it also constructs a reference path for each planned route.
 
 ### Backend
 The planner supports different backends to search for the shortest route in the scenario:
