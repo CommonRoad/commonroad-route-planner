@@ -38,16 +38,18 @@ except ModuleNotFoundError as exp:
 class RoutePlanner:
     """
     Main class for planning routes in CommonRoad scenarios. This is a higher level planner that plans on the lanelet
-    level. It returns the the best routes for each start lanelet to all goal lanelets, with each route in the form of an
-    ordered list of lanelet IDs. The best route has the lowest cost computed per the heuristic function.
-    In survival scenarios (with no goal lanelet), the planner advanced with the priorities: forward, right, left.
+    level. It returns the the best routes for each pair of start/goal lanelets, with each route in the form of an
+    ordered list of lanelet IDs. Depending on the utilized backend, the best route may have the shortest distance (if
+    using NETWORKX and NETWORKX_REVERSEd as backend) or may have the lowest cost computed per the heuristic function (if
+    using PRIORITY_QUEUE as backend). In survival scenarios (with no goal lanelet), the planner advanced with the
+    priorities: forward, right, left.
     """
 
     class Backend(Enum):
         """
         three options for constructing the routes:
-            NETWORKX: uses built-in functions from the networkx package, tends to change lane late
-            NETWORKX_REVERSED: uses built-in functions from the networkx package, tends to change lane early
+            NETWORKX: uses built-in functions from the networkx package, tends to change lane later
+            NETWORKX_REVERSED: uses built-in functions from the networkx package, tends to change lane earlier
             PRIORITY_QUEUE: uses A-star search to find routes, lane changing maneuver depends on the heuristic cost
         """
         NETWORKX = "networkx"
@@ -701,7 +703,7 @@ class RoutePlanner:
                 state_current.position,
                 self.scenario
             )
-            # sor the lanelets in the scenario based on the goal region metric
+            # sort the lanelets in the scenario based on the goal region metric
             list_ids_lanelets_goal_sorted = sort_lanelet_ids_by_goal(self.scenario, self.planning_problem.goal)
 
             list_ids_lanelet_goal_candidates = np.array(

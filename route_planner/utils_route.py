@@ -200,6 +200,7 @@ def sort_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int]:
 
     raise NotImplementedError("Whole lanelet as goal must be implemented here!")
 
+
 def compute_curvature_from_polyline(polyline: np.ndarray) -> np.ndarray:
     """
     Computes the curvature of a given polyline
