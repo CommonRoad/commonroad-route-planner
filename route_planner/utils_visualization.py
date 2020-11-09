@@ -1,22 +1,22 @@
 from typing import List
 
-import matplotlib as mpl
+import matplotlib.pyplot as plt
+from commonroad.geometry.shape import Rectangle
+from commonroad.planning.planning_problem import PlanningProblem
+from commonroad.prediction.prediction import TrajectoryPrediction
+from commonroad.scenario.scenario import Scenario
+from commonroad.scenario.trajectory import Trajectory, State
+from commonroad.visualization.draw_dispatch_cr import draw_object
 
 from route_planner.Route import Route
 
-try:
-    mpl.use('Qt5Agg')
-    import matplotlib.pyplot as plt
-except ImportError:
-    mpl.use('TkAgg')
-    import matplotlib.pyplot as plt
 
-from commonroad.geometry.shape import Rectangle
-from commonroad.scenario.scenario import Scenario
-from commonroad.planning.planning_problem import PlanningProblem
-from commonroad.prediction.prediction import TrajectoryPrediction
-from commonroad.scenario.trajectory import Trajectory, State
-from commonroad.visualization.draw_dispatch_cr import draw_object
+# try:
+#     mpl.use('Qt5Agg')
+#     import matplotlib.pyplot as plt
+# except ImportError:
+#     mpl.use('TkAgg')
+#     import matplotlib.pyplot as plt
 
 
 def draw_state(state: State, fig_num=None, color='red'):
