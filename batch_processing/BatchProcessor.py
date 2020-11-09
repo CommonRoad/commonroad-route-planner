@@ -7,7 +7,6 @@ commonroad_route_planner_root = "./"
 sys.path.append(os.path.join(commonroad_route_planner_root))
 
 import matplotlib as mpl
-import matplotlib.pyplot as plot
 
 try:
     mpl.use('Qt5Agg')
@@ -17,7 +16,7 @@ except ImportError:
     import matplotlib.pyplot as plt
 
 from route_planner.RoutePlanner import RoutePlanner
-from route_planner.utils_visualization import draw_route
+from route_planner.utils_visualization import draw_route, get_plot_limits_from_reference_path
 import HelperFunctions as hf
 
 
@@ -138,8 +137,8 @@ class BatchProcessor:
                 scenarios_path_found.append(scenario_id)
 
                 if save_to_fig:
-                    plot_limits = hf.get_plot_limits_from_reference_path(route)
-                    # plot_limits = hf.get_plot_limits_from_routes(route, scenario)
+                    plot_limits = get_plot_limits_from_reference_path(route)
+                    # plot_limits = get_plot_limits_from_routes(route, scenario)
                     size_x = 20
                     ratio_x_y = (plot_limits[1] - plot_limits[0]) / (plot_limits[3] - plot_limits[2])
                     fig = plt.figure(figsize=(size_x, size_x / ratio_x_y))
