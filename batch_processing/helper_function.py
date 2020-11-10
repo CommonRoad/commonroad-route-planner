@@ -20,7 +20,7 @@ from commonroad.common.file_reader import CommonRoadFileReader
 from commonroad.planning.planning_problem import PlanningProblemSet
 from commonroad.scenario.scenario import Scenario
 
-from route_planner.RoutePlanner import RoutePlanner
+from route_planner.route_planner import RoutePlanner
 
 
 def load_config_file(filename) -> dict:

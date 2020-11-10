@@ -15,9 +15,9 @@ except ImportError:
     mpl.use('TkAgg')
     import matplotlib.pyplot as plt
 
-from route_planner.RoutePlanner import RoutePlanner
+from route_planner.route_planner import RoutePlanner
 from route_planner.utils_visualization import draw_route, get_plot_limits_from_reference_path
-import HelperFunctions as hf
+import helper_function as hf
 
 
 class BatchProcessor:
@@ -204,6 +204,6 @@ class BatchProcessor:
 
 
 if __name__ == "__main__":
-    processor = BatchProcessor('batch_processor_config.yaml')
+    processor = BatchProcessor('batch_processing_config.yaml')
     processor.setup_and_run()
     processor.logger_output()

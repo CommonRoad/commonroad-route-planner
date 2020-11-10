@@ -2,7 +2,7 @@ import os
 import matplotlib.pyplot as plt
 from commonroad.common.file_reader import CommonRoadFileReader
 
-from route_planner.RoutePlanner import RoutePlanner
+from route_planner.route_planner import RoutePlanner
 from route_planner.utils_visualization import draw_route, get_plot_limits_from_reference_path, \
     get_plot_limits_from_routes
 
