@@ -163,7 +163,7 @@ class Route:
         reference_path = self._compute_reference_path(list_portions)
         reference_path_smoothed = chaikins_corner_cutting(reference_path, num_refinements=6)
 
-        return reference_path_smoothed
+        return reference_path
 
     def _compute_lane_change_instructions(self) -> List[int]:
         """
