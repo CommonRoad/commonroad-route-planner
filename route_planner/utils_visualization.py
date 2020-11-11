@@ -1,22 +1,14 @@
 from typing import List
 
-import matplotlib as mpl
-
-from route_planner.Route import Route
-
-try:
-    mpl.use('Qt5Agg')
-    import matplotlib.pyplot as plt
-except ImportError:
-    mpl.use('TkAgg')
-    import matplotlib.pyplot as plt
-
+import matplotlib.pyplot as plt
 from commonroad.geometry.shape import Rectangle
-from commonroad.scenario.scenario import Scenario
 from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.prediction.prediction import TrajectoryPrediction
+from commonroad.scenario.scenario import Scenario
 from commonroad.scenario.trajectory import Trajectory, State
 from commonroad.visualization.draw_dispatch_cr import draw_object
+
+from route_planner.route import Route
 
 
 def draw_state(state: State, fig_num=None, color='red'):
@@ -121,7 +113,7 @@ def plot_route_environment(scenario: Scenario, planning_problem: PlanningProblem
                 'facecolor': '#0de309'
             }})
 
-            # TODO: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
+            # todo: the goal region now is covering the lanelet arrows, solution plot a simple blue line on it
             plt.plot(lanelet.center_vertices[:, 0], lanelet.center_vertices[:, 1], "b", zorder=30, scalex=False,
                      scaley=False)
 
