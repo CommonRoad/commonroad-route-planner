@@ -28,14 +28,6 @@ def draw_state(state: State, fig_num=None, color='red'):
 
 
 def draw_scenario(scenario: Scenario, planning_problem: PlanningProblem, initial_state_color='red', plot_limits=None):
-    # plt.style.use('classic')
-    # inch_in_cm = 2.54
-    # figsize = [60, 30]
-    #
-    # fig = plt.figure(num=0, figsize=(figsize[0] / inch_in_cm, figsize[1] / inch_in_cm))
-    # fig.clf()
-    # fig.gca().axis('equal')
-
     handles = {}  # collects handles of obstacle patches, plotted by matplotlib
 
     # plot the lanelet network and the planning problem

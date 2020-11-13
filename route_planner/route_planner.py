@@ -30,18 +30,19 @@ except ModuleNotFoundError as exp:
 
 
 class RoutePlanner:
-    """
-    Main class for planning routes in CommonRoad scenarios. This is a higher level planner that plans on the lanelet
-    level. It returns the the best routes for each pair of start/goal lanelets, with each route in the form of an
-    ordered list of lanelet IDs. Depending on the utilized backend, the best route may have the shortest distance (if
-    using NETWORKX and NETWORKX_REVERSEd as backend) or may have the lowest cost computed per the heuristic function (if
-    using PRIORITY_QUEUE as backend). In survival scenarios (with no goal lanelet), the planner advanced with the
-    priorities: forward, right, left.
+    """Main class for planning routes in CommonRoad scenarios
+
+    This is a higher level planner that plans on the lanelet level. It returns the the best routes for each
+    pair of start/goal lanelets, with each route in the form of an ordered list of lanelet IDs. Depending on the
+    utilized backend, the best route may have the shortest distance (if using NETWORKX and NETWORKX_REVERSEd
+    as backend) or may have the lowest cost computed per the heuristic function (if using PRIORITY_QUEUE as backend).
+    In survival scenarios (with no goal lanelet), the planner advanced with the priorities: forward, right, left.
     """
 
     class Backend(Enum):
-        """
-        three options for constructing the routes:
+        """Supported backend for constructing the routes
+
+        Three options are supported at the moment:
             NETWORKX: uses built-in functions from the networkx package, tends to change lane later
             NETWORKX_REVERSED: uses built-in functions from the networkx package, tends to change lane earlier
             PRIORITY_QUEUE: uses A-star search to find routes, lane changing maneuver depends on the heuristic cost
@@ -55,8 +56,9 @@ class RoutePlanner:
             return [item.value for item in cls]
 
     class LaneletNode:
-        """
-        Custom class to represent the lanelet as as node when performing A-star search to find routes
+        """Custom class to represent the lanelet as nodes
+
+        This is used to represent the lanelets as node when performing A-star search to find routes
         """
 
         def __init__(self, id_lanelet: int, lanelet: Lanelet, cost: float, length_current: int):
@@ -85,7 +87,7 @@ class RoutePlanner:
                  backend: Backend = Backend.NETWORKX,
                  log_to_console=False,
                  log_to_file=False):
-        """Initializes a RoutePlanner object.
+        """Initializes a RoutePlanner object
 
         :param scenario: Scenario which should be used for the route planning
         :param planning_problem: PlanningProblem for which the route should be planned
@@ -156,10 +158,9 @@ class RoutePlanner:
                     self.logger.critical("diagonal search with custom backend is not implemented")
 
     def plan_routes(self):
-        """
-        Plans all routes from all the start lanelet to all of the goal lanelet.
-        If no goal lanelet ID is given then return a survival route.
+        """Plans all routes from all the start lanelet to all of the goal lanelet
 
+        If no goal lanelet ID is given then return a survival route.
         :return: list of lanelet ids from start to goal.
         """
         self.logger.info("Route planner started")
@@ -194,8 +195,7 @@ class RoutePlanner:
     @staticmethod
     def _filter_lanelets_by_type(list_lanelets_to_filter: List[Lanelet],
                                  set_types_lanelets_forbidden: Set[LaneletType]) -> Generator[Lanelet, None, None]:
-        """
-        Generator filters the lanelets by the defined blacklist
+        """Generator filters the lanelets by the defined blacklist
 
         :param list_lanelets_to_filter: The list of the lanelets which should be filtered
         :return: List of desirable lanelets
@@ -206,8 +206,7 @@ class RoutePlanner:
 
     def _filter_allowed_lanelet_ids(self, list_lanelets_to_filter: List[int]) \
             -> Generator[Lanelet, None, None]:
-        """
-        Generator filters the lanelet ids by the defined blacklist
+        """Generator filters the lanelet ids by the defined blacklist
 
         :param list_lanelets_to_filter: The list of the lanelet ids which should be filtered
         :return: List of desirable lanelets
@@ -254,9 +253,7 @@ class RoutePlanner:
         self.logger.debug("Using backend: {}".format(self.backend))
 
     def _retrieve_ids_lanelets_start(self):
-        """
-        Retrieves the ids of the lanelets in which the initial position is situated
-        """
+        """Retrieves the ids of the lanelets in which the initial position is situated"""
         if hasattr(self.planning_problem.initial_state, 'position'):
             post_start = self.planning_problem.initial_state.position
             # noinspection PyTypeChecker
@@ -271,9 +268,7 @@ class RoutePlanner:
             raise self.NoSourceLaneletId()
 
     def _retrieve_ids_lanelets_goal(self):
-        """
-        Retrieves the ids of the lanelets in which the goal position is situated
-        """
+        """Retrieves the ids of the lanelets in which the goal position is situated"""
         self.ids_lanelets_goal = list()
 
         if hasattr(self.planning_problem.goal, 'lanelets_of_goal_position'):
@@ -313,9 +308,9 @@ class RoutePlanner:
             self.ids_lanelets_goal = None
 
     def _find_survival_route(self, id_lanelet_start: int) -> List:
-        """
-        Finds a route along the lanelet network with a similar approach like in driving exams.
-        Priority:
+        """Finds a route along the lanelet network for survival scenarios
+
+        This is similar to driving in a driver exam. Advancing priority:
             1. forward
             2. right
             3. left
@@ -351,9 +346,9 @@ class RoutePlanner:
         return route
 
     def _create_reversed_graph_from_lanelet_network(self) -> nx.DiGraph:
-        """
-        Build a graph from the lanelet network. Edges are added from the predecessor relations between lanelets.
+        """Builds a graph from the lanelet network
 
+        Edges are added from the predecessor relations between lanelets.
         :return: created graph from lanelet network
         """
 
@@ -388,8 +383,8 @@ class RoutePlanner:
         return graph
 
     def _create_graph_from_lanelet_network_diagonal(self) -> nx.DiGraph:
-        """
-        Build a graph from the lanelet network allowing diagonal lane changes
+        """Builds a graph from the lanelet network allowing diagonal lane changes
+
         :return: created graph from lanelet network with diagonal lane changes
         """
         # todo: test implementation
@@ -445,8 +440,9 @@ class RoutePlanner:
         return graph
 
     def _create_graph_from_lanelet_network(self) -> nx.DiGraph:
-        """
-        Build a graph from the lanelet network. Edges are added from the successor relations between lanelets.
+        """Builds a graph from the lanelet network
+
+        Edges are added from the successor relations between lanelets.
 
         :return: created graph from lanelet network
         """
@@ -487,13 +483,13 @@ class RoutePlanner:
         raise NotImplementedError
 
     def _find_routes_networkx(self, id_lanelet_start: int, id_lanelet_goal: int = None) -> List[List]:
-        """
-         Find all shortest paths using networkx module. This tends to change lane late.
+        """Find all shortest paths using networkx module
 
-         :param id_lanelet_start: ID of start lanelet
-         :param id_lanelet_goal: ID of goal lanelet
-         :return: list of lists of lanelet IDs
-         """
+        This tends to change lane late.
+        :param id_lanelet_start: ID of start lanelet
+        :param id_lanelet_goal: ID of goal lanelet
+        :return: list of lists of lanelet IDs
+        """
         list_lanelets = list()
 
         if id_lanelet_start is None:
@@ -513,13 +509,14 @@ class RoutePlanner:
         return list_lanelets
 
     def _find_routes_networkx_reversed(self, id_lanelet_start: int, id_lanelet_goal: int = None) -> List[List]:
-        """
-         Find all shortest paths (reversed) using the networkx module. This tends to change lane early.
+        """Find all shortest paths (reversed) using the networkx module
 
-         :param id_lanelet_start: ID of source lanelet
-         :param id_lanelet_goal: ID of goal lanelet
-         :return: list of lists of lanelet IDs
-         """
+        This tends to change lane early.
+
+        :param id_lanelet_start: ID of source lanelet
+        :param id_lanelet_goal: ID of goal lanelet
+        :return: list of lists of lanelet IDs
+        """
         list_lanelets = list()
 
         if id_lanelet_start is None:
@@ -539,13 +536,14 @@ class RoutePlanner:
         return list_lanelets
 
     def _find_routes_priority_queue(self, id_lanelet_start: int, id_lanelet_goal: int = None) -> List[List]:
-        """
-         Find the shortest paths using own implementation (A-star). Lane change depends on heuristic.
+        """Find the shortest paths using own implementation (A-star)
 
-         :param id_lanelet_start: ID of source lanelet
-         :param id_lanelet_goal: ID of goal lanelet
-         :return: list of lists of lanelet IDs
-         """
+        Lane change depends on the heuristic cost.
+
+        :param id_lanelet_start: ID of source lanelet
+        :param id_lanelet_goal: ID of goal lanelet
+        :return: list of lists of lanelet IDs
+        """
         list_lanelets = list()
 
         if id_lanelet_start is None:
