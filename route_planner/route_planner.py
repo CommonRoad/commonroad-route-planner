@@ -11,7 +11,7 @@ import os
 import warnings
 from datetime import datetime
 from enum import Enum
-from typing import List, Generator, Set, Union, Tuple
+from typing import List, Generator, Set
 
 import networkx as nx
 import numpy as np
@@ -20,19 +20,13 @@ from commonroad.scenario.lanelet import Lanelet, LaneletType
 from commonroad.scenario.scenario import Scenario
 
 from route_planner.queue import PriorityQueue
-from route_planner.route import RouteType, Route
-from route_planner.utils_route import sort_lanelet_ids_by_orientation, sort_lanelet_ids_by_goal
+from route_planner.route import RouteType, RouteCandidateHolder
 
 try:
     import pycrccosy
-    from commonroad_ccosy.geometry.util import resample_polyline, chaikins_corner_cutting, \
-        compute_curvature_from_polyline
-    import commonroad.geometry.shape as cr_shape
-    from shapely.ops import cascaded_union
-    from shapely.geometry import LineString, Point, Polygon
 except ModuleNotFoundError as exp:
     warnings.warn(f"""You won't be able to use the Curvilinear Coordinate System for the Navigator, 
-                      the calculations won't be precise. {exp}""")
+                          the calculations won't be precise. {exp}""")
 
 
 class RoutePlanner:
@@ -91,9 +85,7 @@ class RoutePlanner:
                  backend: Backend = Backend.NETWORKX,
                  log_to_console=False,
                  log_to_file=False):
-        """
-        Initializes a RoutePlanner object.
-        Class attributes of RoutePlannerHolder and Route classes are also initialized.
+        """Initializes a RoutePlanner object.
 
         :param scenario: Scenario which should be used for the route planning
         :param planning_problem: PlanningProblem for which the route should be planned
@@ -115,9 +107,6 @@ class RoutePlanner:
         self.lanelet_network = scenario.lanelet_network
         self.planning_problem = planning_problem
 
-        # initialize class attributes of RouteCandidateHolder and Route
-        Route.initialize(scenario=scenario, planning_problem=planning_problem)
-
         if set_types_lanelets_forbidden is None:
             set_types_lanelets_forbidden = set()
         self.set_types_lanelets_forbidden = set_types_lanelets_forbidden
@@ -130,7 +119,7 @@ class RoutePlanner:
         # find permissible lanelets
         list_lanelets_filtered = self._filter_lanelets_by_type(self.lanelet_network.lanelets,
                                                                self.set_types_lanelets_forbidden)
-        self.set_ids_lanelets_permissible = {lanelet_permissible.lanelet_id \
+        self.set_ids_lanelets_permissible = {lanelet_permissible.lanelet_id
                                              for lanelet_permissible in list_lanelets_filtered}
 
         # examine initial and goal lanelet ids
@@ -166,9 +155,6 @@ class RoutePlanner:
                 if self.allow_diagonal:
                     self.logger.critical("diagonal search with custom backend is not implemented")
 
-        self.list_route_candidates = list()
-        self.num_route_candidates = 0
-
     def plan_routes(self):
         """
         Plans all routes from all the start lanelet to all of the goal lanelet.
@@ -178,7 +164,7 @@ class RoutePlanner:
         """
         self.logger.info("Route planner started")
         # route is a list that holds lists of lanelet ids from start lanelet to goal lanelet
-        routes = list()
+        list_routes = list()
 
         # iterate for each possible start lanelet id
         for id_lanelet_start in self.id_lanelets_start:
@@ -196,15 +182,14 @@ class RoutePlanner:
                         list_ids_lanelets = self._find_routes_priority_queue(id_lanelet_start, id_lanelet_goal)
 
                     if list_ids_lanelets:
-                        routes.extend(list_ids_lanelets)
+                        list_routes.extend(list_ids_lanelets)
             else:
                 # no goal lanelet, find survival route
                 list_ids_lanelets = self._find_survival_route(id_lanelet_start)
-                routes.append(list_ids_lanelets)
+                list_routes.append(list_ids_lanelets)
 
-        self.list_route_candidates = [Route(route, self.route_type, self.set_ids_lanelets_permissible) for route in
-                                      routes if route]
-        self.num_route_candidates = len(self.list_route_candidates)
+        return RouteCandidateHolder(self.scenario, self.planning_problem, list_routes,
+                                    self.route_type, self.set_ids_lanelets_permissible)
 
     @staticmethod
     def _filter_lanelets_by_type(list_lanelets_to_filter: List[Lanelet],
@@ -678,50 +663,3 @@ class RoutePlanner:
             node = node.parent_node
         # reverse the list to obtain the correct order from start to goal
         return list_ids_lanelets_reversed[::-1]
-
-    def retrieve_all_routes(self) -> Tuple[List[Route], int]:
-        # returns a list of Route objects and total number of routes
-        return self.list_route_candidates, self.num_route_candidates
-
-    def retrieve_best_route_by_orientation(self) -> Union[Route, None]:
-        """
-        Retrieves the best route found by some orientation metrics. If it is the survival scenario, then the first
-        route with idx 0 is returned.
-        """
-        if not len(self.list_route_candidates):
-            return None
-
-        if self.route_type == RouteType.SURVIVAL:
-            return self.list_route_candidates[0]
-
-        else:
-            state_current = self.planning_problem.initial_state
-            # sort the lanelets in the scenario based on their orientation difference with the initial state
-            list_ids_lanelets_initial_sorted = sort_lanelet_ids_by_orientation(
-                self.scenario.lanelet_network.find_lanelet_by_position([state_current.position])[0],
-                state_current.orientation,
-                state_current.position,
-                self.scenario
-            )
-            # sort the lanelets in the scenario based on the goal region metric
-            list_ids_lanelets_goal_sorted = sort_lanelet_ids_by_goal(self.scenario, self.planning_problem.goal)
-
-            list_ids_lanelet_goal_candidates = np.array(
-                [route_candidate.list_ids_lanelets[-1] for route_candidate in self.list_route_candidates])
-
-            for id_lanelet_goal in list_ids_lanelets_goal_sorted:
-                if id_lanelet_goal in list_ids_lanelet_goal_candidates:
-                    list_ids_lanelets_initial_candidates = list()
-                    for route_candidate in self.list_route_candidates:
-                        if route_candidate.list_ids_lanelets[-1] == id_lanelet_goal:
-                            list_ids_lanelets_initial_candidates.append(route_candidate.list_ids_lanelets[0])
-                        else:
-                            list_ids_lanelets_initial_candidates.append(None)
-                    list_ids_lanelets_initial_candidates = np.array(list_ids_lanelets_initial_candidates)
-
-                    for initial_lanelet_id in list_ids_lanelets_initial_sorted:
-                        if initial_lanelet_id in list_ids_lanelets_initial_candidates:
-                            route = self.list_route_candidates[
-                                np.where(list_ids_lanelets_initial_candidates == initial_lanelet_id)[0][0]]
-                            return route
-            return None
