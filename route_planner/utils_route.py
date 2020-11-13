@@ -17,7 +17,8 @@ def relative_orientation(from_angle1_in_rad, to_angle2_in_rad):
 
 
 def chaikins_corner_cutting(polyline: np.ndarray, num_refinements: int = 6) -> np.ndarray:
-    """
+    """Chaikin's corner cutting algorithm
+
     Chaikin's corner cutting algorithm smooths a polyline by replacing each original point with two new points.
     The new points are at 1/4 and 3/4 along the way of an edge.
 
@@ -39,8 +40,7 @@ def chaikins_corner_cutting(polyline: np.ndarray, num_refinements: int = 6) -> n
 
 
 def compute_polyline_length(polyline: np.ndarray) -> float:
-    """
-    Computes the path length of a given polyline.
+    """Computes the path length of a given polyline
 
     :param polyline: The polyline
     :return: The path length of the polyline
@@ -54,6 +54,8 @@ def compute_polyline_length(polyline: np.ndarray) -> float:
 
 
 def resample_polyline_with_length_check(polyline, step=2):
+    """ Resamples polyline with length check
+    """
     length = np.linalg.norm(polyline[-1] - polyline[0])
     if length > step:
         polyline = resample_polyline(polyline, step)
@@ -64,9 +66,10 @@ def resample_polyline_with_length_check(polyline, step=2):
 
 
 def resample_polyline(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
-    """
-    Resamples the input polyline with the specified step size in euclidean distance. The distances between each
-    pair of consecutive vertices are examined. If it is larger than the step size, a new sample is added in between.
+    """Resamples the input polyline with the specified step size
+
+    The distances between each pair of consecutive vertices are examined. If it is larger than the step size,
+    a new sample is added in between.
 
     :param polyline: polyline with 2D points
     :param step: minimum distance between each consecutive pairs of vertices
@@ -105,15 +108,13 @@ def resample_polyline(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
 
 
 def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
-    """
-    Approximates the lanelet orientation with the two closest point to the given state
-    # todo: optimize more for speed
+    """Approximates the lanelet orientation with the two closest point to the given state
 
     :param lanelet: Lanelet on which the orientation at the given state should be calculated
     :param position: Position where the lanelet's orientation should be calculated
     :return: An orientation in interval [-pi,pi]
     """
-
+    # todo: optimize for speed
     center_vertices = lanelet.center_vertices
 
     position_diff = []
@@ -132,8 +133,7 @@ def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
 def sort_lanelet_ids_by_orientation(list_ids_lanelets: List[int], orientation: float, position: np.ndarray,
                                     scenario: Scenario) \
         -> List[int]:
-    """
-    returns the lanelets sorted by relative orientation to the position and orientation given
+    """Returns the lanelets sorted by relative orientation to the given position and orientation
     """
 
     if len(list_ids_lanelets) <= 1:
@@ -152,8 +152,7 @@ def sort_lanelet_ids_by_orientation(list_ids_lanelets: List[int], orientation: f
 
 
 def sort_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int]:
-    """
-    Get the lanelet id of the goal
+    """Sorts lanelet ids by goal region
 
     :param goal:
     :param scenario: commonroad scenario
@@ -202,8 +201,7 @@ def sort_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int]:
 
 
 def compute_curvature_from_polyline(polyline: np.ndarray) -> np.ndarray:
-    """
-    Computes the curvature of a given polyline
+    """ Computes curvature of the given polyline
 
     :param polyline: The polyline for the curvature computation
     :return: The curvature of the polyline

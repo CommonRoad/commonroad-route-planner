@@ -3,25 +3,22 @@ from typing import List
 
 
 class PriorityQueue:
-    """
-    Class implements a priority queue
-    """
+    """Class to represent a priority queue"""
 
-    # todo: considering to use queue.PriorityQueue - synchronized - for branching multiple nodes with multiple processes
+    # todo: consider using queue.PriorityQueue - synchronized - for branching multiple nodes with multiple processes
     def __init__(self):
         self.elements = []
         self.count = 0
 
     def is_empty(self):
-        """
-        Returns true if the queue is empty.
-        """
+        """Returns true if the queue is empty"""
 
         return len(self.elements) == 0
 
     def put(self, item_id, item, priority):
-        """
-        Put an item into the queue and count the number of elements in the queue. The number is saved in self.count.
+        """Put an item into the queue and count the number of elements in the queue
+
+        The number is saved in self.count.
 
         :param item_id: the unique id of the element
         :param item: the element to be put in the queue
@@ -31,9 +28,7 @@ class PriorityQueue:
         self.count += 1
 
     def pop(self):
-        """
-        Pop the smallest item off the heap (Priority queue) if the queue is not empty.
-        """
+        """Pop the smallest item off the heap (Priority queue) if the queue is not empty"""
 
         if self.is_empty():
             return None
@@ -43,18 +38,14 @@ class PriorityQueue:
         return best_element
 
     def top(self):
-        """
-        Read the smallest item off the heap (Priority queue) if the queue is not empty.
-        """
+        """Read the smallest item off the heap (Priority queue) if the queue is not empty"""
 
         if self.is_empty():
             return None
         return self.elements[0][2]
 
     def get_list(self, num_of_values: int = 1) -> List[type] or type:
-        """
-        Pop the smallest items off the heap (Priority queue) if the queue is not empty.
-        """
+        """Pop the smallest items off the heap (Priority queue) if the queue is not empty"""
 
         if self.is_empty():
             return None
@@ -67,8 +58,8 @@ class PriorityQueue:
         return [element[1] for element in self.elements]
 
     def update_item_if_exists(self, replace_id, replace_item, replace_cost):
-        """
-        Makes the element invalid in the heap if exists with the same id and put the new element in it.
+        """Makes the element invalid in the heap if exists with the same id and put the new element in it
+
         If it is not in the queue then do nothing.
         :param replace_id:
         :param replace_cost:
@@ -86,9 +77,7 @@ class PriorityQueue:
                 self.put(replace_id, replace_item, replace_cost)
 
     def merge(self, other_queue: 'PriorityQueue'):
-        """
-        Merges an other priority queue into self
-        """
+        """Merges an other priority queue into self"""
 
         if self.is_empty():
             self.elements = other_queue.elements
