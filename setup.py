@@ -12,12 +12,12 @@ with open(path.join(this_directory, 'requirements.txt'), encoding='utf-8') as f:
 
 setup(
     name='commonroad-route-planner',
-    version='0.9.0',
-    description='Route planner for CommonRoad',
+    version='0.5.0',
+    description='Route planner for CommonRoad scenarios',
     keywords='autonomous automated vehicles driving motion planning',
     url='https://gitlab.lrz.de/cps/commonroad-route-planner',
-    author='Daniel Tar',
-    author_email='daniel.tar@tum.de',
+    author='Daniel Tar, Edmond Irani Liu',
+    author_email='daniel.tar@tum.de, edmond.irani@tum.de',
     license='GNU General Public License v3.0',
     packages=find_packages(),
     install_requires=required,
