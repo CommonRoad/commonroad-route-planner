@@ -1,5 +1,5 @@
 import itertools
-import warnings
+import sys
 from enum import Enum
 from typing import List, Union, Tuple
 from typing import Set
@@ -14,8 +14,7 @@ from route_planner.utils_route import chaikins_corner_cutting, resample_polyline
 try:
     import pycrccosy
 except ModuleNotFoundError as exp:
-    warnings.warn(f"""You won't be able to use the Curvilinear Coordinate System for the Navigator, 
-                      the calculations won't be precise. {exp}""")
+    pass
 
 
 class RouteType(Enum):
@@ -47,7 +46,16 @@ class Route:
         else:
             self.set_ids_lanelets_permissible = set_ids_lanelets_permissible
 
+        # generate reference path from the list of lanelet ids leading to goal
         self.reference_path = self._generate_reference_path()
+
+        self.path_length = self._compute_path_length_from_polyline(self.reference_path)
+        self.path_orientation = self._compute_orientation_from_polyline(self.reference_path)
+        self.path_curvature = self._compute_curvature_from_polyline(self.reference_path)
+
+        if 'pycrccosy' in sys.modules:
+            # make sure the reference path is already resampled and smoothened before creating a CLCS out of it
+            self.clcs = pycrccosy.CurvilinearCoordinateSystem(self.reference_path)
 
     def retrieve_route_sections(self, is_opposite_direction_allowed: bool = False) -> Union[None, List[List[int]]]:
         """Retrieves route sections for lanelets in the route
@@ -256,6 +264,72 @@ class Route:
 
         reference_path = resample_polyline(reference_path, 2)
         return reference_path
+
+    @staticmethod
+    def _compute_path_length_from_polyline(polyline: np.ndarray) -> np.ndarray:
+        """
+        Computes the path length of a polyline
+
+        :param polyline: polyline for which path length should be calculated
+        :return: path length along polyline
+        """
+        assert isinstance(polyline, np.ndarray) and polyline.ndim == 2 and len(
+            polyline[:, 0]) > 2, 'Polyline malformed for path lenth computation p={}'.format(polyline)
+
+        distance = np.zeros((len(polyline),))
+        for i in range(1, len(polyline)):
+            distance[i] = distance[i - 1] + np.linalg.norm(polyline[i] - polyline[i - 1])
+
+        return np.array(distance)
+
+    @staticmethod
+    def _compute_curvature_from_polyline(polyline: np.ndarray) -> np.ndarray:
+        """
+        Computes curvature along a polyline
+
+        :param polyline: polyline for which curvature should be calculated
+        :return: curvature along  polyline
+        """
+        assert isinstance(polyline, np.ndarray) and polyline.ndim == 2 and len(
+            polyline[:, 0]) > 2, 'Polyline malformed for curvature computation p={}'.format(polyline)
+
+        x_d = np.gradient(polyline[:, 0])
+        x_dd = np.gradient(x_d)
+        y_d = np.gradient(polyline[:, 1])
+        y_dd = np.gradient(y_d)
+
+        return (x_d * y_dd - x_dd * y_d) / ((x_d ** 2 + y_d ** 2) ** (3. / 2.))
+
+    @staticmethod
+    def _compute_orientation_from_polyline(polyline: np.ndarray) -> np.ndarray:
+        """
+        Computes orientation along a polyline
+
+        :param polyline: polyline for which orientation should be calculated
+        :return: orientation along polyline
+        """
+        assert isinstance(polyline, np.ndarray) and len(polyline) > 1 and polyline.ndim == 2 and len(
+            polyline[0, :]) == 2, '<Math>: not a valid polyline. polyline = {}'.format(polyline)
+        if len(polyline) < 2:
+            raise ValueError('Cannot create orientation from polyline of length < 2')
+
+        orientation = [0]
+        for i in range(1, len(polyline)):
+            pt1 = polyline[i - 1]
+            pt2 = polyline[i]
+            tmp = pt2 - pt1
+            orientation.append(np.arctan2(tmp[1], tmp[0]))
+
+        return np.array(orientation)
+
+    def orientation(self, position) -> float:
+        """
+        Calculates orientation of lane given a longitudinal position along lane
+
+        :param position: longitudinal position
+        :returns orientation of lane at a given position
+        """
+        return np.interp(position, self.path_length, self.path_orientation)
 
 
 class RouteCandidateHolder:
