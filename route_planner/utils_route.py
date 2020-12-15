@@ -16,7 +16,7 @@ def relative_orientation(from_angle1_in_rad, to_angle2_in_rad):
     return phi
 
 
-def chaikins_corner_cutting(polyline: np.ndarray, num_refinements: int = 6) -> np.ndarray:
+def chaikins_corner_cutting(polyline: np.ndarray, num_refinements: int = 4) -> np.ndarray:
     """Chaikin's corner cutting algorithm
 
     Chaikin's corner cutting algorithm smooths a polyline by replacing each original point with two new points.

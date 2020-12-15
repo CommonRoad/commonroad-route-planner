@@ -162,7 +162,7 @@ class Route:
         instruction = self._compute_lane_change_instructions()
         list_portions = self._compute_lanelet_portion(instruction)
         reference_path = self._compute_reference_path(list_portions)
-        reference_path_smoothed = chaikins_corner_cutting(reference_path, num_refinements=6)
+        reference_path_smoothed = chaikins_corner_cutting(reference_path)
 
         return reference_path_smoothed
 
@@ -225,7 +225,7 @@ class Route:
         return [(lower, upper) for lower, upper in zip(list_bounds_lower, list_bounds_upper)]
 
     def _compute_reference_path(self, list_portions, num_vertices_lane_change_max=5,
-                                percentage_vertices_lane_change_max=0.1):
+                                percentage_vertices_lane_change_max=0.1, step_resample=1.0):
         """Computes reference path given the list of portions of each lanelet
 
         :param list_portions
@@ -234,11 +234,11 @@ class Route:
         :param percentage_vertices_lane_change_max: maximum percentage of vertices that should be used for lane change.
         """
         reference_path = None
-
+        num_lanelets_in_route = len(self.list_ids_lanelets)
         for idx, id_lanelet in enumerate(self.list_ids_lanelets):
             lanelet = self.lanelet_network.find_lanelet_by_id(id_lanelet)
             # resample the center vertices to prevent too few vertices with too large distances
-            vertices_resampled = resample_polyline(lanelet.center_vertices, 2)
+            vertices_resampled = resample_polyline(lanelet.center_vertices, step_resample)
             num_vertices = len(vertices_resampled)
             num_vertices_lane_change = min(int(num_vertices * percentage_vertices_lane_change_max) + 1,
                                            num_vertices_lane_change_max)
@@ -254,9 +254,12 @@ class Route:
                 # prevent index out of bound
                 idx_start = min(idx_start, num_vertices - 1)
 
-                idx_end = int(list_portions[idx][1] * num_vertices) - num_vertices_lane_change
-                # prevent index out of bound
-                idx_end = max(idx_end, 1)
+                idx_end = int(list_portions[idx][1] * num_vertices)
+                # reserve some vertices if it is not the last lanelet
+                if idx != (num_lanelets_in_route - 1):
+                    idx_end = idx_end - num_vertices_lane_change
+                    # prevent index out of bound
+                    idx_end = max(idx_end, 1)
 
                 path_to_be_concatenated = vertices_resampled[idx_start:idx_end, :]
 
