@@ -343,6 +343,7 @@ class RoutePlanner:
                 # no possible route to advance
                 break
 
+            id_lanelet_start = lanelet.lanelet_id
         return route
 
     def _create_reversed_graph_from_lanelet_network(self) -> nx.DiGraph:
