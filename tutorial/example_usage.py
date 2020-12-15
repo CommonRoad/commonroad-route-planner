@@ -9,7 +9,7 @@ from route_planner.utils_visualization import draw_route, get_plot_limits_from_r
 if __name__ == "__main__":
     path_notebook = os.getcwd()
     path_scenario = os.path.join(path_notebook, "../scenarios/")
-    id_scenario = 'USA_Peach-2_1_T-1'
+    id_scenario = 'DEU_Test-1_1_T-1'
 
     # read in scenario and planning problem set
     scenario, planning_problem_set = CommonRoadFileReader(path_scenario + id_scenario + '.xml').open()
