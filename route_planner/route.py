@@ -156,7 +156,7 @@ class Route:
         reference_path = self._compute_reference_path(list_portions)
         reference_path_smoothed = chaikins_corner_cutting(reference_path, num_refinements=6)
 
-        return reference_path
+        return reference_path_smoothed
 
     def _compute_lane_change_instructions(self) -> List[int]:
         """Computes lane change instruction for planned routes
@@ -254,6 +254,7 @@ class Route:
 
                 reference_path = np.concatenate((reference_path, path_to_be_concatenated), axis=0)
 
+        reference_path = resample_polyline(reference_path, 2)
         return reference_path
 
 
