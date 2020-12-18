@@ -329,7 +329,6 @@ class RoutePlanner:
 
         while id_lanelet_start not in route:
             route.append(lanelet.lanelet_id)
-
             if lanelet.successor:
                 # naively select the first successors
                 lanelet = self.lanelet_network.find_lanelet_by_id(lanelet.successor[0])
@@ -342,7 +341,6 @@ class RoutePlanner:
             else:
                 # no possible route to advance
                 break
-
             id_lanelet_start = lanelet.lanelet_id
         return route
 
