@@ -104,6 +104,9 @@ def resample_polyline(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
             # compute new distances of vertices
             current_distance = np.linalg.norm(polyline[current_idx + 1] - polyline[current_idx])
 
+    # add the last vertex
+    polyline_new.append(polyline[-1])
+
     return np.array(polyline_new)
 
 
