@@ -224,7 +224,7 @@ class Route:
 
         return [(lower, upper) for lower, upper in zip(list_bounds_lower, list_bounds_upper)]
 
-    def _compute_reference_path(self, list_portions, num_vertices_lane_change_max=5,
+    def _compute_reference_path(self, list_portions, num_vertices_lane_change_max=6,
                                 percentage_vertices_lane_change_max=0.1, step_resample=1.0):
         """Computes reference path given the list of portions of each lanelet
 
@@ -242,7 +242,6 @@ class Route:
             num_vertices = len(vertices_resampled)
             num_vertices_lane_change = min(int(num_vertices * percentage_vertices_lane_change_max) + 1,
                                            num_vertices_lane_change_max)
-
             if reference_path is None:
                 idx_start = int(list_portions[idx][0] * num_vertices)
                 idx_end = int(list_portions[idx][1] * num_vertices) - num_vertices_lane_change
