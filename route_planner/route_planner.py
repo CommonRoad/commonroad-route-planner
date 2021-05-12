@@ -23,7 +23,7 @@ from route_planner.priority_queue import PriorityQueue
 from route_planner.route import RouteType, RouteCandidateHolder
 
 try:
-    import pycrccosy
+    import commonroad_dc.pycrccosy as pycrccosy
 except ModuleNotFoundError as exp:
     warnings.warn(f"""You won't be able to use the Curvilinear Coordinate System for the Navigator, 
                           the calculations won't be precise. {exp}""")
