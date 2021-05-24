@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 from commonroad.geometry.shape import Rectangle
 from commonroad.prediction.prediction import TrajectoryPrediction
 from commonroad.scenario.lanelet import LaneletNetwork
@@ -8,11 +7,25 @@ from commonroad.visualization.mp_renderer import MPRenderer
 from route_planner.route import Route
 
 
-def visualize_route(renderer, route: Route, draw_route_lanelets=False, draw_reference_path=False, size_x=20):
+def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path=False, size_x=10):
+    # obtain plot limits for a better visualization.
+    # we can obtain them through the lanelets or the reference path
+    plot_limits = obtain_plot_limits_from_reference_path(route)
+    # plot_limits = obtain_plot_limits_from_routes(route)
+
+    # set the figure size and ratio
+    ratio_x_y = (plot_limits[1] - plot_limits[0]) / (plot_limits[3] - plot_limits[2])
+
+    # instantiate a renderer for plotting
+    renderer = MPRenderer(plot_limits=plot_limits, figsize=(size_x, size_x / ratio_x_y))
 
     # draw scenario and planning problem
     route.scenario.draw(renderer)
     route.planning_problem.draw(renderer)
+    rectangle = Rectangle(4.0, 2.0,
+                          route.planning_problem.initial_state.position,
+                          route.planning_problem.initial_state.orientation)
+    rectangle.draw(renderer)
 
     # draw lanelets of the route
     if draw_route_lanelets:
@@ -43,7 +56,9 @@ def visualize_route(renderer, route: Route, draw_route_lanelets=False, draw_refe
         lanelet_network.draw(renderer, draw_params=dict_param)
 
     if draw_reference_path:
-        plt.plot(route.reference_path[:, 0], route.reference_path[:, 1], '-m', linewidth=3.5, zorder=31)
+        renderer.ax.plot(route.reference_path[:, 0], route.reference_path[:, 1], '-m', linewidth=3.5, zorder=30)
+
+    renderer.render()
 
 
 def draw_state(renderer: MPRenderer, state: State, color='red'):

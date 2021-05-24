@@ -33,17 +33,5 @@ if __name__ == "__main__":
     # route = candidate_holder.retrieve_best_route_by_orientation()
 
     # ========== visualization =========== #
-    # obtain plot limits for a better visualization.
-    # we can obtain them through the lanelets or the reference path
-    plot_limits = obtain_plot_limits_from_reference_path(route)
-    # plot_limits = obtain_plot_limits_from_routes(route)
+    visualize_route(route, draw_route_lanelets=True, draw_reference_path=True)
 
-    # set the figure size and ratio
-    size_x = 20
-    ratio_x_y = (plot_limits[1] - plot_limits[0]) / (plot_limits[3] - plot_limits[2])
-
-    renderer = MPRenderer(plot_limits=plot_limits, figsize=(size_x, size_x / ratio_x_y))
-
-    visualize_route(renderer, route, draw_route_lanelets=True, draw_reference_path=True)
-
-    renderer.render()
