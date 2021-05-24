@@ -24,7 +24,7 @@ class RouteType(Enum):
 
 
 class Route:
-    """Class to represent a route in the scenario"""
+    """Class to represent a route in the scenario."""
 
     def __init__(self, scenario: Scenario, planning_problem: PlanningProblem, list_ids_lanelets: List[int],
                  route_type: RouteType, set_ids_lanelets_permissible: Set[int] = None):
@@ -58,7 +58,7 @@ class Route:
             self.clcs = pycrccosy.CurvilinearCoordinateSystem(self.reference_path)
 
     def retrieve_route_sections(self, is_opposite_direction_allowed: bool = False) -> Union[None, List[List[int]]]:
-        """Retrieves route sections for lanelets in the route
+        """Retrieves route sections for lanelets in the route.
 
         A section is a list of lanelet ids that are adjacent to a given lanelet.
         """
@@ -86,7 +86,7 @@ class Route:
         return self.list_sections
 
     def _get_adjacent_lanelets_ids(self, id_lanelet: int, is_opposite_direction_permissible=False) -> list:
-        """Recursively gets adj_left and adj_right lanelets of the given lanelet
+        """Recursively gets adj_left and adj_right lanelets of the given lanelet.
 
         :param id_lanelet: current lanelet id
         :param is_opposite_direction_permissible: specifies if it should give back only the lanelets in the driving

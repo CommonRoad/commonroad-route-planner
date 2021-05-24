@@ -8,8 +8,10 @@ from commonroad.scenario.lanelet import Lanelet
 from commonroad.scenario.scenario import Scenario
 
 
-def relative_orientation(from_angle1_in_rad, to_angle2_in_rad):
-    phi = (to_angle2_in_rad - from_angle1_in_rad) % (2 * np.pi)
+def relative_orientation(angle_1, angle_2):
+    """Computes the angle between two angles."""
+
+    phi = (angle_2 - angle_1) % (2 * np.pi)
     if phi > np.pi:
         phi -= (2 * np.pi)
 
@@ -17,7 +19,7 @@ def relative_orientation(from_angle1_in_rad, to_angle2_in_rad):
 
 
 def chaikins_corner_cutting(polyline: np.ndarray, num_refinements: int = 4) -> np.ndarray:
-    """Chaikin's corner cutting algorithm
+    """Chaikin's corner cutting algorithm.
 
     Chaikin's corner cutting algorithm smooths a polyline by replacing each original point with two new points.
     The new points are at 1/4 and 3/4 along the way of an edge.
@@ -40,7 +42,7 @@ def chaikins_corner_cutting(polyline: np.ndarray, num_refinements: int = 4) -> n
 
 
 def compute_polyline_length(polyline: np.ndarray) -> float:
-    """Computes the path length of a given polyline
+    """Computes the path length of a given polyline.
 
     :param polyline: The polyline
     :return: The path length of the polyline
@@ -54,8 +56,7 @@ def compute_polyline_length(polyline: np.ndarray) -> float:
 
 
 def resample_polyline_with_length_check(polyline, step=2):
-    """ Resamples polyline with length check
-    """
+    """ Resamples polyline with length check."""
     length = np.linalg.norm(polyline[-1] - polyline[0])
     if length > step:
         polyline = resample_polyline(polyline, step)
@@ -66,7 +67,7 @@ def resample_polyline_with_length_check(polyline, step=2):
 
 
 def resample_polyline(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
-    """Resamples the input polyline with the specified step size
+    """Resamples the input polyline with the specified step size.
 
     The distances between each pair of consecutive vertices are examined. If it is larger than the step size,
     a new sample is added in between.
@@ -117,7 +118,6 @@ def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
     :param position: Position where the lanelet's orientation should be calculated
     :return: An orientation in interval [-pi,pi]
     """
-    # todo: optimize for speed
     center_vertices = lanelet.center_vertices
 
     position_diff = []
@@ -136,8 +136,7 @@ def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
 def sort_lanelet_ids_by_orientation(list_ids_lanelets: List[int], orientation: float, position: np.ndarray,
                                     scenario: Scenario) \
         -> List[int]:
-    """Returns the lanelets sorted by relative orientation to the given position and orientation
-    """
+    """Returns the lanelets sorted by relative orientation to the given position and orientation."""
 
     if len(list_ids_lanelets) <= 1:
         return list_ids_lanelets

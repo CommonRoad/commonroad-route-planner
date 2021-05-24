@@ -1,14 +1,13 @@
 __author__ = "Daniel Tar, Peter Kocsis, Edmond Irani Liu"
 __copyright__ = ""
 __credits__ = [""]
-__version__ = "~0.8.0"
-__maintainer__ = "Daniel Tar"
-__email__ = "daniel.tar@tum.de, peter.kocsis@tum.de, edmond.irani@tum.de"
-__status__ = "Under Development"
+__version__ = "1.0.0"
+__maintainer__ = "Edmond Irani Liu"
+__email__ = "edmond.irani@tum.de"
+__status__ = "Release"
 
 import logging
 import os
-import warnings
 from datetime import datetime
 from enum import Enum
 from typing import List, Generator, Set
@@ -22,30 +21,23 @@ from commonroad.scenario.scenario import Scenario
 from route_planner.priority_queue import PriorityQueue
 from route_planner.route import RouteType, RouteCandidateHolder
 
-try:
-    import commonroad_dc.pycrccosy as pycrccosy
-except ModuleNotFoundError as exp:
-    warnings.warn(f"""You won't be able to use the Curvilinear Coordinate System for the Navigator, 
-                          the calculations won't be precise. {exp}""")
-
 
 class RoutePlanner:
-    """Main class for planning routes in CommonRoad scenarios
+    """Main class for planning routes in CommonRoad scenarios.
 
-    This is a higher level planner that plans on the lanelet level. It returns the the best routes for each
-    pair of start/goal lanelets, with each route in the form of an ordered list of lanelet IDs. Depending on the
-    utilized backend, the best route may have the shortest distance (if using NETWORKX and NETWORKX_REVERSEd
-    as backend) or may have the lowest cost computed per the heuristic function (if using PRIORITY_QUEUE as backend).
-    In survival scenarios (with no goal lanelet), the planner advanced with the priorities: forward, right, left.
+    This is a high-level planner that plans on the lanelet level. It returns the best routes for each pair
+    of start/goal lanelets, with each route in the form of an ordered list of lanelet IDs. Depending on the
+    utilized backend, the best route may have the shortest distance (if using NETWORKX and NETWORKX_REVERSED)
+    or may have the lowest cost computed per the heuristic function (if using PRIORITY_QUEUE).
+    In survival scenarios (no goal lanelet), the planner advances in the order of forward, right, left when possible.
     """
 
     class Backend(Enum):
-        """Supported backend for constructing the routes
+        """Supported backend for constructing the routes.
 
-        Three options are supported at the moment:
-            NETWORKX: uses built-in functions from the networkx package, tends to change lane later
-            NETWORKX_REVERSED: uses built-in functions from the networkx package, tends to change lane earlier
-            PRIORITY_QUEUE: uses A-star search to find routes, lane changing maneuver depends on the heuristic cost
+        NETWORKX: uses built-in functions from the networkx package, tends to change lanes later
+        NETWORKX_REVERSED: uses built-in functions from the networkx package, tends to change lanes earlier
+        PRIORITY_QUEUE: uses A-star search to find routes, lane changing maneuver depends on the heuristic cost
         """
         NETWORKX = "networkx"
         NETWORKX_REVERSED = "networkx_reversed"
@@ -56,9 +48,9 @@ class RoutePlanner:
             return [item.value for item in cls]
 
     class LaneletNode:
-        """Custom class to represent the lanelet as nodes
+        """Custom node class to represent a lanelet.
 
-        This is used to represent the lanelets as node when performing A-star search to find routes
+        This is used to represent the lanelets as nodes when performing A-star search.
         """
 
         def __init__(self, id_lanelet: int, lanelet: Lanelet, cost: float, length_current: int):
@@ -69,12 +61,12 @@ class RoutePlanner:
             self.parent_node = None
 
         def __lt__(self, other):
-            # define '<' operation
+            # define '<' operation for comparison
             return self.cost < other.cost
 
     class NoSourceLaneletId(Exception):
         def __init__(self):
-            self.message = "No initial position given"
+            self.message = "<RoutePlanner> No initial position given."
 
     class NoPathFound(Exception):
         def __init__(self, message):
@@ -87,24 +79,22 @@ class RoutePlanner:
                  backend: Backend = Backend.NETWORKX,
                  log_to_console=False,
                  log_to_file=False):
-        """Initializes a RoutePlanner object
+        """Initialization of a RoutePlanner object.
 
-        :param scenario: Scenario which should be used for the route planning
-        :param planning_problem: PlanningProblem for which the route should be planned
-        :param set_types_lanelets_forbidden: Set of lanelet types which should be avoided during route planning
-        :param allow_diagonal: Indicates whether diagonal movements are allowed - experimental
-        :param backend: The backend which should be used, available options: networkx, networkx_reversed
-        :param log_to_console: Indicates whether the outputs should be logged to the console
-        :param log_to_file: Indicates whether the outputs should be logged to file
+        :param scenario: scenario on which the routes should be planned
+        :param planning_problem: planning problem for which the routes should be planned
+        :param set_types_lanelets_forbidden: set of lanelet types which should be avoided during route planning
+        :param allow_diagonal: indicates whether diagonal movements are allowed - experimental
+        :param backend: the backend to be used
+        :param log_to_console: indicates whether the outputs should be logged to the console
+        :param log_to_file: indicates whether the outputs should be logged to file
         """
-
-        # Binding variables
+        # setting backend
         if backend not in RoutePlanner.Backend.values():
             backend = RoutePlanner.Backend.NETWORKX
         self.backend = backend
 
         self.scenario = scenario
-        # self.scenario_id = scenario.benchmark_id # deprecated
         self.scenario_id = scenario.scenario_id
         self.lanelet_network = scenario.lanelet_network
         self.planning_problem = planning_problem
@@ -130,98 +120,16 @@ class RoutePlanner:
         self._retrieve_ids_lanelets_start()
         self._retrieve_ids_lanelets_goal()
 
-        # create lanelet network graph
-        if self.ids_lanelets_goal is None:
-            # if there is no goal lanelet ids then it is a survival scenario and
-            # we do not need to make a graph from the lanelet network
-            self.route_type = RouteType.SURVIVAL
-            self.logger.info("Survival Scenario: No lanelet graph created")
-        else:
-            # construct directional graph
-            self.route_type = RouteType.REGULAR
-
-            if self.backend == RoutePlanner.Backend.NETWORKX:
-                if self.allow_diagonal:
-                    self.logger.warning("Diagonal node connection not tested")
-                    self.digraph = self._create_graph_from_lanelet_network_diagonal()
-                else:
-                    self.digraph = self._create_graph_from_lanelet_network()
-
-            elif self.backend == RoutePlanner.Backend.NETWORKX_REVERSED:
-                if self.allow_diagonal:
-                    self.logger.warning("Diagonal node connection not implemented")
-                    self.digraph = self._create_reversed_graph_from_lanelet_network_lane_change()
-                else:
-                    self.digraph = self._create_reversed_graph_from_lanelet_network()
-            elif self.backend == RoutePlanner.Backend.PRIORITY_QUEUE:
-                if self.allow_diagonal:
-                    self.logger.critical("diagonal search with custom backend is not implemented")
-
-    def plan_routes(self):
-        """Plans all routes from all the start lanelet to all of the goal lanelet
-
-        If no goal lanelet ID is given then return a survival route.
-        :return: list of lanelet ids from start to goal.
-        """
-        self.logger.info("Route planner started")
-        # route is a list that holds lists of lanelet ids from start lanelet to goal lanelet
-        list_routes = list()
-
-        # iterate for each possible start lanelet id
-        for id_lanelet_start in self.id_lanelets_start:
-            if self.ids_lanelets_goal:
-                # iterate for each possible goal lanelet id
-                for id_lanelet_goal in self.ids_lanelets_goal:
-                    list_ids_lanelets = list()
-                    if self.backend == RoutePlanner.Backend.NETWORKX:
-                        list_ids_lanelets = self._find_routes_networkx(id_lanelet_start, id_lanelet_goal)
-
-                    elif self.backend == RoutePlanner.Backend.NETWORKX_REVERSED:
-                        list_ids_lanelets = self._find_routes_networkx_reversed(id_lanelet_start, id_lanelet_goal)
-
-                    elif self.backend == RoutePlanner.Backend.PRIORITY_QUEUE:
-                        list_ids_lanelets = self._find_routes_priority_queue(id_lanelet_start, id_lanelet_goal)
-
-                    if list_ids_lanelets:
-                        list_routes.extend(list_ids_lanelets)
-            else:
-                # no goal lanelet, find survival route
-                list_ids_lanelets = self._find_survival_route(id_lanelet_start)
-                list_routes.append(list_ids_lanelets)
-
-        return RouteCandidateHolder(self.scenario, self.planning_problem, list_routes,
-                                    self.route_type, self.set_ids_lanelets_permissible)
-
-    @staticmethod
-    def _filter_lanelets_by_type(list_lanelets_to_filter: List[Lanelet],
-                                 set_types_lanelets_forbidden: Set[LaneletType]) -> Generator[Lanelet, None, None]:
-        """Generator filters the lanelets by the defined blacklist
-
-        :param list_lanelets_to_filter: The list of the lanelets which should be filtered
-        :return: List of desirable lanelets
-        """
-        for lanelet in list_lanelets_to_filter:
-            if len(lanelet.lanelet_type.intersection(set_types_lanelets_forbidden)) == 0:
-                yield lanelet
-
-    def _filter_allowed_lanelet_ids(self, list_lanelets_to_filter: List[int]) \
-            -> Generator[Lanelet, None, None]:
-        """Generator filters the lanelet ids by the defined blacklist
-
-        :param list_lanelets_to_filter: The list of the lanelet ids which should be filtered
-        :return: List of desirable lanelets
-        """
-        for lanelet_id_to_filter in list_lanelets_to_filter:
-            if lanelet_id_to_filter in self.set_ids_lanelets_permissible:
-                yield lanelet_id_to_filter
+        self._create_lanelet_network_graph()
 
     def _init_logger(self, log_to_console=True, log_to_file=True, add_timestamp_to_log_file=True):
+        """Initializes a logger."""
         # path relative to the running script
         log_file_dir = "solutions/logs/scenario_logs"
         log_file_name = "route_planner_result_with_priority_queue_backend"
+
         # release_logger(self.logger)
         self.logger.setLevel(logging.INFO)
-        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         console_formatter = logging.Formatter('%(asctime)s\t\t%(name)s\t%(levelname)s\t%(message)s')
         file_formatter = logging.Formatter('%(asctime)s\t%(name)s\t%(levelname)s\t%(message)s')
 
@@ -299,7 +207,7 @@ class RoutePlanner:
                         self.logger.debug(
                             "No Goal lanelet IDs could be determined from the goal shape in state [{}]".format(idx))
 
-        # Remove duplicates and reset to none if no lanelet IDs found
+        # remove duplicates and reset to none if no lanelet IDs found
         if len(self.ids_lanelets_goal) != 0:
             # remove duplicates and sort in ascending order
             # noinspection PyTypeChecker
@@ -307,14 +215,98 @@ class RoutePlanner:
         else:
             self.ids_lanelets_goal = None
 
+    def _create_lanelet_network_graph(self):
+        """Creates a directed graph of lanelets."""
+
+        if self.ids_lanelets_goal is None:
+            # if there is no goal lanelet ids then it is a survival scenario and
+            # we do not need to make a graph from the lanelet network
+            self.route_type = RouteType.SURVIVAL
+            self.logger.info("Survival Scenario: No lanelet graph created.")
+
+        else:
+            # construct directed graph
+            self.route_type = RouteType.REGULAR
+
+            if self.backend == RoutePlanner.Backend.NETWORKX:
+                if self.allow_diagonal:
+                    self.logger.warning("Diagonal node connection not tested")
+                    self.digraph = self._create_graph_from_lanelet_network_diagonal()
+                else:
+                    self.digraph = self._create_graph_from_lanelet_network()
+
+            elif self.backend == RoutePlanner.Backend.NETWORKX_REVERSED:
+                if self.allow_diagonal:
+                    self.logger.warning("Diagonal node connection not implemented")
+                    self.digraph = self._create_reversed_graph_from_lanelet_network_lane_change()
+                else:
+                    self.digraph = self._create_reversed_graph_from_lanelet_network()
+            elif self.backend == RoutePlanner.Backend.PRIORITY_QUEUE:
+                if self.allow_diagonal:
+                    self.logger.critical("diagonal search with custom backend is not implemented")
+
+    def plan_routes(self):
+        """Plans routes for every pair of start/goal lanelets.
+
+        If no goal lanelet ID is given then return a survival route.
+        :return: list of lanelet ids from start to goal.
+        """
+        self.logger.info("Route planner started")
+        # route is a list that holds lists of lanelet ids from start lanelet to goal lanelet
+        list_routes = list()
+
+        # iterate through start lanelet ids
+        for id_lanelet_start in self.id_lanelets_start:
+            if self.ids_lanelets_goal:
+                # iterate through goal lanelet ids
+                for id_lanelet_goal in self.ids_lanelets_goal:
+                    list_ids_lanelets = list()
+                    if self.backend == RoutePlanner.Backend.NETWORKX:
+                        list_ids_lanelets = self._find_routes_networkx(id_lanelet_start, id_lanelet_goal)
+
+                    elif self.backend == RoutePlanner.Backend.NETWORKX_REVERSED:
+                        list_ids_lanelets = self._find_routes_networkx_reversed(id_lanelet_start, id_lanelet_goal)
+
+                    elif self.backend == RoutePlanner.Backend.PRIORITY_QUEUE:
+                        list_ids_lanelets = self._find_routes_priority_queue(id_lanelet_start, id_lanelet_goal)
+
+                    if list_ids_lanelets:
+                        list_routes.extend(list_ids_lanelets)
+            else:
+                # no goal lanelet, find survival route
+                list_ids_lanelets = self._find_survival_route(id_lanelet_start)
+                list_routes.append(list_ids_lanelets)
+
+        return RouteCandidateHolder(self.scenario, self.planning_problem, list_routes,
+                                    self.route_type, self.set_ids_lanelets_permissible)
+
+    @staticmethod
+    def _filter_lanelets_by_type(list_lanelets_to_filter: List[Lanelet],
+                                 set_types_lanelets_forbidden: Set[LaneletType]) -> Generator[Lanelet, None, None]:
+        """Filters lanelets with the set of forbidden types.
+
+        :param list_lanelets_to_filter: The list of the lanelets which should be filtered
+        :return: List of desirable lanelets
+        """
+        for lanelet in list_lanelets_to_filter:
+            if len(lanelet.lanelet_type.intersection(set_types_lanelets_forbidden)) == 0:
+                yield lanelet
+
+    def _filter_allowed_lanelet_ids(self, list_lanelets_to_filter: List[int]) \
+            -> Generator[Lanelet, None, None]:
+        """Filters lanelets with the list of ids of forbidden lanelets.
+
+        :param list_lanelets_to_filter: The list of the lanelet ids which should be filtered
+        :return: List of desirable lanelets
+        """
+        for lanelet_id_to_filter in list_lanelets_to_filter:
+            if lanelet_id_to_filter in self.set_ids_lanelets_permissible:
+                yield lanelet_id_to_filter
+
     def _find_survival_route(self, id_lanelet_start: int) -> List:
-        """Finds a route along the lanelet network for survival scenarios
+        """Finds a route along the lanelet network for survival scenarios.
 
-        This is similar to driving in a driver exam. Advancing priority:
-            1. forward
-            2. right
-            3. left
-
+        The planner advances in the order of forward, right, left whenever possible.
         Notes:
             - it only considers lanes with same driving direction
             - the priorities of right and left should be swapped for left-hand traffic countries, e.g. UK
@@ -345,7 +337,7 @@ class RoutePlanner:
         return route
 
     def _create_reversed_graph_from_lanelet_network(self) -> nx.DiGraph:
-        """Builds a graph from the lanelet network
+        """Builds a graph from the lanelet network.
 
         Edges are added from the predecessor relations between lanelets.
         :return: created graph from lanelet network
@@ -376,9 +368,10 @@ class RoutePlanner:
             if id_adj_right and lanelet.adj_right_same_direction and id_adj_right in self.set_ids_lanelets_permissible:
                 edges.append((lanelet.lanelet_id, id_adj_right, {'weight': np.inf}))
 
-        # add all nodes and edges to graph
+        # add all nodes and edges to the graph
         graph.add_nodes_from(nodes)
         graph.add_edges_from(edges)
+
         return graph
 
     def _create_graph_from_lanelet_network_diagonal(self) -> nx.DiGraph:
@@ -386,7 +379,6 @@ class RoutePlanner:
 
         :return: created graph from lanelet network with diagonal lane changes
         """
-        # todo: test implementation
         graph = nx.DiGraph()
         nodes = list()
         edges = list()
@@ -583,7 +575,7 @@ class RoutePlanner:
         node.parent_node = parent_node
 
         if (next_lanelet_id not in self.explored) and (next_lanelet_id not in frontier_lanelet_ids):
-            self.frontier.put(next_lanelet_id, node, cost)
+            self.frontier.push(next_lanelet_id, node, cost)
         elif next_lanelet_id in frontier_lanelet_ids:
             self.frontier.update_item_if_exists(next_lanelet_id, node, cost)
 
@@ -605,7 +597,7 @@ class RoutePlanner:
         cost_travel = self._calc_cost_travel(lanelet_current)
         cost_heuristic = self._calc_cost_heuristic(lanelet_current, lanelet_goal)
         node = RoutePlanner.LaneletNode(id_lanelet_start, lanelet_current, cost_travel + cost_heuristic, 1)
-        self.frontier.put(node.id, node, node.cost)
+        self.frontier.push(node.id, node, node.cost)
 
         # execute the search
         while not self.frontier.is_empty():
@@ -658,5 +650,6 @@ class RoutePlanner:
         while node:
             list_ids_lanelets_reversed.append(node.id)
             node = node.parent_node
+
         # reverse the list to obtain the correct order from start to goal
         return list_ids_lanelets_reversed[::-1]

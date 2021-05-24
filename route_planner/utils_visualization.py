@@ -188,7 +188,7 @@ def draw_route(route: Route, draw_route_lanelets=False, draw_reference_path=Fals
         plt.plot(route.reference_path[:, 0], route.reference_path[:, 1], '-m', linewidth=3.5, zorder=31)
 
 
-def get_plot_limits_from_routes(route, border=15):
+def obtain_plot_limits_from_routes(route, border=15):
     x_min_values = list()
     x_max_values = list()
     y_min_values = list()
@@ -205,7 +205,7 @@ def get_plot_limits_from_routes(route, border=15):
     return plot_limits
 
 
-def get_plot_limits_from_reference_path(route, border=10):
+def obtain_plot_limits_from_reference_path(route, border=10):
     x_min = min(route.reference_path[:, 0])
     x_max = max(route.reference_path[:, 0])
     y_min = min(route.reference_path[:, 1])
