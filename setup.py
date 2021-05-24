@@ -1,7 +1,5 @@
-from setuptools import setup, find_packages
-
-# read the README file
 from os import path
+from setuptools import setup, find_packages
 
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
@@ -12,12 +10,12 @@ with open(path.join(this_directory, 'requirements.txt'), encoding='utf-8') as f:
 
 setup(
     name='commonroad-route-planner',
-    version='0.5.0',
-    description='Route planner for CommonRoad scenarios',
+    version='1.0.0',
+    description='route planner for CommonRoad scenarios',
     keywords='autonomous automated vehicles driving motion planning',
-    url='https://gitlab.lrz.de/cps/commonroad-route-planner',
+    url='https://gitlab.lrz.de/tum-cps/commonroad-route-planner',
     author='Daniel Tar, Edmond Irani Liu',
-    author_email='daniel.tar@tum.de, edmond.irani@tum.de',
+    author_email='commonroad@lists.lrz.de',
     license='GNU General Public License v3.0',
     packages=find_packages(),
     install_requires=required,
