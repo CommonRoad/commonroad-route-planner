@@ -2,9 +2,10 @@ import os
 
 import matplotlib.pyplot as plt
 from commonroad.common.file_reader import CommonRoadFileReader
+from commonroad.visualization.mp_renderer import MPRenderer
 
 from route_planner.route_planner import RoutePlanner
-from route_planner.utils_visualization import draw_route, obtain_plot_limits_from_reference_path
+from route_planner.utils_visualization import visualize_route, obtain_plot_limits_from_reference_path
 
 if __name__ == "__main__":
     # ========== initialization =========== #
@@ -32,16 +33,17 @@ if __name__ == "__main__":
     # route = candidate_holder.retrieve_best_route_by_orientation()
 
     # ========== visualization =========== #
-    # obtain plot limits for a better visualization. we can obtain them through the lanelets or the reference path
+    # obtain plot limits for a better visualization.
+    # we can obtain them through the lanelets or the reference path
     plot_limits = obtain_plot_limits_from_reference_path(route)
     # plot_limits = obtain_plot_limits_from_routes(route)
 
     # set the figure size and ratio
     size_x = 20
     ratio_x_y = (plot_limits[1] - plot_limits[0]) / (plot_limits[3] - plot_limits[2])
-    fig = plt.figure(figsize=(size_x, size_x / ratio_x_y))
-    fig.gca().axis('equal')
 
-    # draw and plot
-    draw_route(route, draw_route_lanelets=True, draw_reference_path=True, plot_limits=plot_limits)
-    plt.show()
+    renderer = MPRenderer(plot_limits=plot_limits, figsize=(size_x, size_x / ratio_x_y))
+
+    visualize_route(renderer, route, draw_route_lanelets=True, draw_reference_path=True)
+
+    renderer.render()
