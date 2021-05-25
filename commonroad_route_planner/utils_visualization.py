@@ -1,13 +1,20 @@
-from commonroad.geometry.shape import Rectangle
-from commonroad.prediction.prediction import TrajectoryPrediction
+import matplotlib.pyplot as plt
+from commonroad.geometry.shape import Rectangle, Circle
 from commonroad.scenario.lanelet import LaneletNetwork
-from commonroad.scenario.trajectory import Trajectory, State
+from commonroad.scenario.trajectory import State
 from commonroad.visualization.mp_renderer import MPRenderer
 
-from route_planner.route import Route
+from commonroad_route_planner.route import Route
 
 
 def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path=False, size_x=10):
+    """Visualizes the given route.
+
+    :param route: route object to be visualized
+    :param draw_route_lanelets: flag to indicate if the lanelets should be visualized
+    :param draw_reference_path: flag to indicate if the reference path should be visualized
+    :param size_x: size of the x-axis of the figure
+    """
     # obtain plot limits for a better visualization.
     # we can obtain them through the lanelets or the reference path
     plot_limits = obtain_plot_limits_from_reference_path(route)
@@ -21,11 +28,9 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
 
     # draw scenario and planning problem
     route.scenario.draw(renderer)
-    route.planning_problem.draw(renderer)
-    rectangle = Rectangle(4.0, 2.0,
-                          route.planning_problem.initial_state.position,
-                          route.planning_problem.initial_state.orientation)
-    rectangle.draw(renderer)
+    route.planning_problem.goal.draw(renderer)
+    # draw the initial state of the planning problem
+    draw_state(renderer, route.planning_problem.initial_state)
 
     # draw lanelets of the route
     if draw_route_lanelets:
@@ -42,7 +47,7 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
             'show_label': False,
             'draw_linewidth': 1,
             'fill_lanelet': True,
-            'facecolor': '#00b8cc',  # color for filling
+            'facecolor': '#469d89',  # color for filling
             'zorder': 30,  # put it higher in the plot, to make it visible
             'center_bound_color': '#3232ff',  # color of the found route with arrow
         }}
@@ -55,27 +60,19 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
 
         lanelet_network.draw(renderer, draw_params=dict_param)
 
+    # draw reference path
     if draw_reference_path:
-        renderer.ax.plot(route.reference_path[:, 0], route.reference_path[:, 1], '-m', linewidth=3.5, zorder=30)
+        for position in route.reference_path:
+            occ_pos = Circle(radius=0.2, center=position)
+            occ_pos.draw(renderer, draw_params={'shape': {'circle': {'facecolor': '#ff477e'}}})
 
     renderer.render()
+    plt.show()
 
 
-def draw_state(renderer: MPRenderer, state: State, color='red'):
-    ego_shape = Rectangle(length=5, width=2)
-
-    if hasattr(state, 'time_step'):
-        initial_time_step = int(state.time_step)
-
-    else:
-        state.time_step = 0
-        initial_time_step = 0
-
-    trajectory = Trajectory(initial_time_step=initial_time_step, state_list=[state])
-    prediction = TrajectoryPrediction(trajectory=trajectory, shape=ego_shape)
-    shape = prediction.occupancy_at_time_step(initial_time_step).shape
-    if isinstance(shape, Rectangle):
-        shape.draw(renderer, draw_params={'shape': {'facecolor': f'{color}'}})
+def draw_state(renderer: MPRenderer, state: State, color='#ee6c4d'):
+    occ_state = Rectangle(4.0, 2.0, state.position, state.orientation)
+    occ_state.draw(renderer, draw_params={'shape': {'rectangle': {'facecolor': f'{color}'}}})
 
 
 def obtain_plot_limits_from_routes(route, border=15):

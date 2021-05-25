@@ -18,8 +18,8 @@ from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import Lanelet, LaneletType
 from commonroad.scenario.scenario import Scenario
 
-from route_planner.priority_queue import PriorityQueue
-from route_planner.route import RouteType, RouteCandidateHolder
+from commonroad_route_planner.priority_queue import PriorityQueue
+from commonroad_route_planner.route import RouteType, RouteCandidateHolder
 
 
 class RoutePlanner:
