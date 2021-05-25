@@ -60,13 +60,16 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
 
         lanelet_network.draw(renderer, draw_params=dict_param)
 
-    # draw reference path
+    # draw reference path with dots
     if draw_reference_path:
         for position in route.reference_path:
             occ_pos = Circle(radius=0.2, center=position)
             occ_pos.draw(renderer, draw_params={'shape': {'circle': {'facecolor': '#ff477e'}}})
 
+    # render and show plot
     renderer.render()
+
+    plt.margins(0, 0)
     plt.show()
 
 

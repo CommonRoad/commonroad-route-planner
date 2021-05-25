@@ -1,19 +1,19 @@
 # CommonRoad Route Planner
 
-This repository hosts the code base of a commonly used route planner. The basic functionality is to find a sequence of lanelets (route) that leads from the initial lanelet(s)  to the goal lanelet(s) of the planning problem. It also works on survival scenarios (where no goal is specified). Additionally, it also constructs a reference path for each planned route.
+The basic functionality of this package is to find sequences of lanelets (also referred to as routes) that lead from the initial lanelet(s)  to the goal lanelet(s) of a given planning problem. It also works with survival scenarios (where no goal region is specified). In addition, the package generates a reference path for each of the planned route, which can be used to construct a curvilinear coordinate system at a later stage.
 
-### Backend
+### Supported Backends
 The planner supports different backends to search for the shortest route in the scenario:
-1. NETWORKX: uses built-in functions from the networkx package, tends to change lane later
-2. NETWORKX_REVERSED: uses built-in functions from the networkx package, tends to change lane earlier
+1. NETWORKX: uses built-in functions from the networkx package, tends to change lanes later
+2. NETWORKX_REVERSED: uses built-in functions from the networkx package, tends to change lanes earlier
 3. PRIORITY_QUEUE: uses A-star search to find routes, lane change maneuver depends on the heuristic cost
 ## Installation
 
 To use this module, run the setup script in the root folder:
 
 ```bash
-python setup.py install
+pip install .
 ```
 Or simply install the dependencies listed in `requirements.txt` and add this repository to your python path.
-## Tutorial
-A tutorial can be found at `tutorial/tutorial_route_planner.ipynb`.
+## Minimal Example
+A tutorial notebook and an example script can be found under the `tutorial/` folder.
