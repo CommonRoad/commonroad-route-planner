@@ -1,11 +1,9 @@
 import os
 
-import matplotlib.pyplot as plt
 from commonroad.common.file_reader import CommonRoadFileReader
-from commonroad.visualization.mp_renderer import MPRenderer
 
-from route_planner.route_planner import RoutePlanner
-from route_planner.utils_visualization import visualize_route, obtain_plot_limits_from_reference_path
+from commonroad_route_planner.route_planner import RoutePlanner
+from commonroad_route_planner.utils_visualization import visualize_route
 
 if __name__ == "__main__":
     # ========== initialization =========== #

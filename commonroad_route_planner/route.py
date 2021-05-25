@@ -8,7 +8,7 @@ import numpy as np
 from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.scenario import Scenario
 
-from route_planner.utils_route import chaikins_corner_cutting, resample_polyline, sort_lanelet_ids_by_orientation, \
+from commonroad_route_planner.utils_route import chaikins_corner_cutting, resample_polyline, sort_lanelet_ids_by_orientation, \
     sort_lanelet_ids_by_goal
 
 try:
