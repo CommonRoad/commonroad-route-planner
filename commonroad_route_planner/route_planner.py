@@ -20,6 +20,7 @@ from commonroad.scenario.scenario import Scenario
 
 from commonroad_route_planner.priority_queue import PriorityQueue
 from commonroad_route_planner.route import RouteType, RouteCandidateHolder
+from commonroad_route_planner.utils_route import lanelet_orientation_at_position, relative_orientation
 
 
 class RoutePlanner:
@@ -116,6 +117,7 @@ class RoutePlanner:
 
         # examine initial and goal lanelet ids
         self.id_lanelets_start = None
+        self.ids_lanelets_start_overtake = None
         self.ids_lanelets_goal = None
         self._retrieve_ids_lanelets_start()
         self._retrieve_ids_lanelets_goal()
@@ -168,6 +170,28 @@ class RoutePlanner:
             list_ids_lanelets_pos_start = self.lanelet_network.find_lanelet_by_position([post_start])[0]
 
             self.id_lanelets_start = list(self._filter_allowed_lanelet_ids(list_ids_lanelets_pos_start))
+
+            # Check if any of the start positions are during an overtake:
+            # if the car is not driving in the correct direction for the lanelet,
+            # it will also consider routes taking an adjacent lanelet in the opposite direction
+            self.ids_lanelets_start_overtake = list()
+            if (hasattr(self.planning_problem.initial_state, 'orientation')
+                    and not self.planning_problem.initial_state.is_uncertain_orientation):
+                orientation = self.planning_problem.initial_state.orientation
+
+                for id_start in self.id_lanelets_start:
+                    lanelet = self.lanelet_network.find_lanelet_by_id(id_start)
+                    lanelet_angle = lanelet_orientation_at_position(lanelet, post_start)
+
+                    # Check if the angle difference is larger than 90 degrees
+                    if abs(relative_orientation(orientation, lanelet_angle)) > 0.5 * np.pi:
+                        if (lanelet.adj_left is not None and not lanelet.adj_left_same_direction
+                                and lanelet.adj_left in self.set_ids_lanelets_permissible):
+                            self.ids_lanelets_start_overtake.append((id_start, lanelet.adj_left))
+
+                        elif (lanelet.adj_right is not None and not lanelet.adj_right_same_direction
+                              and lanelet.adj_right in self.set_ids_lanelets_permissible):
+                            self.ids_lanelets_start_overtake.append((id_start, lanelet.adj_right))
 
             if len(self.id_lanelets_start) > 1:
                 self.logger.info("Multiple start lanelet IDs: some may fail to reach goal lanelet")
@@ -293,7 +317,7 @@ class RoutePlanner:
                 yield lanelet
 
     def _filter_allowed_lanelet_ids(self, list_lanelets_to_filter: List[int]) \
-            -> Generator[Lanelet, None, None]:
+            -> Generator[int, None, None]:
         """Filters lanelets with the list of ids of forbidden lanelets.
 
         :param list_lanelets_to_filter: The list of the lanelet ids which should be filtered
@@ -368,6 +392,10 @@ class RoutePlanner:
             if id_adj_right and lanelet.adj_right_same_direction and id_adj_right in self.set_ids_lanelets_permissible:
                 edges.append((lanelet.lanelet_id, id_adj_right, {'weight': np.inf}))
 
+        # Edges in case of overtake during starting state
+        for id_start, id_adj in self.ids_lanelets_start_overtake:
+            edges.append((id_adj, id_start, {'weight': np.inf}))
+
         # add all nodes and edges to the graph
         graph.add_nodes_from(nodes)
         graph.add_edges_from(edges)
@@ -425,6 +453,10 @@ class RoutePlanner:
                     if (lanelet.lanelet_id, left_successor, {'weight': 0}) not in edges:
                         edges.append((lanelet.lanelet_id, left_successor, {'weight': 0}))
 
+        # Edges in case of overtake during starting state
+        for id_start, id_adj in self.ids_lanelets_start_overtake:
+            edges.append((id_start, id_adj, {'weight': 0}))
+
         # add all nodes and edges to graph
         graph.add_nodes_from(nodes)
         graph.add_edges_from(edges)
@@ -464,6 +496,10 @@ class RoutePlanner:
             id_adj_right = lanelet.adj_right
             if id_adj_right and lanelet.adj_right_same_direction and id_adj_right in self.set_ids_lanelets_permissible:
                 edges.append((lanelet.lanelet_id, id_adj_right, {'weight': 1.0}))
+
+        # Edges in case of overtake during starting state
+        for id_start, id_adj in self.ids_lanelets_start_overtake:
+            edges.append((id_start, id_adj, {'weight': 1.0}))
 
         # add all nodes and edges to graph
         graph.add_nodes_from(nodes)
