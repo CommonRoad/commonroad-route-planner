@@ -13,8 +13,11 @@ from commonroad_route_planner.utils_route import chaikins_corner_cutting, resamp
 
 try:
     import pycrccosy
-except ModuleNotFoundError as exp:
-    pass
+except:
+    try:
+        from commonroad_dc import pycrccosy
+    except ModuleNotFoundError as exp:
+        pass
 
 
 class RouteType(Enum):
