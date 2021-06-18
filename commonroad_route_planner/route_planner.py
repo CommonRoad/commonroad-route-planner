@@ -340,24 +340,41 @@ class RoutePlanner:
         :return: route that consists of a list of lanelet IDs
         """
         route = list()
+        id_lanelet_current = id_lanelet_start
+        lanelet = self.lanelet_network.find_lanelet_by_id(id_lanelet_current)
 
-        lanelet = self.lanelet_network.find_lanelet_by_id(id_lanelet_start)
-
-        while id_lanelet_start not in route:
+        while id_lanelet_current not in route:
             route.append(lanelet.lanelet_id)
+
+            found_new_lanelet = False
             if lanelet.successor:
                 # naively select the first successors
                 lanelet = self.lanelet_network.find_lanelet_by_id(lanelet.successor[0])
-            elif lanelet.adj_right and lanelet.adj_right_same_direction:
+                found_new_lanelet = True
+
+            if not found_new_lanelet and lanelet.adj_right and lanelet.adj_right_same_direction:
                 # try to go right
-                lanelet = self.lanelet_network.find_lanelet_by_id(lanelet.adj_right)
-            elif lanelet.adj_left and lanelet.adj_left_same_direction:
+                lanelet_adj_right = self.lanelet_network.find_lanelet_by_id(lanelet.adj_right)
+                if len(lanelet_adj_right.successor):
+                    # right lanelet has successor
+                    lanelet = self.lanelet_network.find_lanelet_by_id(lanelet.adj_right)
+                    found_new_lanelet = True
+
+            if not found_new_lanelet and lanelet.adj_left and lanelet.adj_left_same_direction:
                 # try to go left
-                lanelet = self.lanelet_network.find_lanelet_by_id(lanelet.adj_left)
-            else:
+                lanelet_adj_left = self.lanelet_network.find_lanelet_by_id(lanelet.adj_left)
+                if len(lanelet_adj_left.successor):
+                    # left lanelet has successor
+                    lanelet = self.lanelet_network.find_lanelet_by_id(lanelet.adj_left)
+                    found_new_lanelet = True
+
+            if not found_new_lanelet:
                 # no possible route to advance
                 break
-            id_lanelet_start = lanelet.lanelet_id
+            else:
+                # set lanelet
+                id_lanelet_current = lanelet.lanelet_id
+
         return route
 
     def _create_reversed_graph_from_lanelet_network(self) -> nx.DiGraph:
