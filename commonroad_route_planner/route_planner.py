@@ -20,7 +20,7 @@ from commonroad.scenario.scenario import Scenario
 
 from commonroad_route_planner.priority_queue import PriorityQueue
 from commonroad_route_planner.route import RouteType, RouteCandidateHolder
-from commonroad_route_planner.utils_route import lanelet_orientation_at_position, relative_orientation
+from commonroad_route_planner.utility.route import lanelet_orientation_at_position, relative_orientation
 
 
 class RoutePlanner:

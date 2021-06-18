@@ -3,7 +3,7 @@ import os
 from commonroad.common.file_reader import CommonRoadFileReader
 
 from commonroad_route_planner.route_planner import RoutePlanner
-from commonroad_route_planner.utils_visualization import visualize_route
+from commonroad_route_planner.utility.visualization import visualize_route
 
 if __name__ == "__main__":
     # ========== initialization =========== #
