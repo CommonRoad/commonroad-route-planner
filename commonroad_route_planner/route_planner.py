@@ -78,6 +78,7 @@ class RoutePlanner:
                  set_types_lanelets_forbidden: List[LaneletType] = None,
                  allow_diagonal=False,
                  backend: Backend = Backend.NETWORKX,
+                 reach_goal_state: bool = False,
                  log_to_console=False,
                  log_to_file=False):
         """Initialization of a RoutePlanner object.
@@ -105,6 +106,7 @@ class RoutePlanner:
         self.set_types_lanelets_forbidden = set_types_lanelets_forbidden
 
         self.allow_diagonal = allow_diagonal
+        self.reach_goal_state = reach_goal_state
 
         self.logger = logging.getLogger(f"Route Planner [{self.scenario_id}]")
         self._init_logger(log_to_console=log_to_console, log_to_file=log_to_file)
@@ -116,11 +118,13 @@ class RoutePlanner:
                                              for lanelet_permissible in list_lanelets_filtered}
 
         # examine initial and goal lanelet ids
-        self.id_lanelets_start = None
-        self.ids_lanelets_start_overtake = None
-        self.ids_lanelets_goal = None
-        self._retrieve_ids_lanelets_start()
-        self._retrieve_ids_lanelets_goal()
+        self.id_lanelets_start = self._retrieve_ids_lanelets_start()
+
+        self.ids_lanelets_goal, self.ids_lanelets_goal_original = self._retrieve_ids_lanelets_goal()
+        if self.reach_goal_state and not self.ids_lanelets_goal:
+            # if the predecessors of the goal states cannot be reached, fall back to reaching the goal lanelets
+            self.reach_goal_state = False
+            self.ids_lanelets_goal, self.ids_lanelets_goal_original = self._retrieve_ids_lanelets_goal()
 
         self._create_lanelet_network_graph()
 
@@ -167,9 +171,9 @@ class RoutePlanner:
         if hasattr(self.planning_problem.initial_state, 'position'):
             post_start = self.planning_problem.initial_state.position
             # noinspection PyTypeChecker
-            list_ids_lanelets_pos_start = self.lanelet_network.find_lanelet_by_position([post_start])[0]
+            list_ids_lanelets_start = self.lanelet_network.find_lanelet_by_position([post_start])[0]
 
-            self.id_lanelets_start = list(self._filter_allowed_lanelet_ids(list_ids_lanelets_pos_start))
+            list_ids_lanelets_start = list(self._filter_allowed_lanelet_ids(list_ids_lanelets_start))
 
             # Check if any of the start positions are during an overtake:
             # if the car is not driving in the correct direction for the lanelet,
@@ -179,29 +183,32 @@ class RoutePlanner:
                     and not self.planning_problem.initial_state.is_uncertain_orientation):
                 orientation = self.planning_problem.initial_state.orientation
 
-                for id_start in self.id_lanelets_start:
-                    lanelet = self.lanelet_network.find_lanelet_by_id(id_start)
+                for id_lanelet_start in list_ids_lanelets_start:
+                    lanelet = self.lanelet_network.find_lanelet_by_id(id_lanelet_start)
                     lanelet_angle = lanelet_orientation_at_position(lanelet, post_start)
 
                     # Check if the angle difference is larger than 90 degrees
                     if abs(relative_orientation(orientation, lanelet_angle)) > 0.5 * np.pi:
                         if (lanelet.adj_left is not None and not lanelet.adj_left_same_direction
                                 and lanelet.adj_left in self.set_ids_lanelets_permissible):
-                            self.ids_lanelets_start_overtake.append((id_start, lanelet.adj_left))
+                            self.ids_lanelets_start_overtake.append((id_lanelet_start, lanelet.adj_left))
 
                         elif (lanelet.adj_right is not None and not lanelet.adj_right_same_direction
                               and lanelet.adj_right in self.set_ids_lanelets_permissible):
-                            self.ids_lanelets_start_overtake.append((id_start, lanelet.adj_right))
+                            self.ids_lanelets_start_overtake.append((id_lanelet_start, lanelet.adj_right))
 
-            if len(self.id_lanelets_start) > 1:
+            if len(list_ids_lanelets_start) > 1:
                 self.logger.info("Multiple start lanelet IDs: some may fail to reach goal lanelet")
         else:
             self.logger.critical("No initial position in the given planning problem")
             raise self.NoSourceLaneletId()
 
+        return list_ids_lanelets_start
+
     def _retrieve_ids_lanelets_goal(self):
         """Retrieves the ids of the lanelets in which the goal position is situated"""
-        self.ids_lanelets_goal = list()
+        list_ids_lanelets_goal = list()
+        list_ids_lanelets_goal_original = list()
 
         if hasattr(self.planning_problem.goal, 'lanelets_of_goal_position'):
             if self.planning_problem.goal.lanelets_of_goal_position is None:
@@ -211,33 +218,47 @@ class RoutePlanner:
                 # the goals are stored in a dict, one goal can consist of multiple lanelets
                 # now we just iterate over the goals and add every ID which we find to
                 # the goal_lanelet_ids list
-                list_ids_lanelets_goal_all = list()
-                for list_ids_lanelets_goal in list(self.planning_problem.goal.lanelets_of_goal_position.values()):
-                    list_ids_lanelets_goal_all.extend(list_ids_lanelets_goal)
-                self.ids_lanelets_goal.extend(list(self._filter_allowed_lanelet_ids(list_ids_lanelets_goal_all)))
+                for list_ids_lanelets_pos_goal in list(self.planning_problem.goal.lanelets_of_goal_position.values()):
+                    list_ids_lanelets_goal.extend(list_ids_lanelets_pos_goal)
 
-        if (len(self.ids_lanelets_goal) == 0) and hasattr(self.planning_problem.goal, 'state_list'):
+                list_ids_lanelets_goal = list(self._filter_allowed_lanelet_ids(list_ids_lanelets_goal))
+
+        if list_ids_lanelets_goal:
+            self.reach_goal_state = False
+
+        elif hasattr(self.planning_problem.goal, 'state_list'):
             for idx, state in enumerate(self.planning_problem.goal.state_list):
                 if hasattr(state, 'position'):
                     pos_goal = state.position
-                    # noinspection PyTypeChecker
                     list_ids_lanelets_pos_goal = self.lanelet_network.find_lanelet_by_shape(pos_goal)
                     list_ids_lanelets_pos_goal = list(self._filter_allowed_lanelet_ids(list_ids_lanelets_pos_goal))
 
-                    if len(list_ids_lanelets_pos_goal) != 0:
-                        self.ids_lanelets_goal.extend(list_ids_lanelets_pos_goal)
+                    if self.reach_goal_state:
+                        # we want to reach the goal states (not just the goal lanelets), here we instead demand
+                        # reaching the predecessor lanelets of the goal states
+                        list_ids_lanelets_goal_original = list_ids_lanelets_pos_goal.copy()
+                        list_ids_lanelets_pos_goal.clear()
+
+                        for id_lanelet_goal in list_ids_lanelets_goal_original:
+                            lanelet_goal = self.lanelet_network.find_lanelet_by_id(id_lanelet_goal)
+                            # make predecessor as goal
+                            list_ids_lanelets_pos_goal.extend(lanelet_goal.predecessor)
+
+                    if list_ids_lanelets_pos_goal:
+                        list_ids_lanelets_goal.extend(list_ids_lanelets_pos_goal)
                         self.logger.debug("Goal lanelet IDs estimated from goal shape in state [{}]".format(idx))
                     else:
                         self.logger.debug(
                             "No Goal lanelet IDs could be determined from the goal shape in state [{}]".format(idx))
 
         # remove duplicates and reset to none if no lanelet IDs found
-        if len(self.ids_lanelets_goal) != 0:
+        if list_ids_lanelets_goal:
             # remove duplicates and sort in ascending order
-            # noinspection PyTypeChecker
-            self.ids_lanelets_goal = sorted(list(dict.fromkeys(self.ids_lanelets_goal)))
+            list_ids_lanelets_goal = sorted(list(dict.fromkeys(list_ids_lanelets_goal)))
         else:
-            self.ids_lanelets_goal = None
+            list_ids_lanelets_goal = None
+
+        return list_ids_lanelets_goal, list_ids_lanelets_goal_original
 
     def _create_lanelet_network_graph(self):
         """Creates a directed graph of lanelets."""
@@ -284,22 +305,30 @@ class RoutePlanner:
             if self.ids_lanelets_goal:
                 # iterate through goal lanelet ids
                 for id_lanelet_goal in self.ids_lanelets_goal:
-                    list_ids_lanelets = list()
+                    list_lists_ids_lanelets = list()
                     if self.backend == RoutePlanner.Backend.NETWORKX:
-                        list_ids_lanelets = self._find_routes_networkx(id_lanelet_start, id_lanelet_goal)
+                        list_lists_ids_lanelets = self._find_routes_networkx(id_lanelet_start, id_lanelet_goal)
 
                     elif self.backend == RoutePlanner.Backend.NETWORKX_REVERSED:
-                        list_ids_lanelets = self._find_routes_networkx_reversed(id_lanelet_start, id_lanelet_goal)
+                        list_lists_ids_lanelets = self._find_routes_networkx_reversed(id_lanelet_start, id_lanelet_goal)
 
                     elif self.backend == RoutePlanner.Backend.PRIORITY_QUEUE:
-                        list_ids_lanelets = self._find_routes_priority_queue(id_lanelet_start, id_lanelet_goal)
+                        list_lists_ids_lanelets = self._find_routes_priority_queue(id_lanelet_start, id_lanelet_goal)
 
-                    if list_ids_lanelets:
-                        list_routes.extend(list_ids_lanelets)
+                    if list_lists_ids_lanelets:
+                        if self.reach_goal_state:
+                            # append the original goal lanelet back to the found route
+                            for id_lanelet_goal_original in self.ids_lanelets_goal_original:
+                                for list_ids_lanelets in list_lists_ids_lanelets:
+                                    list_routes.append(list_ids_lanelets + [id_lanelet_goal_original])
+
+                        else:
+                            list_routes.extend(list_lists_ids_lanelets)
+
             else:
                 # no goal lanelet, find survival route
-                list_ids_lanelets = self._find_survival_route(id_lanelet_start)
-                list_routes.append(list_ids_lanelets)
+                list_lists_ids_lanelets = self._find_survival_route(id_lanelet_start)
+                list_routes.append(list_lists_ids_lanelets)
 
         return RouteCandidateHolder(self.scenario, self.planning_problem, list_routes,
                                     self.route_type, self.set_ids_lanelets_permissible)
@@ -316,16 +345,16 @@ class RoutePlanner:
             if len(lanelet.lanelet_type.intersection(set_types_lanelets_forbidden)) == 0:
                 yield lanelet
 
-    def _filter_allowed_lanelet_ids(self, list_lanelets_to_filter: List[int]) \
+    def _filter_allowed_lanelet_ids(self, list_ids_lanelets_to_filter: List[int]) \
             -> Generator[int, None, None]:
         """Filters lanelets with the list of ids of forbidden lanelets.
 
-        :param list_lanelets_to_filter: The list of the lanelet ids which should be filtered
+        :param list_ids_lanelets_to_filter: The list of the lanelet ids which should be filtered
         :return: List of desirable lanelets
         """
-        for lanelet_id_to_filter in list_lanelets_to_filter:
-            if lanelet_id_to_filter in self.set_ids_lanelets_permissible:
-                yield lanelet_id_to_filter
+        for id_lanelet in list_ids_lanelets_to_filter:
+            if id_lanelet in self.set_ids_lanelets_permissible:
+                yield id_lanelet
 
     def _find_survival_route(self, id_lanelet_start: int) -> List:
         """Finds a route along the lanelet network for survival scenarios.
