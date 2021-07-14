@@ -1,4 +1,4 @@
-commonroad-io>=2019.2
+commonroad-io>=2021.1
 networkx>=2.4
 numpy>=1.17.4
 shapely>=1.6.4.post2
