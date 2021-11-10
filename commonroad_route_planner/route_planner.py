@@ -88,6 +88,7 @@ class RoutePlanner:
         :param set_types_lanelets_forbidden: set of lanelet types which should be avoided during route planning
         :param allow_diagonal: indicates whether diagonal movements are allowed - experimental
         :param backend: the backend to be used
+        :param reach_goal_state: indicates whether the reference path should pass through the goal state (position).
         :param log_to_console: indicates whether the outputs should be logged to the console
         :param log_to_file: indicates whether the outputs should be logged to file
         """
@@ -121,6 +122,7 @@ class RoutePlanner:
         self.id_lanelets_start = self._retrieve_ids_lanelets_start()
 
         self.ids_lanelets_goal, self.ids_lanelets_goal_original = self._retrieve_ids_lanelets_goal()
+
         if self.reach_goal_state and not self.ids_lanelets_goal:
             # if the predecessors of the goal states cannot be reached, fall back to reaching the goal lanelets
             self.reach_goal_state = False
