@@ -1,5 +1,6 @@
 import itertools
 import sys
+import warnings
 from enum import Enum
 from typing import List, Union, Tuple
 from typing import Set
@@ -12,12 +13,12 @@ from commonroad_route_planner.utility.route import chaikins_corner_cutting, resa
     sort_lanelet_ids_by_goal
 
 try:
-    import pycrccosy
-except:
+    import commonroad_dc.pycrccosy as pycrccosy
+except ModuleNotFoundError:
     try:
-        from commonroad_dc import pycrccosy
+        import pycrccosy
     except ModuleNotFoundError as exp:
-        pass
+        warnings.warn("<route.py/import section> no pycrccosy module found!")
 
 
 class RouteType(Enum):
