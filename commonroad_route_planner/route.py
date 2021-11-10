@@ -14,11 +14,13 @@ from commonroad_route_planner.utility.route import chaikins_corner_cutting, resa
 
 try:
     import commonroad_dc.pycrccosy as pycrccosy
+
 except ModuleNotFoundError:
     try:
         import pycrccosy
-    except ModuleNotFoundError as exp:
-        warnings.warn("<route.py/import section> no pycrccosy module found!")
+
+    except ModuleNotFoundError:
+        warnings.warn("<route.py> no pycrccosy module found!")
 
 
 class RouteType(Enum):

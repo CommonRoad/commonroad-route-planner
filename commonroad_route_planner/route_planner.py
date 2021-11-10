@@ -469,13 +469,11 @@ class RoutePlanner:
 
                 # check for diagonal left succeeding lanelet
                 if successor_lanelet.adj_left and lanelet.adj_left_same_direction:
-                    edges.append((lanelet.lanelet_id, successor_lanelet.adj_right,
-                                  {'weight': 0}))
+                    edges.append((lanelet.lanelet_id, successor_lanelet.adj_left, {'weight': 0}))
 
                 # check for diagonal right succeeding lanelet
                 if successor_lanelet.adj_right and lanelet.adj_right_same_direction:
-                    edges.append((lanelet.lanelet_id, successor_lanelet.adj_right,
-                                  {'weight': 0}))
+                    edges.append((lanelet.lanelet_id, successor_lanelet.adj_right, {'weight': 0}))
 
             # check if succeeding lanelet of right lanelet (e.g. turning lane highway)
             if lanelet.adj_right and lanelet.adj_right_same_direction:
