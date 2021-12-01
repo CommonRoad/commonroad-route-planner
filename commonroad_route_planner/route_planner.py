@@ -14,6 +14,7 @@ from typing import List, Generator, Set
 
 import networkx as nx
 import numpy as np
+from commonroad.geometry.shape import Polygon
 from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import Lanelet, LaneletType
 from commonroad.scenario.scenario import Scenario
@@ -231,8 +232,12 @@ class RoutePlanner:
         elif hasattr(self.planning_problem.goal, 'state_list'):
             for idx, state in enumerate(self.planning_problem.goal.state_list):
                 if hasattr(state, 'position'):
-                    pos_goal = state.position
-                    list_ids_lanelets_pos_goal = self.lanelet_network.find_lanelet_by_shape(pos_goal)
+                    if hasattr(state.position, 'center'):
+                        pos_goal = state.position.center
+
+                    else:
+                        pos_goal = state.position
+                    [list_ids_lanelets_pos_goal] = self.lanelet_network.find_lanelet_by_position([pos_goal])
                     list_ids_lanelets_pos_goal = list(self._filter_allowed_lanelet_ids(list_ids_lanelets_pos_goal))
 
                     if self.reach_goal_state:
@@ -279,6 +284,7 @@ class RoutePlanner:
                 if self.allow_diagonal:
                     self.logger.warning("Diagonal node connection not tested")
                     self.digraph = self._create_graph_from_lanelet_network_diagonal()
+
                 else:
                     self.digraph = self._create_graph_from_lanelet_network()
 
@@ -286,8 +292,10 @@ class RoutePlanner:
                 if self.allow_diagonal:
                     self.logger.warning("Diagonal node connection not implemented")
                     self.digraph = self._create_reversed_graph_from_lanelet_network_lane_change()
+
                 else:
                     self.digraph = self._create_reversed_graph_from_lanelet_network()
+
             elif self.backend == RoutePlanner.Backend.PRIORITY_QUEUE:
                 if self.allow_diagonal:
                     self.logger.critical("diagonal search with custom backend is not implemented")
@@ -414,7 +422,6 @@ class RoutePlanner:
         Edges are added from the predecessor relations between lanelets.
         :return: created graph from lanelet network
         """
-
         graph = nx.DiGraph()
         nodes = list()
         edges = list()
@@ -433,16 +440,16 @@ class RoutePlanner:
             # add edge if left lanelet
             id_adj_left = lanelet.adj_left
             if id_adj_left and lanelet.adj_left_same_direction and id_adj_left in self.set_ids_lanelets_permissible:
-                edges.append((lanelet.lanelet_id, id_adj_left, {'weight': np.inf}))
+                edges.append((lanelet.lanelet_id, id_adj_left, {'weight': 4.0}))
 
             # add edge if right lanelet
             id_adj_right = lanelet.adj_right
             if id_adj_right and lanelet.adj_right_same_direction and id_adj_right in self.set_ids_lanelets_permissible:
-                edges.append((lanelet.lanelet_id, id_adj_right, {'weight': np.inf}))
+                edges.append((lanelet.lanelet_id, id_adj_right, {'weight': 4.0}))
 
         # Edges in case of overtake during starting state
         for id_start, id_adj in self.ids_lanelets_start_overtake:
-            edges.append((id_adj, id_start, {'weight': np.inf}))
+            edges.append((id_adj, id_start, {'weight': 1.0}))
 
         # add all nodes and edges to the graph
         graph.add_nodes_from(nodes)
@@ -536,12 +543,12 @@ class RoutePlanner:
             # add edge if left lanelet
             id_adj_left = lanelet.adj_left
             if id_adj_left and lanelet.adj_left_same_direction and id_adj_left in self.set_ids_lanelets_permissible:
-                edges.append((lanelet.lanelet_id, id_adj_left, {'weight': 1.0}))
+                edges.append((lanelet.lanelet_id, id_adj_left, {'weight': 4.0}))
 
             # add edge if right lanelet
             id_adj_right = lanelet.adj_right
             if id_adj_right and lanelet.adj_right_same_direction and id_adj_right in self.set_ids_lanelets_permissible:
-                edges.append((lanelet.lanelet_id, id_adj_right, {'weight': 1.0}))
+                edges.append((lanelet.lanelet_id, id_adj_right, {'weight': 4.0}))
 
         # Edges in case of overtake during starting state
         for id_start, id_adj in self.ids_lanelets_start_overtake:
