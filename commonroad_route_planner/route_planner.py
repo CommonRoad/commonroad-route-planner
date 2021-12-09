@@ -14,7 +14,6 @@ from typing import List, Generator, Set
 
 import networkx as nx
 import numpy as np
-from commonroad.geometry.shape import Polygon
 from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import Lanelet, LaneletType
 from commonroad.scenario.scenario import Scenario
