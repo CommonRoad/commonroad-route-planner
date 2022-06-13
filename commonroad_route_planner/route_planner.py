@@ -305,7 +305,7 @@ class RoutePlanner:
         If no goal lanelet ID is given then return a survival route.
         :return: list of lanelet ids from start to goal.
         """
-        self.logger.info("Route planner started")
+        self.logger.debug("Route planner started")
         # route is a list that holds lists of lanelet ids from start lanelet to goal lanelet
         list_routes = list()
 
