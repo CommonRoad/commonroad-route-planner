@@ -15,6 +15,8 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
     :param draw_reference_path: flag to indicate if the reference path should be visualized
     :param size_x: size of the x-axis of the figure
     """
+    assert route.scenario, "scenario attribute is not set of Route object"
+
     # obtain plot limits for a better visualization.
     # we can obtain them through the lanelets or the reference path
     plot_limits = obtain_plot_limits_from_reference_path(route)
@@ -28,7 +30,8 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
 
     # draw scenario and planning problem
     route.scenario.draw(renderer)
-    route.planning_problem.goal.draw(renderer)
+    if route.planning_problem:
+        route.planning_problem.goal.draw(renderer)
     # draw the initial state of the planning problem
     draw_state(renderer, route.planning_problem.initial_state)
 

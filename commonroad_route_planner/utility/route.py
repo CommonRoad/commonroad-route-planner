@@ -4,8 +4,7 @@ from typing import List
 import numpy as np
 from commonroad.geometry.shape import Shape, Rectangle
 from commonroad.planning.goal import GoalRegion
-from commonroad.scenario.lanelet import Lanelet
-from commonroad.scenario.scenario import Scenario
+from commonroad.scenario.lanelet import Lanelet, LaneletNetwork
 
 
 def relative_orientation(angle_1, angle_2):
@@ -134,7 +133,7 @@ def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
 
 
 def sort_lanelet_ids_by_orientation(list_ids_lanelets: List[int], orientation: float, position: np.ndarray,
-                                    scenario: Scenario) \
+                                    lanelet_network: LaneletNetwork) \
         -> List[int]:
     """Returns the lanelets sorted by relative orientation to the given position and orientation."""
 
@@ -144,7 +143,7 @@ def sort_lanelet_ids_by_orientation(list_ids_lanelets: List[int], orientation: f
         lanelet_id_list = np.array(list_ids_lanelets)
 
         def get_lanelet_relative_orientation(lanelet_id):
-            lanelet = scenario.lanelet_network.find_lanelet_by_id(lanelet_id)
+            lanelet = lanelet_network.find_lanelet_by_id(lanelet_id)
             lanelet_orientation = lanelet_orientation_at_position(lanelet, position)
             return np.abs(relative_orientation(lanelet_orientation, orientation))
 
@@ -153,52 +152,46 @@ def sort_lanelet_ids_by_orientation(list_ids_lanelets: List[int], orientation: f
         return list(lanelet_id_list[sorted_indices])
 
 
-def sort_lanelet_ids_by_goal(scenario: Scenario, goal: GoalRegion) -> List[int]:
+def sort_lanelet_ids_by_goal(lanelet_network: LaneletNetwork, goal_region: GoalRegion) -> List[int]:
     """Sorts lanelet ids by goal region
 
-    :param goal:
-    :param scenario: commonroad scenario
     :return: lanelet id, if the obstacle is out of lanelet boundary (no lanelet is found, therefore return the
     lanelet id of last time step)
     """
-    if hasattr(goal, 'lanelets_of_goal_position') and goal.lanelets_of_goal_position is not None:
-        goal_lanelet_id_batch_list = list(goal.lanelets_of_goal_position.values())
+    if hasattr(goal_region, 'lanelets_of_goal_position') and goal_region.lanelets_of_goal_position is not None:
+        goal_lanelet_id_batch_list = list(goal_region.lanelets_of_goal_position.values())
         goal_lanelet_id_list = [item for sublist in goal_lanelet_id_batch_list for item in sublist]
         goal_lanelet_id_set = set(goal_lanelet_id_list)
-        goal_lanelets = [scenario.lanelet_network.find_lanelet_by_id(goal_lanelet_id) for goal_lanelet_id in
-                         goal_lanelet_id_list]
-        goal_lanelets_with_successor = np.array(
-            [1.0 if len(set(goal_lanelet.successor).intersection(goal_lanelet_id_set)) > 0 else 0.0 for goal_lanelet
-             in goal_lanelets])
+        goal_lanelets = [lanelet_network.find_lanelet_by_id(goal_lanelet_id)
+                         for goal_lanelet_id in goal_lanelet_id_list]
+        goal_lanelets_with_successor = \
+            np.array([1.0 if len(set(goal_lanelet.successor).intersection(goal_lanelet_id_set)) > 0 else 0.0
+                      for goal_lanelet in goal_lanelets])
+
         return [x for _, x in sorted(zip(goal_lanelets_with_successor, goal_lanelet_id_list))]
 
-    if goal.state_list is not None and len(goal.state_list) != 0:
-        if len(goal.state_list) > 1:
+    if goal_region.state_list is not None and len(goal_region.state_list) != 0:
+        if len(goal_region.state_list) > 1:
             raise ValueError("More than one goal state is not supported yet!")
-        goal_state = goal.state_list[0]
+        goal_state = goal_region.state_list[0]
 
         if hasattr(goal_state, "orientation"):
             goal_orientation: float = (goal_state.orientation.start + goal_state.orientation.end) / 2
+
         else:
             goal_orientation = 0.0
             warnings.warn("The goal state has no <orientation> attribute! It is set to 0.0")
 
         if hasattr(goal_state, "position"):
             goal_shape: Shape = goal_state.position
+
         else:
             goal_shape: Shape = Rectangle(length=0.01, width=0.01)
 
         # the goal shape has always a shapley object -> because it is a rectangle
-        # every shape has a shapely_object but ShapeGroup
-
         # noinspection PyUnresolvedReferences
-        return sort_lanelet_ids_by_orientation(
-            scenario.lanelet_network.find_lanelet_by_shape(goal_shape),
-            goal_orientation,
-#            np.array(goal_shape.shapely_object.centroid),
-            goal_shape.shapely_object.centroid.coords,
-            scenario
-        )
+        return sort_lanelet_ids_by_orientation(lanelet_network.find_lanelet_by_shape(goal_shape), goal_orientation,
+                                               goal_shape.shapely_object.centroid.coords, lanelet_network)
 
     raise NotImplementedError("Whole lanelet as goal must be implemented here!")
 

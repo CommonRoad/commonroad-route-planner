@@ -6,20 +6,22 @@ __maintainer__ = "Edmond Irani Liu"
 __email__ = "edmond.irani@tum.de"
 __status__ = "Release"
 
-import logging
 import os
-from datetime import datetime
+import logging
 from enum import Enum
+from datetime import datetime
 from typing import List, Generator, Set
 
-import networkx as nx
 import numpy as np
-from commonroad.planning.planning_problem import PlanningProblem
-from commonroad.scenario.lanelet import Lanelet, LaneletType
+import networkx as nx
+from commonroad.scenario.lanelet import Lanelet, LaneletType, LaneletNetwork
 from commonroad.scenario.scenario import Scenario
+from commonroad.scenario.trajectory import State
+from commonroad.planning.planning_problem import PlanningProblem
+from commonroad.planning.goal import GoalRegion
 
 from commonroad_route_planner.priority_queue import PriorityQueue
-from commonroad_route_planner.route import RouteType, RouteCandidateHolder
+from commonroad_route_planner.route import RouteType, Route, RouteCandidateHolder
 from commonroad_route_planner.utility.route import lanelet_orientation_at_position, relative_orientation
 
 
@@ -73,8 +75,11 @@ class RoutePlanner:
         def __init__(self, message):
             self.message = message
 
-    def __init__(self, scenario: Scenario,
-                 planning_problem: PlanningProblem,
+    def __init__(self, scenario: Scenario = None,
+                 planning_problem: PlanningProblem = None,
+                 lanelet_network: LaneletNetwork = None,
+                 state_initial: State = None,
+                 goal_region: GoalRegion = None,
                  set_types_lanelets_forbidden: List[LaneletType] = None,
                  allow_diagonal=False,
                  backend: Backend = Backend.NETWORKX,
@@ -85,6 +90,9 @@ class RoutePlanner:
 
         :param scenario: scenario on which the routes should be planned
         :param planning_problem: planning problem for which the routes should be planned
+        :param lanelet_network: lanelet network on which the routes should be planned
+        :param state_initial: initial state for which the routes should be planned
+        :param goal_region: goal region for which the routes should be planned
         :param set_types_lanelets_forbidden: set of lanelet types which should be avoided during route planning
         :param allow_diagonal: indicates whether diagonal movements are allowed - experimental
         :param backend: the backend to be used
@@ -97,10 +105,18 @@ class RoutePlanner:
             backend = RoutePlanner.Backend.NETWORKX
         self.backend = backend
 
-        self.scenario = scenario
-        self.scenario_id = scenario.scenario_id
-        self.lanelet_network = scenario.lanelet_network
-        self.planning_problem = planning_problem
+        self.lanelet_network = lanelet_network if lanelet_network else scenario.lanelet_network
+        self.state_initial = state_initial if state_initial else planning_problem.initial_state
+        self.goal_region = goal_region if goal_region else planning_problem.goal
+
+        if scenario:
+            self.scenario_id = scenario.scenario_id
+            Route.scenario = scenario
+        else:
+            self.scenario_id = "None"
+
+        if planning_problem:
+            Route.planning_problem = planning_problem
 
         if set_types_lanelets_forbidden is None:
             set_types_lanelets_forbidden = set()
@@ -170,8 +186,8 @@ class RoutePlanner:
 
     def _retrieve_ids_lanelets_start(self):
         """Retrieves the ids of the lanelets in which the initial position is situated"""
-        if hasattr(self.planning_problem.initial_state, 'position'):
-            post_start = self.planning_problem.initial_state.position
+        if hasattr(self.state_initial, 'position'):
+            post_start = self.state_initial.position
             # noinspection PyTypeChecker
             list_ids_lanelets_start = self.lanelet_network.find_lanelet_by_position([post_start])[0]
 
@@ -181,9 +197,9 @@ class RoutePlanner:
             # if the car is not driving in the correct direction for the lanelet,
             # it will also consider routes taking an adjacent lanelet in the opposite direction
             self.ids_lanelets_start_overtake = list()
-            if (hasattr(self.planning_problem.initial_state, 'orientation')
-                    and not self.planning_problem.initial_state.is_uncertain_orientation):
-                orientation = self.planning_problem.initial_state.orientation
+            if (hasattr(self.state_initial, 'orientation')
+                    and not self.state_initial.is_uncertain_orientation):
+                orientation = self.state_initial.orientation
 
                 for id_lanelet_start in list_ids_lanelets_start:
                     lanelet = self.lanelet_network.find_lanelet_by_id(id_lanelet_start)
@@ -212,15 +228,15 @@ class RoutePlanner:
         list_ids_lanelets_goal = list()
         list_ids_lanelets_goal_original = list()
 
-        if hasattr(self.planning_problem.goal, 'lanelets_of_goal_position'):
-            if self.planning_problem.goal.lanelets_of_goal_position is None:
+        if hasattr(self.goal_region, 'lanelets_of_goal_position'):
+            if self.goal_region.lanelets_of_goal_position is None:
                 self.logger.debug("No goal lanelet given")
             else:
                 self.logger.debug("Goal lanelet given")
                 # the goals are stored in a dict, one goal can consist of multiple lanelets
                 # now we just iterate over the goals and add every ID which we find to
                 # the goal_lanelet_ids list
-                for list_ids_lanelets_pos_goal in list(self.planning_problem.goal.lanelets_of_goal_position.values()):
+                for list_ids_lanelets_pos_goal in list(self.goal_region.lanelets_of_goal_position.values()):
                     list_ids_lanelets_goal.extend(list_ids_lanelets_pos_goal)
 
                 list_ids_lanelets_goal = list(self._filter_allowed_lanelet_ids(list_ids_lanelets_goal))
@@ -228,8 +244,8 @@ class RoutePlanner:
         if list_ids_lanelets_goal:
             self.reach_goal_state = False
 
-        elif hasattr(self.planning_problem.goal, 'state_list'):
-            for idx, state in enumerate(self.planning_problem.goal.state_list):
+        elif hasattr(self.goal_region, 'state_list'):
+            for idx, state in enumerate(self.goal_region.state_list):
                 if hasattr(state, 'position'):
                     if hasattr(state.position, 'center'):
                         pos_goal = state.position.center
@@ -339,7 +355,7 @@ class RoutePlanner:
                 list_lists_ids_lanelets = self._find_survival_route(id_lanelet_start)
                 list_routes.append(list_lists_ids_lanelets)
 
-        return RouteCandidateHolder(self.scenario, self.planning_problem, list_routes,
+        return RouteCandidateHolder(self.lanelet_network, self.state_initial, self.goal_region, list_routes,
                                     self.route_type, self.set_ids_lanelets_permissible)
 
     @staticmethod
