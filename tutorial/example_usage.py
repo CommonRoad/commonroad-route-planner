@@ -16,7 +16,13 @@ if __name__ == "__main__":
 
     # ========== route planning =========== #
     # instantiate a route planner with the scenario and the planning problem
-    route_planner = RoutePlanner(scenario, planning_problem, backend=RoutePlanner.Backend.NETWORKX, reach_goal_state=False)
+    route_planner = RoutePlanner(scenario, planning_problem,
+                                 backend=RoutePlanner.Backend.NETWORKX, reach_goal_state=False)
+    # alternatively, the route planner accepts a lanelet network, an initial state and a goal region
+    # route_planner = RoutePlanner(lanelet_network=scenario.lanelet_network, state_initial=planning_problem.initial_state,
+    #                              goal_region=planning_problem.goal, backend=RoutePlanner.Backend.NETWORKX,
+    #                              reach_goal_state=False)
+
     # plan routes, and save the routes in a route candidate holder
     candidate_holder = route_planner.plan_routes()
 
