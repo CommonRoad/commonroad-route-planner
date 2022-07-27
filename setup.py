@@ -10,13 +10,13 @@ with open(path.join(this_directory, 'requirements.txt'), encoding='utf-8') as f:
 
 setup(
     name='commonroad-route-planner',
-    version='1.0.0',
+    version='2022.2',
     description='route planner for CommonRoad scenarios',
     keywords='autonomous automated vehicles driving motion planning',
     url='https://gitlab.lrz.de/tum-cps/commonroad-route-planner',
     author='Daniel Tar, Edmond Irani Liu',
     author_email='commonroad@lists.lrz.de',
-    license='GNU General Public License v3.0',
+    license='BSD',
     packages=find_packages(),
     install_requires=required,
     extras_require={},
@@ -24,7 +24,7 @@ setup(
     long_description=readme,
     classifiers=[
         "Programming Language :: Python :: 3.7",
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        "License :: OSI Approved :: BSD License",
         "Operating System :: POSIX :: Linux",
         "Operating System :: MacOS",
     ],
