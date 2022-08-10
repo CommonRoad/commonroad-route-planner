@@ -249,11 +249,18 @@ class Route:
             num_vertices = len(vertices_resampled)
             num_vertices_lane_change = min(int(num_vertices * percentage_vertices_lane_change_max) + 1,
                                            num_vertices_lane_change_max)
+
             if reference_path is None:
                 idx_start = int(list_portions[idx][0] * num_vertices)
-                idx_end = int(list_portions[idx][1] * num_vertices) - num_vertices_lane_change
+                idx_end = int(list_portions[idx][1] * num_vertices)
                 # prevent index out of bound
                 idx_end = max(idx_end, 1)
+                # reserve some vertices if it is not the last lanelet
+                if idx != (num_lanelets_in_route - 1):
+                    idx_end = idx_end - num_vertices_lane_change
+                    # prevent index out of bound
+                    idx_end = max(idx_end, 1)
+
                 reference_path = vertices_resampled[idx_start:idx_end, :]
             else:
                 idx_start = int(list_portions[idx][0] * num_vertices) + num_vertices_lane_change
