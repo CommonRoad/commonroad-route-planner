@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from commonroad.geometry.shape import Rectangle, Circle
 from commonroad.scenario.lanelet import LaneletNetwork
-from commonroad.scenario.trajectory import State
+from commonroad.scenario.state import KSState
 from commonroad.visualization.mp_renderer import MPRenderer
 
 from commonroad_route_planner.route import Route
@@ -76,7 +76,7 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
     plt.show()
 
 
-def draw_state(renderer: MPRenderer, state: State, color='#ee6c4d'):
+def draw_state(renderer: MPRenderer, state: KSState, color='#ee6c4d'):
     occ_state = Rectangle(4.0, 2.0, state.position, state.orientation)
     occ_state.draw(renderer, draw_params={'shape': {'rectangle': {'facecolor': f'{color}'}}})
 
