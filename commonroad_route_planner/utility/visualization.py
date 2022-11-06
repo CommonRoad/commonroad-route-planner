@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from commonroad.geometry.shape import Rectangle, Circle
 from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.state import KSState
+
 from commonroad.visualization.mp_renderer import MPRenderer
 
 from commonroad_route_planner.route import Route
@@ -37,23 +38,6 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
 
     # draw lanelets of the route
     if draw_route_lanelets:
-        dict_param = {'lanelet': {
-            'unique_colors': False,  # colorizes center_vertices and labels of each lanelet differently
-            'draw_stop_line': False,
-            'stop_line_color': '#ffffff',
-            'draw_line_markings': True,
-            'draw_left_bound': False,
-            'draw_right_bound': False,
-            'draw_center_bound': True,
-            'draw_border_vertices': False,
-            'draw_start_and_direction': True,
-            'show_label': False,
-            'draw_linewidth': 1,
-            'fill_lanelet': True,
-            'facecolor': '#469d89',  # color for filling
-            'zorder': 30,  # put it higher in the plot, to make it visible
-            'center_bound_color': '#3232ff',  # color of the found route with arrow
-        }}
 
         list_lanelets = []
         for id_lanelet in route.list_ids_lanelets:
@@ -61,13 +45,30 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
             list_lanelets.append(lanelet)
         lanelet_network = LaneletNetwork.create_from_lanelet_list(list_lanelets)
 
-        lanelet_network.draw(renderer, draw_params=dict_param)
+        renderer.draw_params.lanelet_network.lanelet['unique_colors'] = False  # colorizes center_vertices and labels of each lanelet differently
+        renderer.draw_params.lanelet_network.lanelet['draw_stop_line'] = False
+        renderer.draw_params.lanelet_network.lanelet['stop_line_color'] = '#ffffff'
+        renderer.draw_params.lanelet_network.lanelet['draw_line_markings'] = True
+        renderer.draw_params.lanelet_network.lanelet['draw_left_bound'] = False
+        renderer.draw_params.lanelet_network.lanelet['draw_right_bound'] = False
+        renderer.draw_params.lanelet_network.lanelet['draw_center_bound'] = True
+        renderer.draw_params.lanelet_network.lanelet['draw_border_vertices'] = False
+        renderer.draw_params.lanelet_network.lanelet['draw_start_and_direction'] = True
+        renderer.draw_params.lanelet_network.lanelet['show_label'] = False
+        renderer.draw_params.lanelet_network.lanelet['draw_linewidth'] = 1
+        renderer.draw_params.lanelet_network.lanelet['fill_lanelet'] = True
+        renderer.draw_params.lanelet_network.lanelet['facecolor'] = '#469d89'  # color for filling
+        renderer.draw_params.lanelet_network.lanelet['zorder'] = 30  # put it higher in the plot, to make it visible
+        renderer.draw_params.lanelet_network.lanelet['center_bound_color'] = '#3232ff'  # color of the found route with arrow
+
+        lanelet_network.draw(renderer)
 
     # draw reference path with dots
     if draw_reference_path:
         for position in route.reference_path:
             occ_pos = Circle(radius=0.2, center=position)
-            occ_pos.draw(renderer, draw_params={'shape': {'circle': {'facecolor': '#ff477e'}}})
+            renderer.draw_params.shape['circle'] = {'facecolor': '#ff477e'}
+            occ_pos.draw(renderer)
 
     # render and show plot
     renderer.render()
@@ -78,8 +79,9 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
 
 def draw_state(renderer: MPRenderer, state: KSState, color='#ee6c4d'):
     occ_state = Rectangle(4.0, 2.0, state.position, state.orientation)
-    occ_state.draw(renderer, draw_params={'shape': {'rectangle': {'facecolor': f'{color}'}}})
+    renderer.draw_params.shape['rectangle'] = {'facecolor': f'{color}'}
 
+    occ_state.draw(renderer)
 
 def obtain_plot_limits_from_routes(route, border=15):
     x_min_values = list()
