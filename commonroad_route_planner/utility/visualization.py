@@ -67,7 +67,7 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
     if draw_reference_path:
         for position in route.reference_path:
             occ_pos = Circle(radius=0.2, center=position)
-            renderer.draw_params.shape['circle'] = {'facecolor': '#ff477e'}
+            renderer.draw_params.shape.facecolor = '#ff477e'
             occ_pos.draw(renderer)
 
     # render and show plot
