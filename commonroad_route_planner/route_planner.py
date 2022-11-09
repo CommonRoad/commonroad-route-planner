@@ -16,7 +16,7 @@ import numpy as np
 import networkx as nx
 from commonroad.scenario.lanelet import Lanelet, LaneletType, LaneletNetwork
 from commonroad.scenario.scenario import Scenario
-from commonroad.scenario.trajectory import State
+from commonroad.scenario.state import InitialState
 from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.planning.goal import GoalRegion
 
@@ -78,7 +78,7 @@ class RoutePlanner:
     def __init__(self, scenario: Scenario = None,
                  planning_problem: PlanningProblem = None,
                  lanelet_network: LaneletNetwork = None,
-                 state_initial: State = None,
+                 state_initial: InitialState = None,
                  goal_region: GoalRegion = None,
                  set_types_lanelets_forbidden: List[LaneletType] = None,
                  allow_diagonal=False,
