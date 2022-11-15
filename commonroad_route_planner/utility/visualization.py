@@ -32,7 +32,7 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
     # draw scenario and planning problem
     route.scenario.draw(renderer)
     if route.planning_problem:
-        route.planning_problem.goal.draw(renderer)
+        route.planning_problem.draw(renderer)
     # draw the initial state of the planning problem
     draw_state(renderer, route.planning_problem.initial_state)
 
@@ -66,7 +66,7 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
     # draw reference path with dots
     if draw_reference_path:
         for position in route.reference_path:
-            occ_pos = Circle(radius=0.2, center=position)
+            occ_pos = Circle(radius=0.3, center=position)
             renderer.draw_params.shape.facecolor = '#ff477e'
             occ_pos.draw(renderer)
 
@@ -79,8 +79,7 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
 
 def draw_state(renderer: MPRenderer, state: InitialState, color='#ee6c4d'):
     occ_state = Rectangle(4.0, 2.0, state.position, state.orientation)
-    renderer.draw_params.shape['rectangle'] = {'facecolor': f'{color}'}
-
+    renderer.draw_params.shape.facecolor = color
     occ_state.draw(renderer)
 
 def obtain_plot_limits_from_routes(route, border=15):
