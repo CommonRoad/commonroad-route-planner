@@ -10,7 +10,7 @@ with open(path.join(this_directory, 'requirements.txt'), encoding='utf-8') as f:
 
 setup(
     name='commonroad-route-planner',
-    version='2022.2',
+    version='2022.3',
     description='route planner for CommonRoad scenarios',
     keywords='autonomous automated vehicles driving motion planning',
     url='https://gitlab.lrz.de/tum-cps/commonroad-route-planner',
