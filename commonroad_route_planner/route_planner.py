@@ -1,7 +1,7 @@
 __author__ = "Daniel Tar, Peter Kocsis, Edmond Irani Liu"
 __copyright__ = ""
 __credits__ = [""]
-__version__ = "1.0.0"
+__version__ = "2022.3"
 __maintainer__ = "Edmond Irani Liu"
 __email__ = "edmond.irani@tum.de"
 __status__ = "Release"
@@ -14,8 +14,8 @@ from typing import List, Generator, Set
 
 import numpy as np
 import networkx as nx
-from commonroad.scenario.lanelet import Lanelet, LaneletType, LaneletNetwork
 from commonroad.scenario.scenario import Scenario
+from commonroad.scenario.lanelet import Lanelet, LaneletType, LaneletNetwork
 from commonroad.scenario.state import InitialState
 from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.planning.goal import GoalRegion
