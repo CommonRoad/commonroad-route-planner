@@ -39,7 +39,7 @@ flake8:
   allow_failure: true
   script:
     - pip install flake8 flake8-todo
-    - flake8 commonroad-route-planner
+    - flake8 commonroad_route_planner
 
 black:
   stage: style
@@ -50,7 +50,7 @@ black:
   # Do not enforce code formatting
   allow_failure: true
   script:
-    - black --check --verbose --diff --color commonroad-route-planner
+    - black --check --verbose --diff --color commonroad_route_planner
 
 # Deploy the package to the internal package registry
 deploy_master:
