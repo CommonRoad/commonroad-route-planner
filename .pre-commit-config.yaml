@@ -1,0 +1,24 @@
+repos:
+  #  - repo: https://github.com/IamTheFij/docker-pre-commit
+  #    rev: v2.1.1
+  #    hooks:
+  #      - id: docker-compose-check
+
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.5.1
+    hooks:
+      - id: prettier
+        files: \.(json|markdown|md|yaml|yml)$
+
+  - repo: https://github.com/pycqa/isort
+    rev: 5.12.0
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: [--profile, black, --filter-files, --line-width=88]
+
+        # Use the black formatter
+  - repo: https://github.com/psf/black
+    rev: 22.6.0
+    hooks:
+      - id: black
