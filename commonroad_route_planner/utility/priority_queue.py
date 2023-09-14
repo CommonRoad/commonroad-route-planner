@@ -67,7 +67,9 @@ class PriorityQueue:
         :param update_cost: cost of the item to be updated
         :param update_item: item to be updated
         """
-        reverse_lookup = {item_id: index for index, (_, item_id, _) in enumerate(self.elements)}
+        reverse_lookup = {
+            item_id: index for index, (_, item_id, _) in enumerate(self.elements)
+        }
         item_index = reverse_lookup.get(updated_id, -1)
         if item_index >= 0:
             (cost, i_id, item) = self.elements[item_index]
@@ -77,7 +79,7 @@ class PriorityQueue:
                 # put the new one in the queue
                 self.push(updated_id, update_item, update_cost)
 
-    def merge(self, other_queue: 'PriorityQueue'):
+    def merge(self, other_queue: "PriorityQueue"):
         """Merges with another priority queue."""
 
         if other_queue is None or other_queue.is_empty():
@@ -88,7 +90,9 @@ class PriorityQueue:
             self.count = other_queue.count
             return
 
-        self.elements = list(heapq.merge(self.elements, other_queue.elements, key=lambda c: c[0]))
+        self.elements = list(
+            heapq.merge(self.elements, other_queue.elements, key=lambda c: c[0])
+        )
         self.count += other_queue.count
 
     def __str__(self):

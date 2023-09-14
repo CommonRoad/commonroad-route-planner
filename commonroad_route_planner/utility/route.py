@@ -2,7 +2,7 @@ import warnings
 from typing import List
 
 import numpy as np
-from commonroad.geometry.shape import Shape, Rectangle
+from commonroad.geometry.shape import Rectangle, Shape
 from commonroad.planning.goal import GoalRegion
 from commonroad.scenario.lanelet import Lanelet, LaneletNetwork
 
@@ -12,12 +12,14 @@ def relative_orientation(angle_1, angle_2):
 
     phi = (angle_2 - angle_1) % (2 * np.pi)
     if phi > np.pi:
-        phi -= (2 * np.pi)
+        phi -= 2 * np.pi
 
     return phi
 
 
-def chaikins_corner_cutting(polyline: np.ndarray, num_refinements: int = 4) -> np.ndarray:
+def chaikins_corner_cutting(
+    polyline: np.ndarray, num_refinements: int = 4
+) -> np.ndarray:
     """Chaikin's corner cutting algorithm.
 
     Chaikin's corner cutting algorithm smooths a polyline by replacing each original point with two new points.
@@ -46,16 +48,19 @@ def compute_polyline_length(polyline: np.ndarray) -> float:
     :param polyline: The polyline
     :return: The path length of the polyline
     """
-    assert isinstance(polyline, np.ndarray) and polyline.ndim == 2 and len(
-        polyline[:, 0]) > 2, 'Polyline malformed for path length computation p={}'.format(polyline)
+    assert (
+        isinstance(polyline, np.ndarray)
+        and polyline.ndim == 2
+        and len(polyline[:, 0]) > 2
+    ), "Polyline malformed for path length computation p={}".format(polyline)
 
     distance_between_points = np.diff(polyline, axis=0)
     # noinspection PyTypeChecker
-    return np.sum(np.sqrt(np.sum(distance_between_points ** 2, axis=1)))
+    return np.sum(np.sqrt(np.sum(distance_between_points**2, axis=1)))
 
 
 def resample_polyline_with_length_check(polyline, step=2):
-    """ Resamples polyline with length check."""
+    """Resamples polyline with length check."""
     length = np.linalg.norm(polyline[-1] - polyline[0])
     if length > step:
         polyline = resample_polyline(polyline, step)
@@ -89,8 +94,9 @@ def resample_polyline(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
         if current_position <= current_distance:
             # add new sample and increase current position
             ratio = current_position / current_distance
-            polyline_new.append((1 - ratio) * polyline[current_idx] +
-                                ratio * polyline[current_idx + 1])
+            polyline_new.append(
+                (1 - ratio) * polyline[current_idx] + ratio * polyline[current_idx + 1]
+            )
             current_position += step
 
         else:
@@ -102,7 +108,9 @@ def resample_polyline(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
             # deduct the distance of previous vertices from the position
             current_position = current_position - current_distance
             # compute new distances of vertices
-            current_distance = np.linalg.norm(polyline[current_idx + 1] - polyline[current_idx])
+            current_distance = np.linalg.norm(
+                polyline[current_idx + 1] - polyline[current_idx]
+            )
 
     # add the last vertex
     polyline_new.append(polyline[-1])
@@ -132,9 +140,12 @@ def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
     return np.arctan2(direction_vector[1], direction_vector[0])
 
 
-def sort_lanelet_ids_by_orientation(list_ids_lanelets: List[int], orientation: float, position: np.ndarray,
-                                    lanelet_network: LaneletNetwork) \
-        -> List[int]:
+def sort_lanelet_ids_by_orientation(
+    list_ids_lanelets: List[int],
+    orientation: float,
+    position: np.ndarray,
+    lanelet_network: LaneletNetwork,
+) -> List[int]:
     """Returns the lanelets sorted by relative orientation to the given position and orientation."""
 
     if len(list_ids_lanelets) <= 1:
@@ -147,28 +158,50 @@ def sort_lanelet_ids_by_orientation(list_ids_lanelets: List[int], orientation: f
             lanelet_orientation = lanelet_orientation_at_position(lanelet, position)
             return np.abs(relative_orientation(lanelet_orientation, orientation))
 
-        orientation_differences = np.array(list(map(get_lanelet_relative_orientation, lanelet_id_list)))
+        orientation_differences = np.array(
+            list(map(get_lanelet_relative_orientation, lanelet_id_list))
+        )
         sorted_indices = np.argsort(orientation_differences)
         return list(lanelet_id_list[sorted_indices])
 
 
-def sort_lanelet_ids_by_goal(lanelet_network: LaneletNetwork, goal_region: GoalRegion) -> List[int]:
+def sort_lanelet_ids_by_goal(
+    lanelet_network: LaneletNetwork, goal_region: GoalRegion
+) -> List[int]:
     """Sorts lanelet ids by goal region
 
     :return: lanelet id, if the obstacle is out of lanelet boundary (no lanelet is found, therefore return the
     lanelet id of last time step)
     """
-    if hasattr(goal_region, 'lanelets_of_goal_position') and goal_region.lanelets_of_goal_position is not None:
-        goal_lanelet_id_batch_list = list(goal_region.lanelets_of_goal_position.values())
-        goal_lanelet_id_list = [item for sublist in goal_lanelet_id_batch_list for item in sublist]
+    if (
+        hasattr(goal_region, "lanelets_of_goal_position")
+        and goal_region.lanelets_of_goal_position is not None
+    ):
+        goal_lanelet_id_batch_list = list(
+            goal_region.lanelets_of_goal_position.values()
+        )
+        goal_lanelet_id_list = [
+            item for sublist in goal_lanelet_id_batch_list for item in sublist
+        ]
         goal_lanelet_id_set = set(goal_lanelet_id_list)
-        goal_lanelets = [lanelet_network.find_lanelet_by_id(goal_lanelet_id)
-                         for goal_lanelet_id in goal_lanelet_id_list]
-        goal_lanelets_with_successor = \
-            np.array([1.0 if len(set(goal_lanelet.successor).intersection(goal_lanelet_id_set)) > 0 else 0.0
-                      for goal_lanelet in goal_lanelets])
+        goal_lanelets = [
+            lanelet_network.find_lanelet_by_id(goal_lanelet_id)
+            for goal_lanelet_id in goal_lanelet_id_list
+        ]
+        goal_lanelets_with_successor = np.array(
+            [
+                1.0
+                if len(set(goal_lanelet.successor).intersection(goal_lanelet_id_set))
+                > 0
+                else 0.0
+                for goal_lanelet in goal_lanelets
+            ]
+        )
 
-        return [x for _, x in sorted(zip(goal_lanelets_with_successor, goal_lanelet_id_list))]
+        return [
+            x
+            for _, x in sorted(zip(goal_lanelets_with_successor, goal_lanelet_id_list))
+        ]
 
     if goal_region.state_list is not None and len(goal_region.state_list) != 0:
         if len(goal_region.state_list) > 1:
@@ -176,11 +209,15 @@ def sort_lanelet_ids_by_goal(lanelet_network: LaneletNetwork, goal_region: GoalR
         goal_state = goal_region.state_list[0]
 
         if hasattr(goal_state, "orientation"):
-            goal_orientation: float = (goal_state.orientation.start + goal_state.orientation.end) / 2
+            goal_orientation: float = (
+                goal_state.orientation.start + goal_state.orientation.end
+            ) / 2
 
         else:
             goal_orientation = 0.0
-            warnings.warn("The goal state has no <orientation> attribute! It is set to 0.0")
+            warnings.warn(
+                "The goal state has no <orientation> attribute! It is set to 0.0"
+            )
 
         if hasattr(goal_state, "position"):
             goal_shape: Shape = goal_state.position
@@ -190,20 +227,27 @@ def sort_lanelet_ids_by_goal(lanelet_network: LaneletNetwork, goal_region: GoalR
 
         # the goal shape has always a shapley object -> because it is a rectangle
         # noinspection PyUnresolvedReferences
-        return sort_lanelet_ids_by_orientation(lanelet_network.find_lanelet_by_shape(goal_shape), goal_orientation,
-                                               goal_shape.shapely_object.centroid.coords, lanelet_network)
+        return sort_lanelet_ids_by_orientation(
+            lanelet_network.find_lanelet_by_shape(goal_shape),
+            goal_orientation,
+            goal_shape.shapely_object.centroid.coords,
+            lanelet_network,
+        )
 
     raise NotImplementedError("Whole lanelet as goal must be implemented here!")
 
 
 def compute_curvature_from_polyline(polyline: np.ndarray) -> np.ndarray:
-    """ Computes curvature of the given polyline
+    """Computes curvature of the given polyline
 
     :param polyline: The polyline for the curvature computation
     :return: The curvature of the polyline
     """
-    assert isinstance(polyline, np.ndarray) and polyline.ndim == 2 and len(
-        polyline[:, 0]) > 2, 'Polyline malformed for curvature computation p={}'.format(polyline)
+    assert (
+        isinstance(polyline, np.ndarray)
+        and polyline.ndim == 2
+        and len(polyline[:, 0]) > 2
+    ), "Polyline malformed for curvature computation p={}".format(polyline)
     dx = np.gradient(polyline[:, 0])
     dy = np.gradient(polyline[:, 1])
 

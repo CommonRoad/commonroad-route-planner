@@ -6,29 +6,28 @@ __maintainer__ = "Edmond Irani Liu"
 __email__ = "edmond.irani@tum.de"
 __status__ = "Release"
 
+import logging
 from enum import Enum
-from typing import List, Generator, Set
+from typing import Generator, List, Set
 
 import numpy as np
-from commonroad.scenario.scenario import Scenario
-from commonroad.scenario.lanelet import Lanelet, LaneletType, LaneletNetwork
-from commonroad.scenario.state import InitialState
-from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.planning.goal import GoalRegion
+from commonroad.planning.planning_problem import PlanningProblem
+from commonroad.scenario.lanelet import Lanelet, LaneletNetwork, LaneletType
+from commonroad.scenario.scenario import Scenario
+from commonroad.scenario.state import InitialState
 
 from commonroad_route_planner.planners.a_star import AStarRoutePlanner
 from commonroad_route_planner.planners.networkx import (
-    ReversedNetworkxRoutePlanner,
     NetworkxRoutePlanner,
+    ReversedNetworkxRoutePlanner,
 )
 from commonroad_route_planner.planners.survival import SurvivalRoutePlanner
-from commonroad_route_planner.route import RouteType, Route, RouteCandidateHolder
+from commonroad_route_planner.route import Route, RouteCandidateHolder, RouteType
 from commonroad_route_planner.utility.route import (
     lanelet_orientation_at_position,
     relative_orientation,
 )
-
-import logging
 
 _logger = logging.getLogger(__name__)
 
@@ -144,13 +143,15 @@ class RoutePlanner:
         elif self.backend == RoutePlanner.Backend.NETWORKX:
             self.planner = NetworkxRoutePlanner(
                 self.lanelet_network,
-                self.set_ids_lanelets_permissible, self.ids_lanelets_start_overtake,
+                self.set_ids_lanelets_permissible,
+                self.ids_lanelets_start_overtake,
                 self.allow_diagonal,
             )
         elif self.backend == RoutePlanner.Backend.NETWORKX_REVERSED:
             self.planner = ReversedNetworkxRoutePlanner(
-                self.lanelet_network, self.set_ids_lanelets_permissible,
-            self.ids_lanelets_start_overtake
+                self.lanelet_network,
+                self.set_ids_lanelets_permissible,
+                self.ids_lanelets_start_overtake,
             )
         elif self.backend == RoutePlanner.Backend.PRIORITY_QUEUE:
             self.planner = AStarRoutePlanner(

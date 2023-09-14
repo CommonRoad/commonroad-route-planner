@@ -1,18 +1,18 @@
+import logging
 from typing import List
 
 import numpy as np
 from commonroad.scenario.lanelet import Lanelet
 
-from commonroad_route_planner.planners.base_route_planner import \
-    BaseRoutePlanner
-from commonroad_route_planner.utility.exceptions import NoSourceLaneletIdException, \
-    NoPathFoundException
-
-import logging
-
+from commonroad_route_planner.planners.base_route_planner import BaseRoutePlanner
+from commonroad_route_planner.utility.exceptions import (
+    NoPathFoundException,
+    NoSourceLaneletIdException,
+)
 from commonroad_route_planner.utility.priority_queue import PriorityQueue
 
 _logger = logging.getLogger(__name__)
+
 
 class LaneletNode:
     """Custom node class to represent a lanelet.
@@ -20,8 +20,9 @@ class LaneletNode:
     This is used to represent the lanelets as nodes when performing A-star search.
     """
 
-    def __init__(self, id_lanelet: int, lanelet: Lanelet, cost: float,
-                 length_current: int):
+    def __init__(
+        self, id_lanelet: int, lanelet: Lanelet, cost: float, length_current: int
+    ):
         self.id = id_lanelet
         self.lanelet = lanelet
         self.cost = cost
@@ -50,11 +51,14 @@ class AStarRoutePlanner(BaseRoutePlanner):
 
         try:
             list_lanelets.append(
-                self._find_route_astar(id_lanelet_start, id_lanelet_goal))
+                self._find_route_astar(id_lanelet_start, id_lanelet_goal)
+            )
         except NoPathFoundException:
             # it is a normal behaviour because of the overlapping lanelets in a road network
-            _logger.debug(f"""The goal lanelet with ID [{id_lanelet_goal}] cannot be reached 
-                                                      from the start lanelet with ID [{id_lanelet_start}]""")
+            _logger.debug(
+                f"""The goal lanelet with ID [{id_lanelet_goal}] cannot be reached 
+                                                      from the start lanelet with ID [{id_lanelet_start}]"""
+            )
         return list_lanelets
 
     @staticmethod
@@ -68,18 +72,29 @@ class AStarRoutePlanner(BaseRoutePlanner):
         diff = lanelet_goal.center_vertices[0] - lanelet_current.center_vertices[-1]
         return np.sqrt(np.dot(diff, diff))
 
-    def _add_child(self, parent_node: LaneletNode, next_lanelet_id: int, target: Lanelet, extra_cost: float = 0.0):
+    def _add_child(
+        self,
+        parent_node: LaneletNode,
+        next_lanelet_id: int,
+        target: Lanelet,
+        extra_cost: float = 0.0,
+    ):
         next_lanelet = self.lanelet_network.find_lanelet_by_id(next_lanelet_id)
 
         frontier_lanelet_ids = self.frontier.get_item_ids()
-        cost = extra_cost + parent_node.cost + self._calc_cost_travel(next_lanelet) + self._calc_cost_heuristic(
-            next_lanelet,
-            target)
+        cost = (
+            extra_cost
+            + parent_node.cost
+            + self._calc_cost_travel(next_lanelet)
+            + self._calc_cost_heuristic(next_lanelet, target)
+        )
 
         node = LaneletNode(next_lanelet_id, next_lanelet, cost, parent_node.count + 1)
         node.parent_node = parent_node
 
-        if (next_lanelet_id not in self.explored) and (next_lanelet_id not in frontier_lanelet_ids):
+        if (next_lanelet_id not in self.explored) and (
+            next_lanelet_id not in frontier_lanelet_ids
+        ):
             self.frontier.push(next_lanelet_id, node, cost)
         elif next_lanelet_id in frontier_lanelet_ids:
             self.frontier.update_item_if_exists(next_lanelet_id, node, cost)
@@ -87,10 +102,14 @@ class AStarRoutePlanner(BaseRoutePlanner):
     def _find_route_astar(self, id_lanelet_start, id_lanelet_goal: int) -> List:
 
         if id_lanelet_start not in self.set_ids_lanelets_permissible:
-            raise NoPathFoundException("Start lanelet is not in the permissible set. Check its lanelet type.")
+            raise NoPathFoundException(
+                "Start lanelet is not in the permissible set. Check its lanelet type."
+            )
 
         if id_lanelet_goal not in self.set_ids_lanelets_permissible:
-            raise NoPathFoundException("Goal lanelet is not in the permissible set. Check its lanelet type.")
+            raise NoPathFoundException(
+                "Goal lanelet is not in the permissible set. Check its lanelet type."
+            )
 
         self.frontier = PriorityQueue()
         self.explored = set()
@@ -101,7 +120,9 @@ class AStarRoutePlanner(BaseRoutePlanner):
         # in astar search, the cost of a node f is the traveled cost g + heuristic cost h
         cost_travel = self._calc_cost_travel(lanelet_current)
         cost_heuristic = self._calc_cost_heuristic(lanelet_current, lanelet_goal)
-        node = LaneletNode(id_lanelet_start, lanelet_current, cost_travel + cost_heuristic, 1)
+        node = LaneletNode(
+            id_lanelet_start, lanelet_current, cost_travel + cost_heuristic, 1
+        )
         self.frontier.push(node.id, node, node.cost)
 
         # execute the search
@@ -129,27 +150,45 @@ class AStarRoutePlanner(BaseRoutePlanner):
 
             # add left lanelet
             adj_left_id = lanelet_current.adj_left
-            if lanelet_current.adj_left_same_direction and adj_left_id and adj_left_id in self.set_ids_lanelets_permissible:
+            if (
+                lanelet_current.adj_left_same_direction
+                and adj_left_id
+                and adj_left_id in self.set_ids_lanelets_permissible
+            ):
                 self._add_child(node, adj_left_id, lanelet_goal, 1.0 - lanelet_length)
 
                 if self.allow_diagonal:
-                    left_lanelet_successor_ids = self.lanelet_network.find_lanelet_by_id(adj_left_id).successor
+                    left_lanelet_successor_ids = (
+                        self.lanelet_network.find_lanelet_by_id(adj_left_id).successor
+                    )
                     for left_lanelet_successor_id in left_lanelet_successor_ids:
-                        self._add_child(node, left_lanelet_successor_id, lanelet_goal, 0.9)
+                        self._add_child(
+                            node, left_lanelet_successor_id, lanelet_goal, 0.9
+                        )
 
             # add right lanelet
             adj_right_id = lanelet_current.adj_right
-            if lanelet_current.adj_right_same_direction and adj_right_id and adj_right_id in self.set_ids_lanelets_permissible:
+            if (
+                lanelet_current.adj_right_same_direction
+                and adj_right_id
+                and adj_right_id in self.set_ids_lanelets_permissible
+            ):
                 self._add_child(node, adj_right_id, lanelet_goal, 1.0 - lanelet_length)
 
                 if self.allow_diagonal:
-                    right_lanelet_successor_ids = self.lanelet_network.find_lanelet_by_id(adj_right_id).successor
+                    right_lanelet_successor_ids = (
+                        self.lanelet_network.find_lanelet_by_id(adj_right_id).successor
+                    )
                     for right_lanelet_successor_id in right_lanelet_successor_ids:
-                        self._add_child(node, right_lanelet_successor_id, lanelet_goal, 0.9)
+                        self._add_child(
+                            node, right_lanelet_successor_id, lanelet_goal, 0.9
+                        )
         else:
             raise NoPathFoundException(
-                "The Target lanelet_id [{}] cannot be reached from Source [{}]".format(id_lanelet_goal,
-                                                                                       id_lanelet_start))
+                "The Target lanelet_id [{}] cannot be reached from Source [{}]".format(
+                    id_lanelet_goal, id_lanelet_start
+                )
+            )
         list_ids_lanelets_reversed = list()
         # add ids by looking up to parent node
         while node:

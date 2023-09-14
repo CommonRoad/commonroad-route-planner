@@ -1,5 +1,4 @@
-from commonroad_route_planner.planners.base_route_planner import \
-    BaseRoutePlanner
+from commonroad_route_planner.planners.base_route_planner import BaseRoutePlanner
 
 
 class SurvivalRoutePlanner(BaseRoutePlanner):
@@ -25,28 +24,35 @@ class SurvivalRoutePlanner(BaseRoutePlanner):
             found_new_lanelet = False
             if lanelet.successor:
                 # naively select the first successors
-                lanelet = self.lanelet_network.find_lanelet_by_id(
-                        lanelet.successor[0])
+                lanelet = self.lanelet_network.find_lanelet_by_id(lanelet.successor[0])
                 found_new_lanelet = True
 
-            if not found_new_lanelet and lanelet.adj_right and lanelet.adj_right_same_direction:
+            if (
+                not found_new_lanelet
+                and lanelet.adj_right
+                and lanelet.adj_right_same_direction
+            ):
                 # try to go right
                 lanelet_adj_right = self.lanelet_network.find_lanelet_by_id(
-                    lanelet.adj_right)
+                    lanelet.adj_right
+                )
                 if len(lanelet_adj_right.successor):
                     # right lanelet has successor
-                    lanelet = self.lanelet_network.find_lanelet_by_id(
-                        lanelet.adj_right)
+                    lanelet = self.lanelet_network.find_lanelet_by_id(lanelet.adj_right)
                     found_new_lanelet = True
 
-            if not found_new_lanelet and lanelet.adj_left and lanelet.adj_left_same_direction:
+            if (
+                not found_new_lanelet
+                and lanelet.adj_left
+                and lanelet.adj_left_same_direction
+            ):
                 # try to go left
                 lanelet_adj_left = self.lanelet_network.find_lanelet_by_id(
-                    lanelet.adj_left)
+                    lanelet.adj_left
+                )
                 if len(lanelet_adj_left.successor):
                     # left lanelet has successor
-                    lanelet = self.lanelet_network.find_lanelet_by_id(
-                        lanelet.adj_left)
+                    lanelet = self.lanelet_network.find_lanelet_by_id(lanelet.adj_left)
                     found_new_lanelet = True
 
             if not found_new_lanelet:

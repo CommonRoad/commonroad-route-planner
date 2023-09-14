@@ -1,14 +1,15 @@
 import matplotlib.pyplot as plt
-from commonroad.geometry.shape import Rectangle, Circle
+from commonroad.geometry.shape import Circle, Rectangle
 from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.state import InitialState
-
 from commonroad.visualization.mp_renderer import MPRenderer
 
 from commonroad_route_planner.route import Route
 
 
-def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path=False, size_x=10):
+def visualize_route(
+    route: Route, draw_route_lanelets=False, draw_reference_path=False, size_x=10
+):
     """Visualizes the given route.
 
     :param route: route object to be visualized
@@ -45,9 +46,11 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
             list_lanelets.append(lanelet)
         lanelet_network = LaneletNetwork.create_from_lanelet_list(list_lanelets)
 
-        renderer.draw_params.lanelet_network.lanelet.unique_colors = False  # colorizes center_vertices and labels of each lanelet differently
+        renderer.draw_params.lanelet_network.lanelet.unique_colors = (
+            False  # colorizes center_vertices and labels of each lanelet differently
+        )
         renderer.draw_params.lanelet_network.lanelet.draw_stop_line = False
-        renderer.draw_params.lanelet_network.lanelet.stop_line_color = '#ffffff'
+        renderer.draw_params.lanelet_network.lanelet.stop_line_color = "#ffffff"
         renderer.draw_params.lanelet_network.lanelet.draw_line_markings = True
         renderer.draw_params.lanelet_network.lanelet.draw_left_bound = False
         renderer.draw_params.lanelet_network.lanelet.draw_right_bound = False
@@ -57,9 +60,15 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
         renderer.draw_params.lanelet_network.lanelet.show_label = False
         renderer.draw_params.lanelet_network.lanelet.draw_linewidth = 1
         renderer.draw_params.lanelet_network.lanelet.fill_lanelet = True
-        renderer.draw_params.lanelet_network.lanelet.facecolor = '#469d89'  # color for filling
-        renderer.draw_params.lanelet_network.lanelet.zorder = 30  # put it higher in the plot, to make it visible
-        renderer.draw_params.lanelet_network.lanelet.center_bound_color = '#3232ff'  # color of the found route with arrow
+        renderer.draw_params.lanelet_network.lanelet.facecolor = (
+            "#469d89"  # color for filling
+        )
+        renderer.draw_params.lanelet_network.lanelet.zorder = (
+            30  # put it higher in the plot, to make it visible
+        )
+        renderer.draw_params.lanelet_network.lanelet.center_bound_color = (
+            "#3232ff"  # color of the found route with arrow
+        )
 
         lanelet_network.draw(renderer)
 
@@ -67,7 +76,7 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
     if draw_reference_path:
         for position in route.reference_path:
             occ_pos = Circle(radius=0.3, center=position)
-            renderer.draw_params.shape.facecolor = '#ff477e'
+            renderer.draw_params.shape.facecolor = "#ff477e"
             occ_pos.draw(renderer)
 
     # render and show plot
@@ -77,10 +86,11 @@ def visualize_route(route: Route, draw_route_lanelets=False, draw_reference_path
     plt.show()
 
 
-def draw_state(renderer: MPRenderer, state: InitialState, color='#ee6c4d'):
+def draw_state(renderer: MPRenderer, state: InitialState, color="#ee6c4d"):
     occ_state = Rectangle(4.0, 2.0, state.position, state.orientation)
     renderer.draw_params.shape.facecolor = color
     occ_state.draw(renderer)
+
 
 def obtain_plot_limits_from_routes(route, border=15):
     x_min_values = list()
@@ -94,8 +104,12 @@ def obtain_plot_limits_from_routes(route, border=15):
         y_min_values.append(lanelet.center_vertices[:, 1].min())
         y_max_values.append(lanelet.center_vertices[:, 1].max())
 
-    plot_limits = [min(x_min_values) - border, max(x_max_values) + border,
-                   min(y_min_values) - border, max(y_max_values) + border]
+    plot_limits = [
+        min(x_min_values) - border,
+        max(x_max_values) + border,
+        min(y_min_values) - border,
+        max(y_max_values) + border,
+    ]
     return plot_limits
 
 

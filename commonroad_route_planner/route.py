@@ -2,16 +2,21 @@ import itertools
 import sys
 import warnings
 from enum import Enum
-from typing import List, Union, Tuple, Set
+from typing import List, Set, Tuple, Union
 
 import numpy as np
-from commonroad.scenario.scenario import Scenario
-from commonroad.scenario.lanelet import LaneletNetwork
-from commonroad.scenario.state import InitialState
-from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.planning.goal import GoalRegion
-from commonroad_route_planner.utility.route import \
-    chaikins_corner_cutting, resample_polyline, sort_lanelet_ids_by_orientation, sort_lanelet_ids_by_goal
+from commonroad.planning.planning_problem import PlanningProblem
+from commonroad.scenario.lanelet import LaneletNetwork
+from commonroad.scenario.scenario import Scenario
+from commonroad.scenario.state import InitialState
+
+from commonroad_route_planner.utility.route import (
+    chaikins_corner_cutting,
+    resample_polyline,
+    sort_lanelet_ids_by_goal,
+    sort_lanelet_ids_by_orientation,
+)
 
 try:
     import commonroad_dc.pycrccosy as pycrccosy
@@ -32,11 +37,16 @@ class RouteType(Enum):
 
 class Route:
     """Class to represent a route in the scenario."""
+
     scenario: Scenario = None
     planning_problem: PlanningProblem = None
 
-    def __init__(self, lanelet_network: LaneletNetwork, list_ids_lanelets: List[int],
-                 set_ids_lanelets_permissible: Set[int] = None):
+    def __init__(
+        self,
+        lanelet_network: LaneletNetwork,
+        list_ids_lanelets: List[int],
+        set_ids_lanelets_permissible: Set[int] = None,
+    ):
         self.lanelet_network = lanelet_network
 
         # a route is created given the list of lanelet ids from start to goal
@@ -47,7 +57,9 @@ class Route:
         self.set_ids_lanelets_opposite_direction = set()
 
         if set_ids_lanelets_permissible is None:
-            self.set_ids_lanelets_permissible = {lanelet.lanelet_id for lanelet in self.lanelet_network.lanelets}
+            self.set_ids_lanelets_permissible = {
+                lanelet.lanelet_id for lanelet in self.lanelet_network.lanelets
+            }
         else:
             self.set_ids_lanelets_permissible = set_ids_lanelets_permissible
 
@@ -55,14 +67,18 @@ class Route:
         self.reference_path = self._generate_reference_path()
 
         self.path_length = self._compute_path_length_from_polyline(self.reference_path)
-        self.path_orientation = self._compute_orientation_from_polyline(self.reference_path)
+        self.path_orientation = self._compute_orientation_from_polyline(
+            self.reference_path
+        )
         self.path_curvature = self._compute_curvature_from_polyline(self.reference_path)
 
-        if 'commonroad_dc.pycrccosy' in sys.modules:
+        if "commonroad_dc.pycrccosy" in sys.modules:
             # make sure the reference path is already resampled and smoothened before creating a CLCS out of it
             self.CLCS = pycrccosy.CurvilinearCoordinateSystem(self.reference_path)
 
-    def retrieve_route_sections(self, is_opposite_direction_allowed: bool = False) -> Union[None, List[List[int]]]:
+    def retrieve_route_sections(
+        self, is_opposite_direction_allowed: bool = False
+    ) -> Union[None, List[List[int]]]:
         """Retrieves route sections for lanelets in the route.
 
         A section is a list of lanelet ids that are adjacent to a given lanelet.
@@ -71,8 +87,9 @@ class Route:
             # compute list of sections
             for id_lanelet in self.list_ids_lanelets:
                 # for every lanelet in the route, get its adjacent lanelets
-                list_ids_lanelets_in_section = self._get_adjacent_lanelets_ids(id_lanelet,
-                                                                               is_opposite_direction_allowed)
+                list_ids_lanelets_in_section = self._get_adjacent_lanelets_ids(
+                    id_lanelet, is_opposite_direction_allowed
+                )
                 # add lanelet from the route too
                 list_ids_lanelets_in_section.append(id_lanelet)
                 list_ids_lanelets_in_section.sort()
@@ -90,7 +107,9 @@ class Route:
 
         return self.list_sections
 
-    def _get_adjacent_lanelets_ids(self, id_lanelet: int, is_opposite_direction_permissible=False) -> list:
+    def _get_adjacent_lanelets_ids(
+        self, id_lanelet: int, is_opposite_direction_permissible=False
+    ) -> list:
         """Recursively gets adj_left and adj_right lanelets of the given lanelet.
 
         :param id_lanelet: current lanelet id
@@ -113,7 +132,9 @@ class Route:
                     list_lanelets_adjacent.append(id_lanelet_temp)
 
                     # update lanelet_current
-                    lanelet_current = self.lanelet_network.find_lanelet_by_id(id_lanelet_temp)
+                    lanelet_current = self.lanelet_network.find_lanelet_by_id(
+                        id_lanelet_temp
+                    )
                     id_lanelet_temp = lanelet_current.adj_left
 
                 else:
@@ -138,7 +159,9 @@ class Route:
                     list_lanelets_adjacent.append(id_lanelet_temp)
 
                     # Update lanelet_current
-                    lanelet_current = self.lanelet_network.find_lanelet_by_id(id_lanelet_temp)
+                    lanelet_current = self.lanelet_network.find_lanelet_by_id(
+                        id_lanelet_temp
+                    )
                     id_lanelet_temp = lanelet_current.adj_right
                 else:
                     # if the lanelet is in opposite direction, we add them into a set
@@ -179,7 +202,10 @@ class Route:
         """
         list_instructions = []
         for idx, id_lanelet in enumerate(self.list_ids_lanelets[:-1]):
-            if self.list_ids_lanelets[idx + 1] in self.lanelet_network.find_lanelet_by_id(id_lanelet).successor:
+            if (
+                self.list_ids_lanelets[idx + 1]
+                in self.lanelet_network.find_lanelet_by_id(id_lanelet).successor
+            ):
                 list_instructions.append(0)
             else:
                 list_instructions.append(1)
@@ -202,15 +228,17 @@ class Route:
 
         # returns a list of consecutive instructions
         # e.g. input: [0, 0, 1, 1, 0, 1] output: [[0, 0], [1, 1], [0], [1]]
-        list_instructions_consecutive = [list(v) for k, v in itertools.groupby(list_instructions)]
+        list_instructions_consecutive = [
+            list(v) for k, v in itertools.groupby(list_instructions)
+        ]
 
         list_bounds_upper = []
-        list_bounds_lower = [0.]
+        list_bounds_lower = [0.0]
         for instructions in list_instructions_consecutive:
             for idx, instruction in enumerate(instructions):
                 if instruction == 0:
                     # goes till the end of the lanelet
-                    bound_upper = 1.
+                    bound_upper = 1.0
                 else:
                     # goes only till a specific portion
                     bound_upper = (idx + 1) / (len(instructions) + 1)
@@ -219,18 +247,26 @@ class Route:
 
         if len(list_bounds_upper) > 1:
             for idx in range(1, len(list_bounds_upper)):
-                if np.isclose(list_bounds_upper[idx - 1], 1.):
-                    list_bounds_lower.append(0.)
+                if np.isclose(list_bounds_upper[idx - 1], 1.0):
+                    list_bounds_lower.append(0.0)
                 else:
                     list_bounds_lower.append(list_bounds_upper[idx - 1])
 
-        assert len(list_bounds_lower) == len(list_bounds_upper) == len(list_instructions), \
-            f"The lengths of portions do not match."
+        assert (
+            len(list_bounds_lower) == len(list_bounds_upper) == len(list_instructions)
+        ), f"The lengths of portions do not match."
 
-        return [(lower, upper) for lower, upper in zip(list_bounds_lower, list_bounds_upper)]
+        return [
+            (lower, upper) for lower, upper in zip(list_bounds_lower, list_bounds_upper)
+        ]
 
-    def _compute_reference_path(self, list_portions, num_vertices_lane_change_max=6,
-                                percentage_vertices_lane_change_max=0.1, step_resample=1.0):
+    def _compute_reference_path(
+        self,
+        list_portions,
+        num_vertices_lane_change_max=6,
+        percentage_vertices_lane_change_max=0.1,
+        step_resample=1.0,
+    ):
         """Computes reference path given the list of portions of each lanelet
 
         :param list_portions
@@ -243,10 +279,14 @@ class Route:
         for idx, id_lanelet in enumerate(self.list_ids_lanelets):
             lanelet = self.lanelet_network.find_lanelet_by_id(id_lanelet)
             # resample the center vertices to prevent too few vertices with too large distances
-            vertices_resampled = resample_polyline(lanelet.center_vertices, step_resample)
+            vertices_resampled = resample_polyline(
+                lanelet.center_vertices, step_resample
+            )
             num_vertices = len(vertices_resampled)
-            num_vertices_lane_change = min(int(num_vertices * percentage_vertices_lane_change_max) + 1,
-                                           num_vertices_lane_change_max)
+            num_vertices_lane_change = min(
+                int(num_vertices * percentage_vertices_lane_change_max) + 1,
+                num_vertices_lane_change_max,
+            )
 
             if reference_path is None:
                 idx_start = int(list_portions[idx][0] * num_vertices)
@@ -261,7 +301,9 @@ class Route:
 
                 reference_path = vertices_resampled[idx_start:idx_end, :]
             else:
-                idx_start = int(list_portions[idx][0] * num_vertices) + num_vertices_lane_change
+                idx_start = (
+                    int(list_portions[idx][0] * num_vertices) + num_vertices_lane_change
+                )
                 # prevent index out of bound
                 idx_start = min(idx_start, num_vertices - 1)
 
@@ -274,7 +316,9 @@ class Route:
 
                 path_to_be_concatenated = vertices_resampled[idx_start:idx_end, :]
 
-                reference_path = np.concatenate((reference_path, path_to_be_concatenated), axis=0)
+                reference_path = np.concatenate(
+                    (reference_path, path_to_be_concatenated), axis=0
+                )
 
         reference_path = resample_polyline(reference_path, 2)
         return reference_path
@@ -287,12 +331,17 @@ class Route:
         :param polyline: polyline for which path length should be calculated
         :return: path length along polyline
         """
-        assert isinstance(polyline, np.ndarray) and polyline.ndim == 2 and len(
-            polyline[:, 0]) > 2, 'Polyline malformed for path lenth computation p={}'.format(polyline)
+        assert (
+            isinstance(polyline, np.ndarray)
+            and polyline.ndim == 2
+            and len(polyline[:, 0]) > 2
+        ), "Polyline malformed for path lenth computation p={}".format(polyline)
 
         distance = np.zeros((len(polyline),))
         for i in range(1, len(polyline)):
-            distance[i] = distance[i - 1] + np.linalg.norm(polyline[i] - polyline[i - 1])
+            distance[i] = distance[i - 1] + np.linalg.norm(
+                polyline[i] - polyline[i - 1]
+            )
 
         return np.array(distance)
 
@@ -304,15 +353,18 @@ class Route:
         :param polyline: polyline for which curvature should be calculated
         :return: curvature along  polyline
         """
-        assert isinstance(polyline, np.ndarray) and polyline.ndim == 2 and len(
-            polyline[:, 0]) > 2, 'Polyline malformed for curvature computation p={}'.format(polyline)
+        assert (
+            isinstance(polyline, np.ndarray)
+            and polyline.ndim == 2
+            and len(polyline[:, 0]) > 2
+        ), "Polyline malformed for curvature computation p={}".format(polyline)
 
         x_d = np.gradient(polyline[:, 0])
         x_dd = np.gradient(x_d)
         y_d = np.gradient(polyline[:, 1])
         y_dd = np.gradient(y_d)
 
-        return (x_d * y_dd - x_dd * y_d) / ((x_d ** 2 + y_d ** 2) ** (3. / 2.))
+        return (x_d * y_dd - x_dd * y_d) / ((x_d**2 + y_d**2) ** (3.0 / 2.0))
 
     @staticmethod
     def _compute_orientation_from_polyline(polyline: np.ndarray) -> np.ndarray:
@@ -322,10 +374,14 @@ class Route:
         :param polyline: polyline for which orientation should be calculated
         :return: orientation along polyline
         """
-        assert isinstance(polyline, np.ndarray) and len(polyline) > 1 and polyline.ndim == 2 and len(
-            polyline[0, :]) == 2, '<Math>: not a valid polyline. polyline = {}'.format(polyline)
+        assert (
+            isinstance(polyline, np.ndarray)
+            and len(polyline) > 1
+            and polyline.ndim == 2
+            and len(polyline[0, :]) == 2
+        ), "<Math>: not a valid polyline. polyline = {}".format(polyline)
         if len(polyline) < 2:
-            raise ValueError('Cannot create orientation from polyline of length < 2')
+            raise ValueError("Cannot create orientation from polyline of length < 2")
 
         orientation = [0]
         for i in range(1, len(polyline)):
@@ -349,22 +405,32 @@ class Route:
 class RouteCandidateHolder:
     """Class to hold route candidates generated by the route planner"""
 
-    def __init__(self, lanelet_network: LaneletNetwork, state_initial: InitialState, goal_region: GoalRegion,
-                 list_route_candidates: List[List[int]], set_ids_lanelets_permissible: Set):
+    def __init__(
+        self,
+        lanelet_network: LaneletNetwork,
+        state_initial: InitialState,
+        goal_region: GoalRegion,
+        list_route_candidates: List[List[int]],
+        set_ids_lanelets_permissible: Set,
+    ):
         self.lanelet_network = lanelet_network
         self.state_initial = state_initial
         self.goal_region = goal_region
 
         # create a list of Route objects for all routes found by the route planner which is not empty
-        self.list_route_candidates = [Route(lanelet_network, route, set_ids_lanelets_permissible)
-                                      for route in list_route_candidates if route]
+        self.list_route_candidates = [
+            Route(lanelet_network, route, set_ids_lanelets_permissible)
+            for route in list_route_candidates
+            if route
+        ]
         self.num_route_candidates = len(self.list_route_candidates)
 
         if set_ids_lanelets_permissible is None:
-            self.set_ids_lanelets_permissible = {lanelet.lanelet_id for lanelet in self.lanelet_network.lanelets}
+            self.set_ids_lanelets_permissible = {
+                lanelet.lanelet_id for lanelet in self.lanelet_network.lanelets
+            }
         else:
             self.set_ids_lanelets_permissible = set_ids_lanelets_permissible
-
 
     def retrieve_first_route(self) -> Route:
         return self.list_route_candidates[0]
@@ -380,44 +446,62 @@ class RouteCandidateHolder:
         # sort the lanelets in the scenario based on their orientation difference with the initial state
         list_ids_lanelets_initial_sorted = sort_lanelet_ids_by_orientation(
             self.lanelet_network.find_lanelet_by_position([state_current.position])[0],
-            state_current.orientation, state_current.position, self.lanelet_network)
+            state_current.orientation,
+            state_current.position,
+            self.lanelet_network,
+        )
         # sort the lanelets in the scenario based on the goal region metric
-        list_ids_lanelets_goal_sorted = sort_lanelet_ids_by_goal(self.lanelet_network, self.goal_region)
+        list_ids_lanelets_goal_sorted = sort_lanelet_ids_by_goal(
+            self.lanelet_network, self.goal_region
+        )
 
         list_ids_lanelet_goal_candidates = np.array(
-            [route_candidate.list_ids_lanelets[-1] for route_candidate in self.list_route_candidates])
+            [
+                route_candidate.list_ids_lanelets[-1]
+                for route_candidate in self.list_route_candidates
+            ]
+        )
 
         for id_lanelet_goal in list_ids_lanelets_goal_sorted:
             if id_lanelet_goal in list_ids_lanelet_goal_candidates:
                 list_ids_lanelets_initial_candidates = list()
                 for route_candidate in self.list_route_candidates:
                     if route_candidate.list_ids_lanelets[-1] == id_lanelet_goal:
-                        list_ids_lanelets_initial_candidates.append(route_candidate.list_ids_lanelets[0])
+                        list_ids_lanelets_initial_candidates.append(
+                            route_candidate.list_ids_lanelets[0]
+                        )
                     else:
                         list_ids_lanelets_initial_candidates.append(None)
-                list_ids_lanelets_initial_candidates = np.array(list_ids_lanelets_initial_candidates)
+                list_ids_lanelets_initial_candidates = np.array(
+                    list_ids_lanelets_initial_candidates
+                )
 
                 for initial_lanelet_id in list_ids_lanelets_initial_sorted:
                     if initial_lanelet_id in list_ids_lanelets_initial_candidates:
                         route = self.list_route_candidates[
-                            np.where(list_ids_lanelets_initial_candidates == initial_lanelet_id)[0][0]]
+                            np.where(
+                                list_ids_lanelets_initial_candidates
+                                == initial_lanelet_id
+                            )[0][0]
+                        ]
                         return route
             return None
 
     def retrieve_all_routes(self) -> Tuple[List[Route], int]:
-        """ Returns the list of Route objects and the total number of routes"""
+        """Returns the list of Route objects and the total number of routes"""
         return self.list_route_candidates, self.num_route_candidates
 
     def __repr__(self):
-        return f"RouteCandidateHolder(#candidates:{len(self.list_route_candidates)},initial_state={self.state_initial}," \
-               f"goal_region={self.goal_region})"
+        return (
+            f"RouteCandidateHolder(#candidates:{len(self.list_route_candidates)},initial_state={self.state_initial},"
+            f"goal_region={self.goal_region})"
+        )
 
     def __str__(self):
         return self.__repr__()
 
 
 class SurvivalRouteCandidateHolder(RouteCandidateHolder):
-
     def retrieve_best_route_by_orientation(self) -> Union[Route, None]:
         if not len(self.list_route_candidates):
             return None
