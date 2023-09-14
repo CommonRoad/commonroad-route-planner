@@ -1,0 +1,79 @@
+image: python:3.10
+
+cache:
+  paths:
+    - .venv
+
+stages:
+  - style
+  - test
+  - deploy
+
+before_script:
+  - pip install poetry
+  - poetry config virtualenvs.in-project true
+  - poetry install --with test
+  - source .venv/bin/activate
+
+# Run all tests in the tests folder
+unittest:
+  stage: test
+  script:
+    - coverage run --source=./commonroad-route-planner -m unittest discover test
+    - coverage report -m || true
+    - coverage xml
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+
+flake8:
+  stage: style
+  needs: [ ]
+  image: python:3.10
+  before_script: [ ]
+  cache: [ ]
+  # Do not enforce style
+  allow_failure: true
+  script:
+    - pip install flake8 flake8-todo
+    - flake8 commonroad-route-planner
+
+black:
+  stage: style
+  needs: [ ]
+  image: pyfound/black:22.6.0
+  before_script: [ ]
+  cache: [ ]
+  # Do not enforce code formatting
+  allow_failure: true
+  script:
+    - black --check --verbose --diff --color commonroad-route-planner
+
+# Deploy the package to the internal package registry
+deploy_master:
+  stage: deploy
+  script:
+    - poetry config repositories.gitlab ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi
+    - poetry build
+    - poetry publish --repository gitlab -u gitlab-ci-token -p ${CI_JOB_TOKEN}
+  only:
+    - master
+  except:
+    - tags
+
+# Deploy to PiPy
+#publish_pypi:
+#  stage: deploy
+#  when: manual
+#  only:
+#    - master
+#  script:
+#    - poetry build
+#    - poetry publish -u ${CR_PYPI_RELEASE_USERNAME} -p ${CR_PYPI_RELEASE_PASSWORD}
+#  environment:
+#    name: production
+#    url: https://pypi.org/project/commonroad-route-planner

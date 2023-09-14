@@ -204,12 +204,23 @@ def compute_curvature_from_polyline(polyline: np.ndarray) -> np.ndarray:
     """
     assert isinstance(polyline, np.ndarray) and polyline.ndim == 2 and len(
         polyline[:, 0]) > 2, 'Polyline malformed for curvature computation p={}'.format(polyline)
-    x_d = np.gradient(polyline[:, 0])
-    x_dd = np.gradient(x_d)
-    y_d = np.gradient(polyline[:, 1])
-    y_dd = np.gradient(y_d)
+    dx = np.gradient(polyline[:, 0])
+    dy = np.gradient(polyline[:, 1])
 
-    # compute curvature
-    curvature = (x_d * y_dd - x_dd * y_d) / ((x_d ** 2 + y_d ** 2) ** (3. / 2.))
+    velocity = np.column_stack((dx, dy))
+
+    ddx = np.gradient(dx)
+    ddy = np.gradient(dy)
+
+    acceleration = np.column_stack((ddx, ddy))
+    # kappa = a x v / |v|^3
+    v_squared_sum = np.sum(velocity**2, axis=-1)
+    out = np.zeros_like(v_squared_sum)
+    np.divide(
+        -np.cross(acceleration, velocity),
+        v_squared_sum**1.5,
+        where=v_squared_sum > 0.0,
+        out=out,
+    )
 
     return curvature

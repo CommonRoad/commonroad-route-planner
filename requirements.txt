@@ -1,6 +1,0 @@
-commonroad-io>=2022.2
-networkx>=2.4
-numpy>=1.17.4
-shapely>=1.6.4.post2
-matplotlib>=3.1.2
-setuptools>=42.0.1
