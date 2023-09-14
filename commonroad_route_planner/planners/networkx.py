@@ -52,8 +52,7 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         except nx.exception.NetworkXNoPath:
             # it is a normal behaviour because of the overlapping lanelets in a road network
             _logger.debug(
-                f"""The goal lanelet with ID [{id_lanelet_goal}] cannot be reached 
-                              from the start lanelet with ID [{id_lanelet_start}]"""
+                f"The goal lanelet with ID [{id_lanelet_goal}] cannot be reached from the start lanelet with ID [{id_lanelet_start}]"
             )
         return list_lanelets
 

@@ -254,7 +254,7 @@ class Route:
 
         assert (
             len(list_bounds_lower) == len(list_bounds_upper) == len(list_instructions)
-        ), f"The lengths of portions do not match."
+        ), "The lengths of portions do not match."
 
         return [
             (lower, upper) for lower, upper in zip(list_bounds_lower, list_bounds_upper)

@@ -267,4 +267,4 @@ def compute_curvature_from_polyline(polyline: np.ndarray) -> np.ndarray:
         out=out,
     )
 
-    return curvature
+    return out
