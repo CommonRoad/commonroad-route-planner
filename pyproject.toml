@@ -17,8 +17,17 @@ matplotlib = ">=3.1.2"
 commonroad-drivability-checker = "^2023.1"
 
 
+[tool.poetry.group.tutorial]
+optional = true
+
 [tool.poetry.group.tutorial.dependencies]
 jupyter = "^1.0.0"
+
+[tool.poetry.group.test]
+optional = true
+
+[tool.poetry.group.test.dependencies]
+coverage = "^6.5.0"
 
 [build-system]
 requires = ["poetry-core"]
