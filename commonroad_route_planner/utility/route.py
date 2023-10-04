@@ -7,9 +7,8 @@ from commonroad.planning.goal import GoalRegion
 from commonroad.scenario.lanelet import Lanelet, LaneletNetwork
 
 
-def relative_orientation(angle_1, angle_2):
+def relative_orientation(angle_1, angle_2) -> float:
     """Computes the angle between two angles."""
-
     phi = (angle_2 - angle_1) % (2 * np.pi)
     if phi > np.pi:
         phi -= 2 * np.pi
@@ -17,9 +16,7 @@ def relative_orientation(angle_1, angle_2):
     return phi
 
 
-def chaikins_corner_cutting(
-    polyline: np.ndarray, num_refinements: int = 4
-) -> np.ndarray:
+def chaikins_corner_cutting(polyline: np.ndarray, num_refinements: int = 4) -> np.ndarray:
     """Chaikin's corner cutting algorithm.
 
     Chaikin's corner cutting algorithm smooths a polyline by replacing each original point with two new points.
@@ -59,7 +56,7 @@ def compute_polyline_length(polyline: np.ndarray) -> float:
     return np.sum(np.sqrt(np.sum(distance_between_points**2, axis=1)))
 
 
-def resample_polyline_with_length_check(polyline, step=2):
+def resample_polyline_with_length_check(polyline, step=2) -> np.ndarray:
     """Resamples polyline with length check."""
     length = np.linalg.norm(polyline[-1] - polyline[0])
     if length > step:
@@ -118,7 +115,7 @@ def resample_polyline(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
     return np.array(polyline_new)
 
 
-def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
+def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray) -> float:
     """Approximates the lanelet orientation with the two closest point to the given state
 
     :param lanelet: Lanelet on which the orientation at the given state should be calculated
@@ -140,12 +137,8 @@ def lanelet_orientation_at_position(lanelet: Lanelet, position: np.ndarray):
     return np.arctan2(direction_vector[1], direction_vector[0])
 
 
-def sort_lanelet_ids_by_orientation(
-    list_ids_lanelets: List[int],
-    orientation: float,
-    position: np.ndarray,
-    lanelet_network: LaneletNetwork,
-) -> List[int]:
+def sort_lanelet_ids_by_orientation(list_ids_lanelets: List[int],orientation: float,position: np.ndarray,
+                                    lanelet_network: LaneletNetwork,) -> List[int]:
     """Returns the lanelets sorted by relative orientation to the given position and orientation."""
 
     if len(list_ids_lanelets) <= 1:
@@ -165,9 +158,7 @@ def sort_lanelet_ids_by_orientation(
         return list(lanelet_id_list[sorted_indices])
 
 
-def sort_lanelet_ids_by_goal(
-    lanelet_network: LaneletNetwork, goal_region: GoalRegion
-) -> List[int]:
+def sort_lanelet_ids_by_goal(lanelet_network: LaneletNetwork, goal_region: GoalRegion) -> List[int]:
     """Sorts lanelet ids by goal region
 
     :return: lanelet id, if the obstacle is out of lanelet boundary (no lanelet is found, therefore return the

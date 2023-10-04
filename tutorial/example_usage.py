@@ -24,7 +24,7 @@ def main():
         scenario,
         planning_problem,
         backend=RoutePlanner.Backend.NETWORKX_REVERSED,
-        reach_goal_state=False,
+        use_predecessors_to_pass_through_goal_state=False,
     )
     # plan routes, and save the routes in a route candidate holder
     candidate_holder = route_planner.plan_routes()
