@@ -234,7 +234,8 @@ class RoutePlanner:
             for idx, state in enumerate(self.goal_region.state_list):
 
                 if(not hasattr(state, "position")):
-                    raise ValueError(f'state of state list has no position entry')
+                    raise ValueError(f'[CR Route Planner] goal state of state list has no position entry')
+
 
                 # set goal position, which can either be defined by center for regions or by position
                 if(hasattr(state.position, "center")):
