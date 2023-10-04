@@ -133,13 +133,9 @@ class RoutePlanner:
         self._set_lanelet_ids_for_start_and_overtake()
         self._set_goal_lanelet_ids()
 
-        # if the predecessors of the goal states cannot be reached, fall back to reaching the goal lanelets
-        if(self.use_predecessors_to_pass_through_goal_state and not self.ids_lanelets_goal):
-            self.use_predecessors_to_pass_through_goal_state = False
-            self.ids_lanelets_goal, self.ids_lanelets_goal_original = self._set_ids_lanelets_goal()
-
         # if there are no lanelets of the goal, activate the survival route planner
         if(len(self.ids_lanelets_goal) == 0):
+            warnings.warn(f'[CR Route Planner] starting Survival-Mode Planner, since no goal information was found')
             self.planner = SurvivalRoutePlanner(self.lanelet_network, self.ids_lanelets_permissible)
 
         # check different backend
@@ -222,8 +218,9 @@ class RoutePlanner:
                 warnings.warn(f'[CR Route Planner] lanelets_of_goal_position not given')
 
             else:
-                for list_ids_lanelets_pos_goal in list(set(self.goal_region.lanelets_of_goal_position.values())):
+                for list_ids_lanelets_pos_goal in self.goal_region.lanelets_of_goal_position.values():
                     self.ids_lanelets_goal.extend(self._get_filtered_ids(list_ids_lanelets_pos_goal))
+
 
         # TODO: Why is this necessary
         if(self.ids_lanelets_goal):
@@ -234,30 +231,42 @@ class RoutePlanner:
             for idx, state in enumerate(self.goal_region.state_list):
 
                 if(not hasattr(state, "position")):
-                    raise ValueError(f'[CR Route Planner] goal state of state list has no position entry')
+                    warnings.warn(f'[CR Route Planner] goal state of state list has no position entry, will pass')
+                    continue
 
 
                 # set goal position, which can either be defined by center for regions or by position
                 if(hasattr(state.position, "center")):
                     goal_position: np.ndarray = state.position.center
                 else:
-                    goal_position: np.ndarray = state.position
+                    # FIXME: For uncertain position rounte planner takes first polygon
+                    warnings.warn(f'[CR Route Planner] For uncertain positions, CR route planner uses the center of the first shape')
+                    goal_position: np.ndarray = state.position.shapes[0].center
 
+                # use predecessors to pass through goal state
                 if(self.use_predecessors_to_pass_through_goal_state):
                     for lanelet_id_list in self.lanelet_network.find_lanelet_by_position([goal_position]):
-                        for lanelet in lanelet_id_list:
+                        for lanelet_id in lanelet_id_list:
+                            lanelet: Lanelet = self.lanelet_network.find_lanelet_by_id(lanelet_id)
                             self.ids_lanelets_goal.extend(lanelet.predecessor)
 
+                    # TODO: weird fallback
+                    # if lanelets are empty afterwards, normal method
+                    if(len(self.ids_lanelets_goal) == 0):
+                        self.use_predecessors_to_pass_through_goal_state = False
+                        for lanelet_id_list in self.lanelet_network.find_lanelet_by_position([goal_position]):
+                            self.ids_lanelets_goal.extend(lanelet_id_list)
 
+                # use normal mode of computing the lanes
                 else:
-                   for lanelet_id_list in self.lanelet_network.find_lanelet_by_position([goal_position]):
-                       self.ids_lanelets_goal.extend(lanelet_id_list)
+                    for lanelet_id_list in self.lanelet_network.find_lanelet_by_position([goal_position]):
+                        self.ids_lanelets_goal.extend(lanelet_id_list)
 
             # remove duplicated and filter for permitted lanelets
             self.ids_lanelets_goal = self._get_filtered_ids(list(set(self.ids_lanelets_goal)))
 
         if(not self.ids_lanelets_goal):
-            raise ValueError(f'[CR Route Planner] Not a single goal lanelet id could be found')
+            warnings.warn(f'[CR Route Planner] Could not find a single goal position or lane')
 
 
 
