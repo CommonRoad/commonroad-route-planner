@@ -19,7 +19,7 @@ def main():
     path_scenarios = Path(__file__).parents[1] / "scenarios"
 
     ignored_scenarios: List = [
-        "USA_US101-3_4_T-1",
+        # "USA_US101-3_4_T-1",
         "DEU_Muc-1_2_T-1",
         "USA_US101-4_3_T-1",
     ]

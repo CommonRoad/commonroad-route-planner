@@ -239,7 +239,7 @@ class RoutePlanner:
                 if(hasattr(state.position, "center")):
                     goal_position: np.ndarray = state.position.center
                 else:
-                    # FIXME: For uncertain position rounte planner takes first polygon
+                    # FIXME: For uncertain position route planner takes first polygon
                     warnings.warn(f'[CR Route Planner] For uncertain positions, CR route planner uses the center of the first shape')
                     goal_position: np.ndarray = state.position.shapes[0].center
 
