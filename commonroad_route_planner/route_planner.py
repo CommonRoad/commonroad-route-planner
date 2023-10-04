@@ -126,8 +126,8 @@ class RoutePlanner:
             lanelet_permissible.lanelet_id for lanelet_permissible in list_lanelets_filtered}
 
         # examine initial and goal lanelet ids
-        self.ids_lanelets_start_overtake = list()
         self.id_lanelets_start = list()
+        self.id_lanelets_overtake_during_start = list()
         self.ids_lanelets_goal = list()
         self.ids_lanelets_goal_original = list()
         self._set_lanelet_ids_for_start_and_overtake()
@@ -147,7 +147,7 @@ class RoutePlanner:
             self.planner = NetworkxRoutePlanner(
                 self.lanelet_network,
                 self.ids_lanelets_permissible,
-                self.ids_lanelets_start_overtake,
+                self.id_lanelets_overtake_during_start,
                 self.allow_diagonal)
 
         else:
@@ -163,15 +163,20 @@ class RoutePlanner:
 
 
     def _set_lanelet_ids_for_start_and_overtake(self) -> None:
-        """Retrieves the ids of the lanelets in which the initial position is situated"""
+        """
+        Retrieves the ids of the lanelets in which the initial position is situated.
+        Also checks if the initial state is during a lanechange
+        """
 
         # sanity check
         if(not hasattr(self.state_initial, "position")):
             raise ValueError(f'No initial position in the given planning problem found')
 
         # FIXME: Why is only the lanelet at index 0 used
-        self.list_ids_lanelets_start = self._get_filtered_ids(
-            self.lanelet_network.find_lanelet_by_position([self.state_initial.position])[0])
+        # Add start lanelets
+        self.id_lanelets_start = (self._get_filtered_ids(
+            self.lanelet_network.find_lanelet_by_position([self.state_initial.position])[0]))
+
 
         # Check if any of the start positions are during an overtake:
         # if the car is not driving in the correct direction for the lanelet,
@@ -179,7 +184,7 @@ class RoutePlanner:
         if (hasattr(self.state_initial, "orientation") and not self.state_initial.is_uncertain_orientation):
             orientation = self.state_initial.orientation
 
-            for id_lanelet_start in self.list_ids_lanelets_start:
+            for id_lanelet_start in self.id_lanelets_start:
                 lanelet: Lanelet = self.lanelet_network.find_lanelet_by_id(id_lanelet_start)
                 lanelet_angle = lanelet_orientation_at_position(lanelet, self.state_initial.position)
 
@@ -187,16 +192,21 @@ class RoutePlanner:
                 if(abs(relative_orientation(orientation, lanelet_angle)) > 0.5 * np.pi):
                     if (lanelet.adj_left is not None and not lanelet.adj_left_same_direction
                             and lanelet.adj_left in self.ids_lanelets_permissible):
-                        self.ids_lanelets_start_overtake.append(id_lanelet_start, lanelet.adj_left)
+                        self.id_lanelets_overtake_during_start.append(id_lanelet_start, lanelet.adj_left)
 
 
                     elif (lanelet.adj_right is not None and not lanelet.adj_right_same_direction and
                           lanelet.adj_right in self.ids_lanelets_permissible):
-                        self.ids_lanelets_start_overtake.append(id_lanelet_start, lanelet.adj_right)
+                        self.id_lanelets_overtake_during_start.append(id_lanelet_start, lanelet.adj_right)
 
 
-        if(len(self.list_ids_lanelets_start) > 1):
+        if(len(self.id_lanelets_start) > 1):
             warnings.warn("Multiple start lanelet IDs: some may fail to reach goal lanelet")
+
+        if(len(self.id_lanelets_start) == 0):
+            raise ValueError(f'No initial lanelet ids found')
+
+
 
 
 
