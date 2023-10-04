@@ -61,6 +61,8 @@ def main():
         # ========== visualization =========== #
         visualize_route(route, draw_route_lanelets=True, draw_reference_path=True)
 
+        print(f' \n \n')
+
 
 if __name__ == "__main__":
     main()
