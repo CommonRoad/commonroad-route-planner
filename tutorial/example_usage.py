@@ -14,7 +14,7 @@ from commonroad_route_planner.utility.visualization import visualize_route
 from typing import List
 
 
-def main():
+def main(save_imgs: bool = False):
     # ========== initialization =========== #
     path_scenarios = Path(__file__).parents[1] / "scenarios"
 
@@ -40,7 +40,7 @@ def main():
         route_planner = RoutePlanner(
             scenario,
             planning_problem,
-            use_predecessors_to_pass_through_goal_state=True,
+            use_predecessors_to_pass_through_goal_state=False,
         )
         # plan routes, and save the routes in a route candidate holder
         candidate_holder = route_planner.plan_routes()
@@ -56,10 +56,12 @@ def main():
 
 
         # ========== visualization =========== #
-        visualize_route(route, id_scenario, draw_route_lanelets=True, draw_reference_path=True)
+        visualize_route(route, id_scenario,
+                        save_img=save_imgs,
+                        draw_route_lanelets=True, draw_reference_path=True)
 
         print(f' \n \n')
 
 
 if __name__ == "__main__":
-    main()
+    main(save_imgs=True)

@@ -218,6 +218,7 @@ class RoutePlanner:
     def _set_goal_lanelet_ids(self) -> None:
         """
         Sets the goal lanelet ids in the attribute.
+        Takes first goal polygon for uncertain goal position
         """
 
         # If the goal region is directly defined by lanelets, use it
@@ -247,7 +248,7 @@ class RoutePlanner:
                 if(hasattr(state.position, "center")):
                     goal_position: np.ndarray = state.position.center
                 else:
-                    # FIXME: For uncertain position route planner takes first polygon
+                    # For uncertain position route planner takes first polygon
                     warnings.warn(f'[CR Route Planner] For uncertain positions, CR route planner uses the center of the first shape')
                     goal_position: np.ndarray = state.position.shapes[0].center
 
@@ -261,6 +262,7 @@ class RoutePlanner:
                     # TODO: weird fallback
                     # if lanelets are empty afterwards, use normal method
                     if(len(self.ids_lanelets_goal) == 0):
+                        warnings.warn(f'[CR Route Planner] want to use predecessors but could not generate goal')
                         self.use_predecessors_to_pass_through_goal_state = False
                         for lanelet_id_list in self.lanelet_network.find_lanelet_by_position([goal_position]):
                             self.ids_lanelets_goal.extend(lanelet_id_list)
@@ -303,13 +305,14 @@ class RoutePlanner:
                     )
 
                     if self.use_predecessors_to_pass_through_goal_state:
+                        list_routes.extend(ids_lanelets)
                         # append the original goal lanelet back to the found route
-                        # FIXME: self.ids_lanelets_goal_origia
-                        for id_lanelet_goal_original in self.ids_lanelets_goal_original:
-                            for list_ids_lanelets in ids_lanelets:
-                                list_routes.append(
-                                    list_ids_lanelets + [id_lanelet_goal_original]
-                                )
+                        # FIXME: self.ids_lanelets_goal_original
+                        #for id_lanelet_goal_original in self.ids_lanelets_goal_original:
+                        #    for list_ids_lanelets in ids_lanelets:
+                        #        list_routes.append(
+                        #            list_ids_lanelets + [id_lanelet_goal_original]
+                        #        )
 
                     else:
                         list_routes.extend(ids_lanelets)

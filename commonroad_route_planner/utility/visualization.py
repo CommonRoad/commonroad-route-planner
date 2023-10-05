@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 from commonroad.geometry.shape import Circle, Rectangle
 from commonroad.scenario.lanelet import LaneletNetwork
@@ -8,7 +10,10 @@ from commonroad_route_planner.route import Route
 
 
 def visualize_route(route: Route, scenario_name: str,
-        draw_route_lanelets=False, draw_reference_path=False, size_x=10):
+                    save_img: bool = True,
+                    save_path: str = os.path.join(os.getcwd(), 'img'),
+                    draw_route_lanelets=False, draw_reference_path=False,
+                    size_x=10):
     """Visualizes the given route.
 
     :param route: route object to be visualized
@@ -83,7 +88,12 @@ def visualize_route(route: Route, scenario_name: str,
 
     plt.margins(0, 0)
     plt.title(str(scenario_name))
-    plt.show()
+
+    if(save_img):
+        save_name: str = os.path.join(save_path, scenario_name)
+        plt.savefig(save_name, format='png')
+    else:
+        plt.show()
 
 
 def draw_state(renderer: MPRenderer, state: InitialState, color="#ee6c4d"):
