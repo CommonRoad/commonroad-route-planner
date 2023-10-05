@@ -14,15 +14,19 @@ from commonroad_route_planner.utility.visualization import visualize_route
 from typing import List
 
 
-def main(save_imgs: bool = False):
+def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
     # ========== initialization =========== #
-    path_scenarios = Path(__file__).parents[1] / "scenarios"
+
+    if(use_cr2023_challenge):
+        path_scenarios = Path(__file__).parents[1] / "tutorial/commonroad_challenge_2023"
+    else:
+        path_scenarios = Path(__file__).parents[1] / "scenarios"
 
     ignored_scenarios: List = [
         #"USA_Peach-3_1_T-1",
     ]
 
-    for filename in os.listdir(path_scenarios):
+    for idx, filename in enumerate(os.listdir(path_scenarios)):
         id_scenario = filename.split('.')[0]
         if(id_scenario in ignored_scenarios):
             continue
@@ -60,8 +64,11 @@ def main(save_imgs: bool = False):
                         save_img=save_imgs,
                         draw_route_lanelets=True, draw_reference_path=True)
 
+
+        print(f'checked {(idx*100/len(os.listdir(path_scenarios))):.2f}% of scenarios')
+
         print(f' \n \n')
 
 
 if __name__ == "__main__":
-    main(save_imgs=True)
+    main(save_imgs=True, use_cr2023_challenge=True)

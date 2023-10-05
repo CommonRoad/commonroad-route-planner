@@ -9,6 +9,7 @@ from commonroad.scenario.lanelet import LaneletNetwork
 # Own code base
 from commonroad_route_planner.planners.base_route_planner import BaseRoutePlanner
 from commonroad_route_planner.utility.exceptions import NoSourceLaneletIdException
+from commonroad_route_planner.utility.overtake_init_state import OvertakeInitState
 
 
 # typing
@@ -22,13 +23,13 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         self,
         lanelet_network: LaneletNetwork,
         set_ids_permissible_lanelets=None,
-        ids_lanelets_start_overtake=None,
+        overtake_states: OvertakeInitState=None,
         allow_diagonal=False,
     ):
         super().__init__(lanelet_network, set_ids_permissible_lanelets)
-        if ids_lanelets_start_overtake is None:
-            ids_lanelets_start_overtake = set()
-        self.ids_lanelets_start_overtake = ids_lanelets_start_overtake
+        if overtake_states is None:
+            overtake_states = set()
+        self.overtake_states = overtake_states
         self.allow_diagonal = allow_diagonal
         self.digraph = self._create_graph_from_lanelet_network()
         if self.allow_diagonal:
@@ -120,8 +121,8 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
                 edges.append((lanelet.lanelet_id, id_adj_right, {"weight": 4.0}))
 
         # Edges in case of overtake during starting state
-        for id_start, id_adj in self.ids_lanelets_start_overtake:
-            edges.append((id_start, id_adj, {"weight": 1.0}))
+        for overtake_state in self.overtake_states:
+            edges.append((overtake_state.original_lanelet_id, overtake_state.adjecent_lanelet_id, {"weight": 1.0}))
 
         # add all nodes and edges to graph
         graph.add_nodes_from(nodes)
@@ -141,8 +142,8 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         graph = nx.compose(lon_graph, lat_graph)
 
         # Edges in case of overtake during starting state
-        for id_start, id_adj in self.ids_lanelets_start_overtake:
-            graph.add_edge(id_start, id_adj, {"weight": 0})
+        for overtake_state in self.overtake_states:
+            graph.add_edges_from([(overtake_state.original_lanelet_id, overtake_state.adjecent_lanelet_id, {"weight": 0})])
 
         return graph
 

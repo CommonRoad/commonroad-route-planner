@@ -19,17 +19,18 @@ from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import Lanelet, LaneletNetwork, LaneletType
 from commonroad.scenario.scenario import Scenario
 from commonroad.scenario.state import InitialState
-from commonroad_route_planner.planners.a_star import AStarRoutePlanner
+
+
+
+# Own code base
 from commonroad_route_planner.planners.networkx import (
     NetworkxRoutePlanner,
     ReversedNetworkxRoutePlanner,
 )
 from commonroad_route_planner.planners.survival import NoGoalFoundRoutePlanner
 from commonroad_route_planner.route import Route, RouteCandidateHolder, RouteType
-from commonroad_route_planner.utility.route import (
-    lanelet_orientation_at_position,
-    relative_orientation,
-)
+from commonroad_route_planner.utility.route import (lanelet_orientation_at_position, relative_orientation)
+from commonroad_route_planner.utility.overtake_init_state import OvertakeInitState
 
 # typing
 from typing import Generator, List, Set
@@ -135,7 +136,7 @@ class RoutePlanner:
 
         # examine initial and goal lanelet ids
         self.id_lanelets_start = list()
-        self.id_lanelets_overtake_during_start = list()
+        self.overtake_states = list()
         self.ids_lanelets_goal = list()
         self.ids_lanelets_goal_original = list()
         self._set_lanelet_ids_for_start_and_overtake()
@@ -151,7 +152,7 @@ class RoutePlanner:
             self.planner = NetworkxRoutePlanner(
                 self.lanelet_network,
                 self.ids_lanelets_permissible,
-                self.id_lanelets_overtake_during_start,
+                self.overtake_states,
                 self.allow_diagonal)
 
         else:
@@ -185,6 +186,7 @@ class RoutePlanner:
         # Check if any of the start positions are during an overtake:
         # if the car is not driving in the correct direction for the lanelet,
         # it will also consider routes taking an adjacent lanelet in the opposite direction
+        # FIXME: Orientation may fail because int
         if (hasattr(self.state_initial, "orientation") and not self.state_initial.is_uncertain_orientation):
             orientation = self.state_initial.orientation
 
@@ -196,12 +198,14 @@ class RoutePlanner:
                 if(abs(relative_orientation(orientation, lanelet_angle)) > 0.5 * np.pi):
                     if (lanelet.adj_left is not None and not lanelet.adj_left_same_direction
                             and lanelet.adj_left in self.ids_lanelets_permissible):
-                        self.id_lanelets_overtake_during_start.append(id_lanelet_start, lanelet.adj_left)
+                        overtake_state = OvertakeInitState(id_lanelet_start, lanelet.adj_left, self.lanelet_network)
+                        self.overtake_states.append(overtake_state)
 
 
                     elif (lanelet.adj_right is not None and not lanelet.adj_right_same_direction and
                           lanelet.adj_right in self.ids_lanelets_permissible):
-                        self.id_lanelets_overtake_during_start.append(id_lanelet_start, lanelet.adj_right)
+                        overtake_state = OvertakeInitState(id_lanelet_start, lanelet.adj_right, self.lanelet_network)
+                        self.overtake_states.append(overtake_state)
 
 
         if(len(self.id_lanelets_start) > 1):
