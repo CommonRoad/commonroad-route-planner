@@ -55,13 +55,20 @@ class RoutePlanner:
         PRIORITY_QUEUE: uses A-star search to find routes, lane changing maneuver depends on the heuristic cost
         """
 
+        # FIXME: This is a bad implementation
+
         NETWORKX = "networkx"
-        NETWORKX_REVERSED = "networkx_reversed"
-        PRIORITY_QUEUE = "priority_queue"
+        #NETWORKX_REVERSED = "networkx_reversed"
+        #PRIORITY_QUEUE = "priority_queue"
 
         @classmethod
         def values(cls):
             return [item.value for item in cls]
+
+        @classmethod
+        def keys(cls):
+            return [item for item in cls]
+
 
     def __init__(self,
                  scenario: Scenario = None,
@@ -87,8 +94,8 @@ class RoutePlanner:
         """
 
         # setting backend
-        if(backend not in RoutePlanner.Backend.values()):
-            raise NotImplementedError(f'[CR Route Planner] backend not implemented')
+        if(backend not in self.Backend.keys() and backend not in self.Backend.values()):
+            raise NotImplementedError(f'[CR Route Planner] backend {backend} not implemented')
         self.backend = backend
 
         # set lanelet network

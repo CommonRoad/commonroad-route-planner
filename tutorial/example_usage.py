@@ -5,7 +5,7 @@ from time import perf_counter
 # commonrad
 from commonroad.common.file_reader import CommonRoadFileReader
 
-# Own Code
+# Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
 from commonroad_route_planner.utility.visualization import visualize_route
 
@@ -42,7 +42,6 @@ def main():
         route_planner = RoutePlanner(
             scenario,
             planning_problem,
-            #backend=RoutePlanner.Backend.NETWORKX_REVERSED,
             use_predecessors_to_pass_through_goal_state=False,
         )
         # plan routes, and save the routes in a route candidate holder
