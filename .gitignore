@@ -19,6 +19,6 @@ outputs/logs/
 
 tutorial/.ipynb_checkpoints/
 
-tutorial/img/
+/tutorial/img/
 
-tutorial/commonroad_challenge_2023/
+/tutorial/commonroad_challenge_2023/
