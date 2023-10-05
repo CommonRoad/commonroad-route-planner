@@ -27,7 +27,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         #"USA_Peach-3_1_T-1",
     ]
 
-    for idx, filename in enumerate(os.listdir(path_scenarios)):
+    for idx, filename in enumerate(sorted(os.listdir(path_scenarios))):
         id_scenario = filename.split('.')[0]
         if(id_scenario in ignored_scenarios):
             continue

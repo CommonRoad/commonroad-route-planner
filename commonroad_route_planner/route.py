@@ -446,14 +446,22 @@ class RouteCandidateHolder:
         else:
             self.ids_lanelets_permissible: Set = ids_lanelets_permissible
 
-    def retrieve_first_route(self) -> Route:
+    def retrieve_first_route(self,
+                             retrieve_shortest: bool = True) -> Route:
         """
         Retrieves the first Route object.
         """
+        # FIXME if there is more than one route, retrieve the shortest by length of reference path
         if(len(self.route_candidates) == 0):
-            raise ValueError(f'[CR Route Planner] Not a single route candidate is given')
+            raise ValueError(f'[CR Route Planner] Not a single route candidate was found')
 
-        return self.route_candidates[0]
+        elif(len(self.route_candidates) == 0 or not retrieve_shortest):
+            return self.route_candidates[0]
+
+        else:
+            # TODO: check shortest path by length of ref path
+            return self.route_candidates[0]
+
 
     def retrieve_best_route_by_orientation(self) -> Union[Route, None]:
         """Retrieves the best route found by some orientation metrics
