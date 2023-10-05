@@ -1,4 +1,5 @@
 import itertools
+import math
 import sys
 import warnings
 from enum import Enum
@@ -201,8 +202,6 @@ class Route:
         ref_path = reference_path[np.sort(idx)]
 
         return ref_path
-
-
 
 
 

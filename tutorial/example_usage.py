@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 from time import perf_counter
 
+import numpy as np
 # commonrad
 from commonroad.common.file_reader import CommonRoadFileReader
 
@@ -53,6 +54,12 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         # here we retrieve the first route in the list, this is equivalent to: route = list_routes[0]
         route = candidate_holder.retrieve_first_route()
         print(f'[Time] Retrieving first route took {perf_counter() - t_start}')
+
+        # Add dummy position and test additional point generation
+        dummy_position: np.ndarray = route.reference_path[0, :]
+        route.reference_path, success = RoutePlanner.extend_reference_path_at_start(route.reference_path, dummy_position)
+
+
 
         # option 2: retrieve all routes
         list_routes, num_route_candidates = candidate_holder.retrieve_all_routes()

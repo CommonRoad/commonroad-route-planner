@@ -10,7 +10,13 @@ __status__ = "Release"
 import logging
 from enum import Enum
 import warnings
+import math
 import numpy as np
+
+
+# third party
+from scipy.spatial.kdtree import KDTree
+
 
 
 # commonroad
@@ -33,7 +39,7 @@ from commonroad_route_planner.utility.route import (lanelet_orientation_at_posit
 from commonroad_route_planner.utility.overtake_init_state import OvertakeInitState
 
 # typing
-from typing import Generator, List, Set
+from typing import Generator, List, Set, Tuple
 
 #  _logger = logging.getLogger(__name__)
 
@@ -47,6 +53,50 @@ class RoutePlanner:
     or may have the lowest cost computed per the heuristic function (if using PRIORITY_QUEUE).
     In survival scenarios (no goal lanelet), the planner advances in the order of forward, right, left when possible.
     """
+
+    @classmethod
+    def extend_reference_path_at_start(cls, reference_path: np.ndarray, initial_position_cart: np.ndarray,
+                                       additional_lenght_in_meters: float = 5.0,
+                                       distance_threshold_in_meters: float = np.inf) -> Tuple[np.ndarray, bool]:
+        """
+        Adds additional points at start in along line between first two points of reference path.
+        Returns new reference path and success indicator
+
+        Reasoning
+        ----------
+        Otherwise, an occuring edge-case would be that
+        the rear axel of the vehicle is before the first point of the ref path, which makes
+        Frenet-Localization problematic.
+
+        If the closest point to the initial position is the first point of the reference path and their
+        distance is below a certain threshold (currently infinity), additional points are being placed
+        """
+
+        # check if the closest point to the initial point is the first point of the ref_path
+        nn_distance, nn_idx = KDTree(reference_path).query(initial_position_cart)
+
+        if (nn_idx == 0 and nn_distance < distance_threshold_in_meters):
+            # get distance between first two points to know what the pseudo-uniform sampling would be
+            point_0: np.ndarray = reference_path[0, :]
+            point_1: np.ndarray = reference_path[1, :]
+            distance: float = np.linalg.norm(point_1 - point_0)
+            num_new_points: int = math.ceil(additional_lenght_in_meters / distance)
+
+            delta_x: float = float(point_1[0] - point_0[0])
+            delta_y: float = float(point_1[1] - point_0[1])
+
+            for idx in range(1, num_new_points + 1):
+                new_point: np.ndarray = np.asarray([point_0[0] - idx * delta_x, point_0[1] - idx * delta_y])
+                reference_path: np.ndarray = np.vstack((new_point, reference_path))
+
+            return reference_path, True
+        else:
+            return reference_path, False
+
+
+
+
+
 
     class Backend(Enum):
         """Supported backend for constructing the routes.

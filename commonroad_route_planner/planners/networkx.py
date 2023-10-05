@@ -23,7 +23,7 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         self,
         lanelet_network: LaneletNetwork,
         set_ids_permissible_lanelets=None,
-        overtake_states: OvertakeInitState=None,
+        overtake_states: List[OvertakeInitState]=None,
         allow_diagonal=False,
     ):
         super().__init__(lanelet_network, set_ids_permissible_lanelets)
