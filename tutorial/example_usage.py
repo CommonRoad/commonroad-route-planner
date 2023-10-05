@@ -71,4 +71,4 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
 
 if __name__ == "__main__":
-    main(save_imgs=True, use_cr2023_challenge=True)
+    main(save_imgs=True, use_cr2023_challenge=False)
