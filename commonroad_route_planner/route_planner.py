@@ -79,6 +79,7 @@ class RoutePlanner:
                  types_lanelets_forbidden: Set[LaneletType] = None,
                  allow_diagonal=False,
                  backend: Backend = Backend.NETWORKX,
+                 # FIXME: Not working correctly
                  use_predecessors_to_pass_through_goal_state: bool = False):
         """Initialization of a RoutePlanner object.
 
@@ -290,7 +291,6 @@ class RoutePlanner:
 
         # For each start lanelet, find route to each goal lanelet
         for id_lanelet_start in self.id_lanelets_start:
-            # FIXME: The for loop is not triggered if goal lanelets are empty --> NoRouteFoundPlanner is never triggered
             # if survival route planner
             if(len(self.ids_lanelets_goal) == 0):
                 list_routes.append(self.planner.find_routes(id_lanelet_start, None))
@@ -304,6 +304,7 @@ class RoutePlanner:
 
                     if self.use_predecessors_to_pass_through_goal_state:
                         # append the original goal lanelet back to the found route
+                        # FIXME: self.ids_lanelets_goal_origia
                         for id_lanelet_goal_original in self.ids_lanelets_goal_original:
                             for list_ids_lanelets in ids_lanelets:
                                 list_routes.append(

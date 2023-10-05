@@ -19,9 +19,7 @@ def main():
     path_scenarios = Path(__file__).parents[1] / "scenarios"
 
     ignored_scenarios: List = [
-        # "USA_US101-3_4_T-1",
-        # "DEU_Muc-1_2_T-1",
-        # "USA_US101-4_3_T-1",
+        #"USA_Peach-3_1_T-1",
     ]
 
     for filename in os.listdir(path_scenarios):
@@ -42,7 +40,7 @@ def main():
         route_planner = RoutePlanner(
             scenario,
             planning_problem,
-            use_predecessors_to_pass_through_goal_state=False,
+            use_predecessors_to_pass_through_goal_state=True,
         )
         # plan routes, and save the routes in a route candidate holder
         candidate_holder = route_planner.plan_routes()

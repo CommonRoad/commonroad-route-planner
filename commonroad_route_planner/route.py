@@ -3,21 +3,21 @@ import sys
 import warnings
 from enum import Enum
 from typing import List, Set, Tuple, Union
-
 import numpy as np
+
+# commonroad
 from commonroad.planning.goal import GoalRegion
 from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.scenario import Scenario
 from commonroad.scenario.state import InitialState
 
-from commonroad_route_planner.utility.route import (
-    chaikins_corner_cutting,
-    resample_polyline,
-    sort_lanelet_ids_by_goal,
-    sort_lanelet_ids_by_orientation,
-)
 
+# own code base
+from commonroad_route_planner.utility.route import (chaikins_corner_cutting,
+                                                    resample_polyline,
+                                                    sort_lanelet_ids_by_goal,
+                                                    sort_lanelet_ids_by_orientation)
 try:
     import commonroad_dc.pycrccosy as pycrccosy
 
@@ -74,9 +74,8 @@ class Route:
             # make sure the reference path is already resampled and smoothened before creating a CLCS out of it
             self.CLCS = pycrccosy.CurvilinearCoordinateSystem(self.reference_path)
 
-    def retrieve_route_sections(
-        self, is_opposite_direction_allowed: bool = False
-    ) -> Union[None, List[List[int]]]:
+
+    def retrieve_route_sections(self, is_opposite_direction_allowed: bool = False) -> Union[None, List[List[int]]]:
         """Retrieves route sections for lanelets in the route.
 
         A section is a list of lanelet ids that are adjacent to a given lanelet.
@@ -105,9 +104,8 @@ class Route:
 
         return self.list_sections
 
-    def _get_adjacent_lanelets_ids(
-        self, id_lanelet: int, is_opposite_direction_permissible=False
-    ) -> list:
+
+    def _get_adjacent_lanelets_ids(self, id_lanelet: int, is_opposite_direction_permissible=False) -> list:
         """Recursively gets adj_left and adj_right lanelets of the given lanelet.
 
         :param id_lanelet: current lanelet id
