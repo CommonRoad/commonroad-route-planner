@@ -1,10 +1,18 @@
 import logging
 
+# Third party
 import networkx as nx
+
+# Commonroad
 from commonroad.scenario.lanelet import LaneletNetwork
 
+# Own code base
 from commonroad_route_planner.planners.base_route_planner import BaseRoutePlanner
 from commonroad_route_planner.utility.exceptions import NoSourceLaneletIdException
+
+
+# typing
+from typing import List, Dict, Tuple
 
 _logger = logging.getLogger(__name__)
 
@@ -26,7 +34,7 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         if self.allow_diagonal:
             self._add_diagonal_edges()
 
-    def find_routes(self, id_lanelet_start, id_lanelet_goal):
+    def find_routes(self, id_lanelet_start, id_lanelet_goal) -> List:
         """Find all shortest paths using networkx module
 
         This tends to change lane late.

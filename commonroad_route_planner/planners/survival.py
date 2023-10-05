@@ -10,10 +10,10 @@ if TYPE_CHECKING:
 # FIXME: This class is not working!!!!
 
 
-class SurvivalRoutePlanner(BaseRoutePlanner):
+class NoGoalFoundRoutePlanner(BaseRoutePlanner):
     def __init__(self, lanelet_network: "LaneletNetwork", ids_lanelets_permissible: Set,
                  threshold_network_exploring: int = 20):
-        super(SurvivalRoutePlanner, self).__init__(lanelet_network, ids_lanelets_permissible)
+        super(NoGoalFoundRoutePlanner, self).__init__(lanelet_network, ids_lanelets_permissible)
         self.threshold_network_exploring: int = threshold_network_exploring
 
     def find_routes(self, id_lanelet_start, id_lanelet_goal):

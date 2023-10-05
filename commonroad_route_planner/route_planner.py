@@ -2,8 +2,8 @@ __author__ = "Daniel Tar, Peter Kocsis, Edmond Irani Liu, Luis Gressenbuch, Tobi
 __copyright__ = ""
 __credits__ = [""]
 __version__ = "2022.3"
-__maintainer__ = "Edmond Irani Liu"
-__email__ = "edmond.irani@tum.de"
+__maintainer__ = "Tobias Mascetta, Gerald Wuersching"
+__email__ = "tobias.mascetta@tum.de"
 __status__ = "Release"
 
 
@@ -24,7 +24,7 @@ from commonroad_route_planner.planners.networkx import (
     NetworkxRoutePlanner,
     ReversedNetworkxRoutePlanner,
 )
-from commonroad_route_planner.planners.survival import SurvivalRoutePlanner
+from commonroad_route_planner.planners.survival import NoGoalFoundRoutePlanner
 from commonroad_route_planner.route import Route, RouteCandidateHolder, RouteType
 from commonroad_route_planner.utility.route import (
     lanelet_orientation_at_position,
@@ -136,7 +136,7 @@ class RoutePlanner:
         # if there are no lanelets of the goal, activate the survival route planner
         if(len(self.ids_lanelets_goal) == 0):
             warnings.warn(f'[CR Route Planner] starting Survival-Mode Planner, since no goal information was found')
-            self.planner = SurvivalRoutePlanner(self.lanelet_network, self.ids_lanelets_permissible)
+            self.planner = NoGoalFoundRoutePlanner(self.lanelet_network, self.ids_lanelets_permissible)
 
         # check different backend
         elif self.backend == RoutePlanner.Backend.NETWORKX:
@@ -251,7 +251,7 @@ class RoutePlanner:
                             self.ids_lanelets_goal.extend(lanelet.predecessor)
 
                     # TODO: weird fallback
-                    # if lanelets are empty afterwards, normal method
+                    # if lanelets are empty afterwards, use normal method
                     if(len(self.ids_lanelets_goal) == 0):
                         self.use_predecessors_to_pass_through_goal_state = False
                         for lanelet_id_list in self.lanelet_network.find_lanelet_by_position([goal_position]):
@@ -272,7 +272,7 @@ class RoutePlanner:
 
 
 
-    def plan_routes(self):
+    def plan_routes(self) -> RouteCandidateHolder:
         """Plans routes for every pair of start/goal lanelets.
 
         If no goal lanelet ID is given then return a survival route.
@@ -281,32 +281,41 @@ class RoutePlanner:
         # route is a list that holds lists of lanelet ids from start lanelet to goal lanelet
         list_routes = list()
 
-        # iterate through start lanelet ids
+        # For each start lanelet, find route to each goal lanelet
         for id_lanelet_start in self.id_lanelets_start:
-            # iterate through goal lanelet ids
-            for id_lanelet_goal in self.ids_lanelets_goal:
-                list_lists_ids_lanelets = self.planner.find_routes(
-                    id_lanelet_start, id_lanelet_goal
-                )
+            # FIXME: The for loop is not triggered if goal lanelets are empty --> NoRouteFoundPlanner is never triggered
+            # if survival route planner
+            if(len(self.ids_lanelets_goal) == 0):
+                list_routes.append(self.planner.find_routes(id_lanelet_start, None))
 
-                if self.use_predecessors_to_pass_through_goal_state:
-                    # append the original goal lanelet back to the found route
-                    for id_lanelet_goal_original in self.ids_lanelets_goal_original:
-                        for list_ids_lanelets in list_lists_ids_lanelets:
-                            list_routes.append(
-                                list_ids_lanelets + [id_lanelet_goal_original]
-                            )
+            else:
+            # if normal planner iterate through goal lanelet ids
+                for id_lanelet_goal in self.ids_lanelets_goal:
+                    ids_lanelets = self.planner.find_routes(
+                        id_lanelet_start, id_lanelet_goal
+                    )
 
-                else:
-                    list_routes.extend(list_lists_ids_lanelets)
+                    if self.use_predecessors_to_pass_through_goal_state:
+                        # append the original goal lanelet back to the found route
+                        for id_lanelet_goal_original in self.ids_lanelets_goal_original:
+                            for list_ids_lanelets in ids_lanelets:
+                                list_routes.append(
+                                    list_ids_lanelets + [id_lanelet_goal_original]
+                                )
+
+                    else:
+                        list_routes.extend(ids_lanelets)
+
+
+        if(len(list_routes) == 0):
+            raise ValueError(f'[CR Route Planner] planner {self.planner} could not find a single route')
 
         return RouteCandidateHolder(
             self.lanelet_network,
             self.state_initial,
             self.goal_region,
             list_routes,
-            self.ids_lanelets_permissible,
-        )
+            self.ids_lanelets_permissible)
 
 
     @staticmethod
