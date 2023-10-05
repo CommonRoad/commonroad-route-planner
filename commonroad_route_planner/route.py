@@ -64,13 +64,11 @@ class Route:
             self.set_ids_lanelets_permissible = set_ids_lanelets_permissible
 
         # generate reference path from the list of lanelet ids leading to goal
-        self.reference_path = self._generate_reference_path()
+        self.reference_path: np.ndarray = self._generate_reference_path()
 
         self.path_length = self._compute_path_length_from_polyline(self.reference_path)
-        self.path_orientation = self._compute_orientation_from_polyline(
-            self.reference_path
-        )
-        self.path_curvature = self._compute_curvature_from_polyline(self.reference_path)
+        self.path_orientation = self._compute_orientation_from_polyline(self.reference_path)
+        self.path_curvature = self._compute_scalar_curvature_from_polyline(self.reference_path)
 
         if "commonroad_dc.pycrccosy" in sys.modules:
             # make sure the reference path is already resampled and smoothened before creating a CLCS out of it
@@ -189,10 +187,26 @@ class Route:
         """
         instruction = self._compute_lane_change_instructions()
         list_portions = self._compute_lanelet_portion(instruction)
-        reference_path = self._compute_reference_path(list_portions)
-        reference_path_smoothed = chaikins_corner_cutting(reference_path)
+        reference_path: np.ndarray = self._compute_reference_path(list_portions)
+        reference_path: np.ndarray = self._remove_duplicate_points(reference_path)
+        reference_path_smoothed: np.ndarray = chaikins_corner_cutting(reference_path)
 
         return reference_path_smoothed
+
+
+    @staticmethod
+    def _remove_duplicate_points(reference_path: np.ndarray) -> np.ndarray:
+        """
+        Removes identical points from reference path to avoid issues with numerical differenciation and curvature
+        """
+        _, idx = np.unique(reference_path, axis=0, return_index=True)
+        ref_path = reference_path[np.sort(idx)]
+
+        return ref_path
+
+
+
+
 
     def _compute_lane_change_instructions(self) -> List[int]:
         """Computes lane change instruction for planned routes
@@ -346,25 +360,29 @@ class Route:
         return np.array(distance)
 
     @staticmethod
-    def _compute_curvature_from_polyline(polyline: np.ndarray) -> np.ndarray:
+    def _compute_scalar_curvature_from_polyline(polyline: np.ndarray) -> np.ndarray:
         """
-        Computes curvature along a polyline
+        Computes scalar curvature along a polyline.
 
         :param polyline: polyline for which curvature should be calculated
         :return: curvature along  polyline
         """
+        # FIXME: WTF ????
         assert (
             isinstance(polyline, np.ndarray)
             and polyline.ndim == 2
             and len(polyline[:, 0]) > 2
         ), "Polyline malformed for curvature computation p={}".format(polyline)
 
-        x_d = np.gradient(polyline[:, 0])
-        x_dd = np.gradient(x_d)
-        y_d = np.gradient(polyline[:, 1])
-        y_dd = np.gradient(y_d)
+        # Derivation to position, not time
+        x_d: np.ndarray = np.gradient(polyline[:, 0])
+        x_dd: np.ndarray = np.gradient(x_d)
+        y_d: np.ndarray = np.gradient(polyline[:, 1])
+        y_dd: np.ndarray = np.gradient(y_d)
 
-        return (x_d * y_dd - x_dd * y_d) / ((x_d**2 + y_d**2) ** (3.0 / 2.0))
+        curvature_array: np.ndarray = (x_d * y_dd - x_dd * y_d) / ((x_d**2 + y_d**2) ** (3.0 / 2.0))
+
+        return curvature_array
 
     @staticmethod
     def _compute_orientation_from_polyline(polyline: np.ndarray) -> np.ndarray:
