@@ -7,9 +7,8 @@ from commonroad.visualization.mp_renderer import MPRenderer
 from commonroad_route_planner.route import Route
 
 
-def visualize_route(
-    route: Route, draw_route_lanelets=False, draw_reference_path=False, size_x=10
-):
+def visualize_route(route: Route, scenario_name: str,
+        draw_route_lanelets=False, draw_reference_path=False, size_x=10):
     """Visualizes the given route.
 
     :param route: route object to be visualized
@@ -83,6 +82,7 @@ def visualize_route(
     renderer.render()
 
     plt.margins(0, 0)
+    plt.title(str(scenario_name))
     plt.show()
 
 

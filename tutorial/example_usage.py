@@ -42,7 +42,7 @@ def main():
         route_planner = RoutePlanner(
             scenario,
             planning_problem,
-            backend=RoutePlanner.Backend.NETWORKX_REVERSED,
+            #backend=RoutePlanner.Backend.NETWORKX_REVERSED,
             use_predecessors_to_pass_through_goal_state=False,
         )
         # plan routes, and save the routes in a route candidate holder
@@ -59,7 +59,7 @@ def main():
 
 
         # ========== visualization =========== #
-        visualize_route(route, draw_route_lanelets=True, draw_reference_path=True)
+        visualize_route(route, id_scenario, draw_route_lanelets=True, draw_reference_path=True)
 
         print(f' \n \n')
 

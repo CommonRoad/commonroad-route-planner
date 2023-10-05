@@ -88,7 +88,7 @@ class RoutePlanner:
 
         # setting backend
         if(backend not in RoutePlanner.Backend.values()):
-            backend = RoutePlanner.Backend.NETWORKX
+            raise NotImplementedError(f'[CR Route Planner] backend not implemented')
         self.backend = backend
 
         # set lanelet network
@@ -279,7 +279,7 @@ class RoutePlanner:
         :return: list of lanelet ids from start to goal.
         """
         # route is a list that holds lists of lanelet ids from start lanelet to goal lanelet
-        list_routes = list()
+        list_routes: List[List[int]] = list()
 
         # For each start lanelet, find route to each goal lanelet
         for id_lanelet_start in self.id_lanelets_start:
@@ -319,10 +319,8 @@ class RoutePlanner:
 
 
     @staticmethod
-    def _filter_lanelets_by_type(
-        list_lanelets_to_filter: List[Lanelet],
-        set_types_lanelets_forbidden: Set[LaneletType],
-    ) -> Generator[Lanelet, None, None]:
+    def _filter_lanelets_by_type(list_lanelets_to_filter: List[Lanelet],
+        set_types_lanelets_forbidden: Set[LaneletType]) -> Generator[Lanelet, None, None]:
         """Filters lanelets with the set of forbidden types.
 
         :param list_lanelets_to_filter: The list of the lanelets which should be filtered
