@@ -42,16 +42,14 @@ class Route:
     scenario: Scenario = None
     planning_problem: PlanningProblem = None
 
-    def __init__(
-        self,
-        lanelet_network: LaneletNetwork,
-        list_ids_lanelets: List[int],
-        set_ids_lanelets_permissible: Set[int] = None,
-    ):
+    def __init__(self, lanelet_network: LaneletNetwork, list_ids_lanelets: List[int],
+                 set_ids_lanelets_permissible: Set[int] = None):
+
         self.lanelet_network = lanelet_network
 
         # a route is created given the list of lanelet ids from start to goal
         self.list_ids_lanelets = list_ids_lanelets
+
         # a section is a list of lanelet ids that are adjacent to a lanelet in the route
         self.list_sections = list()
         self.set_ids_lanelets_in_sections = set()
@@ -67,7 +65,10 @@ class Route:
         # generate reference path from the list of lanelet ids leading to goal
         self.reference_path: np.ndarray = self._generate_reference_path()
 
-        self.path_length = self._compute_path_length_from_polyline(self.reference_path)
+        # TODO: Weird mix between static and non_static methods
+        # save additional information about the reference path
+        self.interpoint_distances = self._compute_interpoint_distances_from_polyline(self.reference_path)
+        self.length_reference_path = self._compute_length_of_reference_path()
         self.path_orientation = self._compute_orientation_from_polyline(self.reference_path)
         self.path_curvature = self._compute_scalar_curvature_from_polyline(self.reference_path)
 
@@ -334,12 +335,19 @@ class Route:
         reference_path = resample_polyline(reference_path, 2)
         return reference_path
 
-    @staticmethod
-    def _compute_path_length_from_polyline(polyline: np.ndarray) -> np.ndarray:
-        """
-        Computes the path length of a polyline
 
-        :param polyline: polyline for which path length should be calculated
+
+    def _compute_length_of_reference_path(self) -> float:
+        """
+        Computes length of reference path
+        """
+        return float(np.sum(self.interpoint_distances))
+
+
+    @staticmethod
+    def _compute_interpoint_distances_from_polyline(polyline: np.ndarray) -> np.ndarray:
+        """
+        Computes the path length of a polyline, i.e. the reference path
         :return: path length along polyline
         """
         assert (
@@ -414,7 +422,7 @@ class Route:
         :param position: longitudinal position
         :returns orientation of lane at a given position
         """
-        return np.interp(position, self.path_length, self.path_orientation)
+        return np.interp(position, self.interpoint_distances, self.path_orientation)
 
 
 class RouteCandidateHolder:
@@ -455,12 +463,13 @@ class RouteCandidateHolder:
         if(len(self.route_candidates) == 0):
             raise ValueError(f'[CR Route Planner] Not a single route candidate was found')
 
-        elif(len(self.route_candidates) == 0 or not retrieve_shortest):
+        elif(len(self.route_candidates) == 1 or not retrieve_shortest):
             return self.route_candidates[0]
 
         else:
-            # TODO: check shortest path by length of ref path
-            return self.route_candidates[0]
+            shortest_rout: Route = sorted(self.route_candidates, key=lambda x: x.length_reference_path, reverse=False)[0]
+            return shortest_rout
+
 
 
     def retrieve_best_route_by_orientation(self) -> Union[Route, None]:

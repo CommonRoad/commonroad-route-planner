@@ -52,7 +52,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
         # ========== retrieving routes =========== #
         # here we retrieve the first route in the list, this is equivalent to: route = list_routes[0]
-        route = candidate_holder.retrieve_first_route()
+        route = candidate_holder.retrieve_first_route(retrieve_shortest=True)
         print(f'[Time] Retrieving first route took {perf_counter() - t_start}')
 
         # Add dummy position and test additional point generation
