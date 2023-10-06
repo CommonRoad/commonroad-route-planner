@@ -3,8 +3,13 @@ import math
 import sys
 import warnings
 from enum import Enum
-from typing import List, Set, Tuple, Union
+
 import numpy as np
+
+
+# third party
+from scipy.spatial.kdtree import KDTree
+
 
 # commonroad
 from commonroad.planning.goal import GoalRegion
@@ -14,11 +19,7 @@ from commonroad.scenario.scenario import Scenario
 from commonroad.scenario.state import InitialState
 
 
-# own code base
-from commonroad_route_planner.utility.route import (chaikins_corner_cutting,
-                                                    resample_polyline,
-                                                    sort_lanelet_ids_by_goal,
-                                                    sort_lanelet_ids_by_orientation)
+# TODO: Better import
 try:
     import commonroad_dc.pycrccosy as pycrccosy
 
@@ -28,6 +29,19 @@ except ModuleNotFoundError:
 
     except ModuleNotFoundError:
         warnings.warn("<route.py> no pycrccosy module found!")
+
+
+
+
+# own code base
+from commonroad_route_planner.utility.route import (chaikins_corner_cutting,
+                                                    resample_polyline,
+                                                    sort_lanelet_ids_by_goal,
+                                                    sort_lanelet_ids_by_orientation)
+
+
+from typing import List, Set, Tuple, Union
+
 
 
 class RouteType(Enum):
@@ -454,12 +468,14 @@ class RouteCandidateHolder:
         else:
             self.ids_lanelets_permissible: Set = ids_lanelets_permissible
 
+
     def retrieve_first_route(self,
                              retrieve_shortest: bool = True) -> Route:
         """
         Retrieves the first Route object.
+
+        If retrieve shortest, the shortest route is used and orientation of the lanelet is checked.
         """
-        # FIXME if there is more than one route, retrieve the shortest by length of reference path
         if(len(self.route_candidates) == 0):
             raise ValueError(f'[CR Route Planner] Not a single route candidate was found')
 
@@ -467,16 +483,46 @@ class RouteCandidateHolder:
             return self.route_candidates[0]
 
         else:
-            shortest_rout: Route = sorted(self.route_candidates, key=lambda x: x.length_reference_path, reverse=False)[0]
-            return shortest_rout
+            sorted_routes: List[Route] = sorted(self.route_candidates, key=lambda x: x.length_reference_path, reverse=False)
+
+            for route in sorted_routes:
+                if(self._heuristic_check_matching_orientation_of_initial_state(route.reference_path)):
+                    return route
+
+            raise ValueError(f'[CR Route Planner] could not find a well oriented route. Perhaps increase distance threshold')
 
 
 
+
+
+    def _heuristic_check_matching_orientation_of_initial_state(self, reference_path: np.ndarray,
+                                                            distance_threshold_in_meters: float = 1.0) -> bool:
+        """
+        Necessary to filter out the corner case, where the initial position is on multiple lanelets (i.e. on an
+        intersection) and the shortest path might choose the wrong one
+        """
+
+        # Algorithm
+        # ----------
+        # use KDTree to check for closest point on ref path
+        distance, idx = KDTree(reference_path).query(self.state_initial.position)
+
+        if(distance <= distance_threshold_in_meters):
+            return True
+        else:
+            return False
+
+
+
+    # FIXME: This check should always be incorporated and the first route should be the shortest which matches
+    # the orientation
     def retrieve_best_route_by_orientation(self) -> Union[Route, None]:
-        """Retrieves the best route found by some orientation metrics
+        """Retrieves the best route found by some orientation metrics --> WTF which orientation metric
 
         If it is the survival scenario, then the first route with idx 0 is returned.
         """
+
+        # TODO this method is a complete clusterfuck --> Refactor !!!
         if not len(self.route_candidates):
             return None
         state_current = self.state_initial
@@ -523,6 +569,7 @@ class RouteCandidateHolder:
                         ]
                         return route
             return None
+
 
     def retrieve_all_routes(self) -> Tuple[List[Route], int]:
         """Returns the list of Route objects and the total number of routes"""

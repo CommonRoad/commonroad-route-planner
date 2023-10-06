@@ -236,34 +236,3 @@ def sort_lanelet_ids_by_goal(lanelet_network: LaneletNetwork, goal_region: GoalR
     raise NotImplementedError("Whole lanelet as goal must be implemented here!")
 
 
-def compute_curvature_from_polyline(polyline: np.ndarray) -> np.ndarray:
-    """Computes curvature of the given polyline
-
-    :param polyline: The polyline for the curvature computation
-    :return: The curvature of the polyline
-    """
-    assert (
-        isinstance(polyline, np.ndarray)
-        and polyline.ndim == 2
-        and len(polyline[:, 0]) > 2
-    ), "Polyline malformed for curvature computation p={}".format(polyline)
-    dx = np.gradient(polyline[:, 0])
-    dy = np.gradient(polyline[:, 1])
-
-    velocity = np.column_stack((dx, dy))
-
-    ddx = np.gradient(dx)
-    ddy = np.gradient(dy)
-
-    acceleration = np.column_stack((ddx, ddy))
-    # kappa = a x v / |v|^3
-    v_squared_sum = np.sum(velocity**2, axis=-1)
-    out = np.zeros_like(v_squared_sum)
-    np.divide(
-        -np.cross(acceleration, velocity),
-        v_squared_sum**1.5,
-        where=v_squared_sum > 0.0,
-        out=out,
-    )
-
-    return out
