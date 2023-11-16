@@ -15,6 +15,7 @@ numpy = ">=1.17.4"
 shapely = ">=1.6.4.post2"
 matplotlib = ">=3.1.2"
 commonroad-drivability-checker = "^2023.1"
+gurobipy = "^10.0.3"
 
 
 [tool.poetry.group.tutorial]
