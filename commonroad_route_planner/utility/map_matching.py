@@ -37,11 +37,6 @@ class MapMatcher:
             for v in val:
                 occupancy_matrix[lanelet_mapping[v], key] = True
 
-        # optimization problem
-        # m = gp.Model(
-        #     "Map Matching"
-        # )  # academic gurobi lic https://support.gurobi.com/hc/en-us/articles/360040541251
-
         number_time_steps = len(trajectory)
         number_lanelets = len(occurring_lanelet_ids)
 
@@ -54,7 +49,7 @@ class MapMatcher:
         ]  # only choose lanelets that are available
 
         for k in range(number_time_steps):
-            constr += [cp.sum(x[:, k]) == 1]  # only match one lanelet at each timestep
+            constr += [cp.sum(x[:, k]) == 1]  # only match one lanelet at each timestep  # TODO relax!!
 
         # consider lanelet network topology
         for lt_id in occurring_lanelet_ids:
@@ -101,7 +96,7 @@ class MapMatcher:
             cp.Minimize(cp.sum(cp.abs((cp.diff(x, axis=1))))), constraints=constr
         )
 
-        m.solve()
+        m.solve(cp.GLPK_MI)
 
         if m.status != "optimal":
             #  Solution status not optimal.
