@@ -49,7 +49,11 @@ class MapMatcher:
         ]  # only choose lanelets that are available
 
         for k in range(number_time_steps):
-            constr += [cp.sum(x[:, k]) == 1]  # only match one lanelet at each timestep  # TODO relax!!
+            constr += [cp.sum(x[:, k]) <= 1]  # at most match one lanelet at each timestep
+
+        for k in range(number_time_steps):
+            upper_lim = min(k+self.relax_consistency_constraint+1, number_time_steps)
+            constr += [cp.sum(x[:, k:upper_lim]) >= 1]  # relax
 
         # consider lanelet network topology
         for lt_id in occurring_lanelet_ids:
@@ -93,7 +97,7 @@ class MapMatcher:
                 ]
 
         m = cp.Problem(
-            cp.Minimize(cp.sum(cp.abs((cp.diff(x, axis=1))))), constraints=constr
+            cp.Minimize(cp.sum(cp.abs((cp.diff(x, axis=1)))) - cp.sum(x)), constraints=constr
         )
 
         m.solve(cp.GLPK_MI)
