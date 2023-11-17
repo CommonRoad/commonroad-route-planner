@@ -2,36 +2,39 @@ import os
 from pathlib import Path
 from time import perf_counter
 
+# typing
+from typing import List
+
 import numpy as np
+
 # commonrad
 from commonroad.common.file_reader import CommonRoadFileReader
 
 # Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
 from commonroad_route_planner.utility.visualization import visualize_route
-
-
-# typing
-from typing import List
+from commonroad_route_planner.utility.map_matching import MapMatcher
 
 
 def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
     # ========== initialization =========== #
 
-    if(use_cr2023_challenge):
-        path_scenarios = Path(__file__).parents[1] / "tutorial/commonroad_challenge_2023"
+    if use_cr2023_challenge:
+        path_scenarios = (
+            Path(__file__).parents[1] / "tutorial/commonroad_challenge_2023"
+        )
     else:
         path_scenarios = Path(__file__).parents[1] / "scenarios"
 
     ignored_scenarios: List = [
-        #"USA_Peach-3_1_T-1",
+        # "USA_Peach-3_1_T-1",
     ]
 
     for idx, filename in enumerate(sorted(os.listdir(path_scenarios))):
-        id_scenario = filename.split('.')[0]
-        if(id_scenario in ignored_scenarios):
+        id_scenario = filename.split(".")[0]
+        if id_scenario in ignored_scenarios:
             continue
-        print(f'Testing scenario {filename}')
+        print(f"Testing scenario {filename}")
         # read in scenario and planning problem set
         scenario, planning_problem_set = CommonRoadFileReader(
             f"{path_scenarios / id_scenario}.xml"
@@ -53,28 +56,45 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         # ========== retrieving routes =========== #
         # here we retrieve the first route in the list, this is equivalent to: route = list_routes[0]
         route = candidate_holder.retrieve_first_route(retrieve_shortest=True)
-        print(f'[Time] Retrieving first route took {perf_counter() - t_start}')
+        print(f"[Time] Retrieving first route took {perf_counter() - t_start}")
 
         # Add dummy position and test additional point generation
         dummy_position: np.ndarray = route.reference_path[0, :]
-        route.reference_path, success = RoutePlanner.extend_reference_path_at_start(route.reference_path, dummy_position)
-
-
+        route.reference_path, success = RoutePlanner.extend_reference_path_at_start(
+            route.reference_path, dummy_position
+        )
 
         # option 2: retrieve all routes
         list_routes, num_route_candidates = candidate_holder.retrieve_all_routes()
         print(f"Number of route candidates: {num_route_candidates}")
 
-
         # ========== visualization =========== #
-        visualize_route(route, id_scenario,
-                        save_img=save_imgs,
-                        draw_route_lanelets=True, draw_reference_path=True)
+        visualize_route(
+            route,
+            id_scenario,
+            save_img=save_imgs,
+            draw_route_lanelets=True,
+            draw_reference_path=True,
+        )
 
+        print(f"checked {(idx*100/len(os.listdir(path_scenarios))):.2f}% of scenarios")
 
-        print(f'checked {(idx*100/len(os.listdir(path_scenarios))):.2f}% of scenarios')
+        print(f" \n \n")
 
-        print(f' \n \n')
+        # ========== map matching ============ #
+        scenario, planning_problem = CommonRoadFileReader(
+            Path(__file__).parents[1] / "scenarios/DEU_Gar-3_2_T-1.xml"
+        ).open()
+
+        mm = MapMatcher(scenario.lanelet_network, 2)
+        lt_sequence = mm.map_matching(
+            scenario.dynamic_obstacles[0].prediction.trajectory.state_list
+        )
+
+        if lt_sequence != [54508, 54541, 54494, 54520, 54490]:
+            raise ValueError
+        else:
+            print("Map matching successful.")
 
 
 if __name__ == "__main__":

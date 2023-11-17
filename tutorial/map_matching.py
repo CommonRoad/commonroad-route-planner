@@ -12,7 +12,7 @@ scenario, planning_problem = CommonRoadFileReader(
 ).open()
 
 mm = MapMatcher(scenario.lanelet_network, 2)
-lt_sequence = mm.map_mathing(
+lt_sequence = mm.map_matching(
     scenario.dynamic_obstacles[0].prediction.trajectory.state_list
 )
 
