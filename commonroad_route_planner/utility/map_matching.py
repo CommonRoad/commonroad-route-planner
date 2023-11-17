@@ -54,9 +54,7 @@ class MapMatcher:
         ]  # only choose lanelets that are available
 
         for k in range(number_time_steps):
-            constr += [
-                cp.sum(x[:, k]) == 1
-            ]  # only match one lanelet at each timestep
+            constr += [cp.sum(x[:, k]) == 1]  # only match one lanelet at each timestep
 
         # consider lanelet network topology
         for lt_id in occurring_lanelet_ids:
@@ -99,16 +97,20 @@ class MapMatcher:
                     ]
                 ]
 
-        m = cp.Problem(cp.Minimize(cp.sum(cp.abs((cp.diff(x, axis=1))))), constraints=constr)
+        m = cp.Problem(
+            cp.Minimize(cp.sum(cp.abs((cp.diff(x, axis=1))))), constraints=constr
+        )
 
         m.solve()
 
-        if m.status != 'optimal':
+        if m.status != "optimal":
             #  Solution status not optimal.
             #  Maybe try higher value for relax_consistency
             raise NotImplementedError
 
-        raw_result = x.value  # np.reshape(m.getAttr("x"), (number_lanelets, number_time_steps))
+        raw_result = (
+            x.value
+        )  # np.reshape(m.getAttr("x"), (number_lanelets, number_time_steps))
         # lanelet_trajectory = np.argmax(raw_result, axis=0)
         lanelet_trajectory = []
         for k in range(number_time_steps):

@@ -12,8 +12,8 @@ from commonroad.common.file_reader import CommonRoadFileReader
 
 # Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
-from commonroad_route_planner.utility.visualization import visualize_route
 from commonroad_route_planner.utility.map_matching import MapMatcher
+from commonroad_route_planner.utility.visualization import visualize_route
 
 
 def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
