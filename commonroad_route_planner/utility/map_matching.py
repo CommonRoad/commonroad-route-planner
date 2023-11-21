@@ -4,7 +4,7 @@ from typing import List
 import cvxpy as cp
 import numpy as np
 from commonroad.scenario.lanelet import LaneletNetwork
-from commonroad.scenario.state import State
+from commonroad.scenario.state import InitialState, State
 
 
 class MapMatcher:
@@ -14,13 +14,18 @@ class MapMatcher:
         self.lanelet_network: LaneletNetwork = lanelet_network
         self.relax_consistency_constraint: int = relax_consistency_constraint
 
-    def map_matching(self, trajectory: List[State]) -> List[int]:
+    def map_matching(self, trajectory: List[State], initial_state: InitialState = None) -> List[int]:
         """
         Conduct map matching for given trajectory.
         """
         # determine occupancy matrix
         occupancy_dict = dict()
         occurring_lanelet_ids = set()
+        if initial_state is not None:
+            # add initial state to trajectory
+            assert initial_state.time_step == trajectory[0].time_step-1
+            trajectory.insert(0, initial_state)
+
         for k in range(len(trajectory)):
             occupancy_dict[k] = self.lanelet_network.find_lanelet_by_position(
                 [trajectory[k].position]
