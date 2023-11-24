@@ -17,7 +17,6 @@ from typing import List
 
 def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
     # ========== initialization =========== #
-
     if(use_cr2023_challenge):
         path_scenarios = Path(__file__).parents[1] / "tutorial/commonroad_challenge_2023"
     else:
