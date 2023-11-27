@@ -12,7 +12,6 @@ from commonroad.common.file_reader import CommonRoadFileReader
 
 # Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
-from commonroad_route_planner.utility.map_matching import MapMatcher
 from commonroad_route_planner.utility.visualization import visualize_route
 
 
@@ -78,20 +77,6 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
         print(f" \n \n")
 
-        # ========== map matching ============ #
-        scenario, planning_problem = CommonRoadFileReader(
-            Path(__file__).parents[1] / "scenarios/DEU_Gar-3_2_T-1.xml"
-        ).open()
-
-        mm = MapMatcher(scenario.lanelet_network, 2)
-        lt_sequence = mm.map_matching(
-            scenario.dynamic_obstacles[0].prediction.trajectory.state_list
-        )
-
-        if lt_sequence != [54508, 54541, 54494, 54520, 54490]:
-            raise ValueError
-        else:
-            print("Map matching successful.")
 
 
 if __name__ == "__main__":
