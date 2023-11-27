@@ -54,11 +54,18 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         route = candidate_holder.retrieve_first_route(retrieve_shortest=True)
         print(f"[Time] Retrieving first route took {perf_counter() - t_start}")
 
-        # Add dummy position and test additional point generation
-        dummy_position: np.ndarray = route.reference_path[0, :]
+        # Add dummy start position and test additional point generation
+        dummy_start_position: np.ndarray = route.reference_path[0, :]
         route.reference_path, success = RoutePlanner.extend_reference_path_at_start(
-            route.reference_path, dummy_position
+            route.reference_path, dummy_start_position
         )
+
+        # Add dummy end position and test additional point generation
+        dummy_end_position: np.ndarray = route.reference_path[-1, :]
+        route.reference_path, success = RoutePlanner.extend_reference_path_at_end(
+            route.reference_path, dummy_end_position
+        )
+
 
         # option 2: retrieve all routes
         list_routes, num_route_candidates = candidate_holder.retrieve_all_routes()
