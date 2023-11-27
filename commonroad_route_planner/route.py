@@ -86,9 +86,6 @@ class Route:
         self.path_orientation = self._compute_orientation_from_polyline(self.reference_path)
         self.path_curvature = self._compute_scalar_curvature_from_polyline(self.reference_path)
 
-        if "commonroad_dc.pycrccosy" in sys.modules:
-            # make sure the reference path is already resampled and smoothened before creating a CLCS out of it
-            self.CLCS = pycrccosy.CurvilinearCoordinateSystem(self.reference_path)
 
 
     def retrieve_route_sections(self, is_opposite_direction_allowed: bool = False) -> Union[None, List[List[int]]]:

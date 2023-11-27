@@ -18,11 +18,8 @@ from commonroad_route_planner.utility.visualization import visualize_route
 
 def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
     # ========== initialization =========== #
-
-    if use_cr2023_challenge:
-        path_scenarios = (
-            Path(__file__).parents[1] / "tutorial/commonroad_challenge_2023"
-        )
+    if(use_cr2023_challenge):
+        path_scenarios = Path(__file__).parents[1] / "tutorial/commonroad_challenge_2023"
     else:
         path_scenarios = Path(__file__).parents[1] / "scenarios"
 
