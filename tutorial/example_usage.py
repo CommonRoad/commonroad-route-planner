@@ -2,9 +2,6 @@ import os
 from pathlib import Path
 from time import perf_counter
 
-# typing
-from typing import List
-
 import numpy as np
 
 # commonrad
@@ -13,6 +10,10 @@ from commonroad.common.file_reader import CommonRoadFileReader
 # Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
 from commonroad_route_planner.utility.visualization import visualize_route
+
+
+# typing
+from typing import List
 
 
 def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):

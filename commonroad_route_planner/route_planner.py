@@ -11,12 +11,12 @@ import logging
 from enum import Enum
 import warnings
 import math
+
 import numpy as np
 
 
 # third party
 from scipy.spatial.kdtree import KDTree
-
 
 
 # commonroad
