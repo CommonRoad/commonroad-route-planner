@@ -7,14 +7,34 @@ from commonroad_route_planner.utility.map_matching import MapMatcher
 
 scenario, planning_problem = CommonRoadFileReader(
     pathlib.Path(commonroad_route_planner.__file__).parent.joinpath(
-        "./../scenarios/DEU_Gar-3_2_T-1.xml"
+        "./../scenarios/USA_Lanker-2_6_T-1.xml"
     )
 ).open()
+dyn_obst = scenario.obstacle_by_id(2452)
 
-mm = MapMatcher(scenario.lanelet_network, 2)
+
+# plotting
+import matplotlib.pyplot as plt
+from commonroad.visualization.mp_renderer import MPRenderer
+
+plt.figure(figsize=(25, 25))
+rnd = MPRenderer()
+rnd.draw_params.lanelet_network.lanelet.show_label = True
+rnd.draw_params.lanelet_network.lanelet.unique_colors = True
+rnd.draw_params.lanelet_network.lanelet.draw_border_vertices = True
+scenario.lanelet_network.draw(rnd)
+dyn_obst.draw(rnd)
+rnd.render()
+plt.show()
+
+
+mm = MapMatcher(scenario.lanelet_network)
 lt_sequence = mm.map_matching(
-    scenario.dynamic_obstacles[0].prediction.trajectory.state_list,
-    scenario.dynamic_obstacles[0].initial_state
+    dyn_obst.prediction.trajectory.state_list,
+    dyn_obst.initial_state,
+    True,
+    6
 )
 
 print(f"Map matching result: {lt_sequence}")
+
