@@ -31,7 +31,7 @@ class TestGoalReached(unittest.TestCase):
     """
     Tests whether reference path intersects with goal region
     """
-    def test_goalreached(self):
+    def test_goalreached(self, development=False):
         
         scenarios_without_problem: List[str] = ["DEU_Aachen-9_50_I-1", "DEU_Cologne-19_130_I-1", "DEU_GarchingCampus2D-2", "USA_Lanker-2_18_T-1"]
         success_scenarios_easy, failed_scenarios_easy = self._analyse_scenarios(scenarios_without_problem, use_cr2023_challenge=False)
@@ -46,22 +46,22 @@ class TestGoalReached(unittest.TestCase):
 )
 
         
-        # TODO: Uncomment once sulution is found
-        """
-        scenarios_with_problem: List[str] = ["USA_Peach-3_1_T-1", "USA_US101-22_1_T-1", "USA_US101-29_1_T-1"]
-        success_scenarios_hard, failed_scenarios_hard = self._analyse_scenarios(scenarios_with_problem, use_cr2023_challenge=False)
-        print(f'Tested hard scnearios:')
-        print(f'  >>  successes: {len(success_scenarios_hard)}')
-        print(f'  >>  failed scenarios: {len(failed_scenarios_hard)}')
-        
-        
-        if(len(failed_scenarios_easy) > 0 or len(failed_scenarios_hard) > 0):
-            raise ValueError(f"Not all reference paths intersect goal regions: \n " + 
-                             f"succeded easy: {len(success_scenarios_easy)} --  {success_scenarios_easy} \n"
-                             f"failed easy: {len(failed_scenarios_easy)}  --  {failed_scenarios_easy} \n"
-                             f"succeded hard: {len(success_scenarios_hard)} --  {success_scenarios_hard} \n"
-                             f"failed hard: {len(failed_scenarios_hard)}  --  {failed_scenarios_hard} \n")
-        """
+        # TODO: Make this actually work
+        if(development):
+            scenarios_with_problem: List[str] = ["USA_Peach-3_1_T-1", "USA_US101-22_1_T-1", "USA_US101-29_1_T-1"]
+            success_scenarios_hard, failed_scenarios_hard = self._analyse_scenarios(scenarios_with_problem, use_cr2023_challenge=False)
+            print(f'Tested hard scnearios:')
+            print(f'  >>  successes: {len(success_scenarios_hard)}')
+            print(f'  >>  failed scenarios: {len(failed_scenarios_hard)}')
+            
+            
+            if(len(failed_scenarios_easy) > 0 or len(failed_scenarios_hard) > 0):
+                raise ValueError(f"Not all reference paths intersect goal regions: \n " + 
+                                f"succeded easy: {len(success_scenarios_easy)} --  {success_scenarios_easy} \n"
+                                f"failed easy: {len(failed_scenarios_easy)}  --  {failed_scenarios_easy} \n"
+                                f"succeded hard: {len(success_scenarios_hard)} --  {success_scenarios_hard} \n"
+                                f"failed hard: {len(failed_scenarios_hard)}  --  {failed_scenarios_hard} \n")
+            
 
         
 
@@ -128,7 +128,3 @@ class TestGoalReached(unittest.TestCase):
                     
         return success_scenarios, failed_scenarios
                     
-                    
-if __name__ == "__main__":
-    asdf = TestGoalReached()
-    asdf.test_goalreached()
