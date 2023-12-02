@@ -15,19 +15,21 @@ from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.scenario import Scenario
 from commonroad.scenario.state import InitialState
 
-
-
-
 # own code base
 from commonroad_route_planner.utility.route import (chaikins_corner_cutting,
                                                     resample_polyline,
                                                     sort_lanelet_ids_by_goal,
                                                     sort_lanelet_ids_by_orientation)
+from commonroad_route_planner.pseudo_dataclasses.lanelet_section import LaneletSection
+import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
 
 
 
 # typing
 from typing import List, Set, Tuple, Union
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from commonroad.scenario.scenario import LaneletNetwork, Lanelet
 
 
 
@@ -43,136 +45,58 @@ class Route:
     scenario: Scenario = None
     planning_problem: PlanningProblem = None
 
-    def __init__(self, lanelet_network: LaneletNetwork, list_ids_lanelets: List[int],
-                 set_ids_lanelets_permissible: Set[int] = None):
+    def __init__(self, lanelet_network: LaneletNetwork, lanelet_ids: List[int],
+                 permissible_lanelet_ids: Set[int] = None):
 
-        self.lanelet_network = lanelet_network
+        self.lanelet_network: LaneletNetwork = lanelet_network
 
         # a route is created given the list of lanelet ids from start to goal
-        self.list_ids_lanelets = list_ids_lanelets
+        self.lanelet_ids: List[int] = lanelet_ids
 
         # a section is a list of lanelet ids that are adjacent to a lanelet in the route
-        self.list_sections = list()
+        self.sections: List[LaneletSection] = list()
+        
         self.set_ids_lanelets_in_sections = set()
         self.set_ids_lanelets_opposite_direction = set()
 
-        if set_ids_lanelets_permissible is None:
-            self.set_ids_lanelets_permissible = {
+        if permissible_lanelet_ids is None:
+            self.permissible_lanelet_ids: Set[int] = {
                 lanelet.lanelet_id for lanelet in self.lanelet_network.lanelets
             }
         else:
-            self.set_ids_lanelets_permissible = set_ids_lanelets_permissible
+            self.permissible_lanelet_ids: Set[int]  = permissible_lanelet_ids
 
         # generate reference path from the list of lanelet ids leading to goal
-        self.reference_path: np.ndarray = self._generate_reference_path()
+        self.reference_path: np.ndarray = None
+        self._generate_reference_path()
 
-        # TODO: Weird mix between static and non_static methods
         # save additional information about the reference path
-        self.interpoint_distances: np.ndarray = self._compute_interpoint_distances_from_polyline(self.reference_path)
-        self.length_reference_path: np.ndarray = self._compute_length_of_reference_path()
-        self.path_orientation: np.ndarray = self._compute_orientation_from_polyline(self.reference_path)
-        self.path_curvature: np.ndarray = self._compute_scalar_curvature_from_polyline(self.reference_path)
+        self.interpoint_distances: np.ndarray = pops.compute_interpoint_distances_from_polyline(self.reference_path)
+        self.length_reference_path: np.ndarray = pops.compute_length_of_polyline(self.reference_path)
+        self.path_orientation: np.ndarray = pops.compute_orientation_from_polyline(self.reference_path)
+        self.path_curvature: np.ndarray = pops.compute_scalar_curvature_from_polyline(self.reference_path)
 
 
 
-    def retrieve_route_sections(self, is_opposite_direction_allowed: bool = False) -> Union[None, List[List[int]]]:
+    def retrieve_route_sections(self):
         """Retrieves route sections for lanelets in the route.
 
         A section is a list of lanelet ids that are adjacent to a given lanelet.
         """
-        if not self.list_sections:
+        if(len(self.list_sections) == 0):
             # compute list of sections
-            for id_lanelet in self.list_ids_lanelets:
-                # for every lanelet in the route, get its adjacent lanelets
-                list_ids_lanelets_in_section = self._get_adjacent_lanelets_ids(
-                    id_lanelet, is_opposite_direction_allowed
-                )
-                # add lanelet from the route too
-                list_ids_lanelets_in_section.append(id_lanelet)
-                list_ids_lanelets_in_section.sort()
+            for id_lanelet in self.lanelet_ids:
+                current_lanelet: "Lanelet" = self.lanelet_network.find_lanelet_by_id(id_lanelet)
+                current_section: LaneletSection = LaneletSection(current_lanelet, self.lanelet_network, self.permissible_lanelet_ids)
+                
+                # TODO: check if that weird check has some meening?
+                
+                self.sections.append(current_section)
+                
+                
+    
 
-                if len(self.list_sections) == 0:
-                    self.list_sections.append(list_ids_lanelets_in_section)
-
-                elif self.list_sections[-1] != list_ids_lanelets_in_section:
-                    # only add new sections if it is not the same as the last section
-                    self.list_sections.append(list_ids_lanelets_in_section)
-
-        for section in self.list_sections:
-            for id_lanelet in section:
-                self.set_ids_lanelets_in_sections.add(id_lanelet)
-
-        return self.list_sections
-
-
-    def _get_adjacent_lanelets_ids(self, id_lanelet: int, is_opposite_direction_permissible=False) -> list:
-        """Recursively gets adj_left and adj_right lanelets of the given lanelet.
-
-        :param id_lanelet: current lanelet id
-        :param is_opposite_direction_permissible: specifies if it should give back only the lanelets in the driving
-            direction or it should give back the first neighbouring lanelet in the opposite direction
-        :return: list of adjacent lanelet ids: all lanelets which are going in the same direction and one-one from the
-                 left and right side which are going in the opposite direction, empty lists if there are none
-        """
-        list_lanelets_adjacent = list()
-        lanelet_base = self.lanelet_network.find_lanelet_by_id(id_lanelet)
-
-        # goes in left direction
-        lanelet_current = lanelet_base
-        id_lanelet_temp = lanelet_current.adj_left
-        while id_lanelet_temp is not None:
-            # set this lanelet as the current if it goes in the same direction and iterate further
-            if id_lanelet_temp in self.set_ids_lanelets_permissible:
-                if lanelet_current.adj_left_same_direction:
-                    # append the left adjacent lanelet
-                    list_lanelets_adjacent.append(id_lanelet_temp)
-
-                    # update lanelet_current
-                    lanelet_current = self.lanelet_network.find_lanelet_by_id(
-                        id_lanelet_temp
-                    )
-                    id_lanelet_temp = lanelet_current.adj_left
-
-                else:
-                    # if the lanelet is in opposite direction, we add them into a set
-                    # if driving in opposite lanelet is allowed, they can be traversed too to form the route
-                    self.set_ids_lanelets_opposite_direction.add(id_lanelet_temp)
-                    if is_opposite_direction_permissible:
-                        list_lanelets_adjacent.append(id_lanelet_temp)
-                    break
-            else:
-                # it is not allowed to drive in that lane, so just break
-                break
-
-        # goes in right direction
-        lanelet_current = lanelet_base
-        id_lanelet_temp = lanelet_current.adj_right
-        while id_lanelet_temp is not None:
-            # set this lanelet as the current if it goes in the same direction and iterate further
-            if id_lanelet_temp in self.set_ids_lanelets_permissible:
-                if lanelet_current.adj_right_same_direction:
-                    # append the right adjacent lanelet
-                    list_lanelets_adjacent.append(id_lanelet_temp)
-
-                    # Update lanelet_current
-                    lanelet_current = self.lanelet_network.find_lanelet_by_id(
-                        id_lanelet_temp
-                    )
-                    id_lanelet_temp = lanelet_current.adj_right
-                else:
-                    # if the lanelet is in opposite direction, we add them into a set
-                    # if driving in opposite lanelet is allowed, they can be traversed too to form the route
-                    self.set_ids_lanelets_opposite_direction.add(id_lanelet_temp)
-                    if is_opposite_direction_permissible:
-                        list_lanelets_adjacent.append(id_lanelet_temp)
-                    break
-            else:
-                # it is not allowed to drive in that lane, so just break
-                break
-
-        return list_lanelets_adjacent
-
-    def _generate_reference_path(self) -> np.ndarray:
+    def _generate_reference_path(self) -> None:
         """Generates a reference path (polyline) out of the given route
 
         This is done in four steps:
@@ -186,21 +110,14 @@ class Route:
         instruction = self._compute_lane_change_instructions()
         list_portions = self._compute_lanelet_portion(instruction)
         reference_path: np.ndarray = self._compute_reference_path(list_portions)
-        reference_path: np.ndarray = self._remove_duplicate_points(reference_path)
+        reference_path: np.ndarray = pops.remove_duplicate_points(reference_path)
         reference_path_smoothed: np.ndarray = chaikins_corner_cutting(reference_path)
+        
+        self.reference_path: np.ndarray = reference_path_smoothed
 
-        return reference_path_smoothed
 
 
-    @staticmethod
-    def _remove_duplicate_points(reference_path: np.ndarray) -> np.ndarray:
-        """
-        Removes identical points from reference path to avoid issues with numerical differenciation and curvature
-        """
-        _, idx = np.unique(reference_path, axis=0, return_index=True)
-        ref_path = reference_path[np.sort(idx)]
-
-        return ref_path
+ 
 
 
 
@@ -211,9 +128,9 @@ class Route:
         (driving straight forward0, and 1 indicating that a lane change (to the left or right) is required.
         """
         list_instructions = []
-        for idx, id_lanelet in enumerate(self.list_ids_lanelets[:-1]):
+        for idx, id_lanelet in enumerate(self.lanelet_ids[:-1]):
             if (
-                self.list_ids_lanelets[idx + 1]
+                self.lanelet_ids[idx + 1]
                 in self.lanelet_network.find_lanelet_by_id(id_lanelet).successor
             ):
                 list_instructions.append(0)
@@ -269,6 +186,8 @@ class Route:
         return [
             (lower, upper) for lower, upper in zip(list_bounds_lower, list_bounds_upper)
         ]
+        
+        
 
     def _compute_reference_path(
         self,
@@ -285,8 +204,8 @@ class Route:
         :param percentage_vertices_lane_change_max: maximum percentage of vertices that should be used for lane change.
         """
         reference_path = None
-        num_lanelets_in_route = len(self.list_ids_lanelets)
-        for idx, id_lanelet in enumerate(self.list_ids_lanelets):
+        num_lanelets_in_route = len(self.lanelet_ids)
+        for idx, id_lanelet in enumerate(self.lanelet_ids):
             lanelet = self.lanelet_network.find_lanelet_by_id(id_lanelet)
             # resample the center vertices to prevent too few vertices with too large distances
             vertices_resampled = resample_polyline(
@@ -335,83 +254,9 @@ class Route:
 
 
 
-    def _compute_length_of_reference_path(self) -> float:
-        """
-        Computes length of reference path
-        """
-        return float(np.sum(self.interpoint_distances))
 
 
-    @staticmethod
-    def _compute_interpoint_distances_from_polyline(polyline: np.ndarray) -> np.ndarray:
-        """
-        Computes the path length of a polyline, i.e. the reference path
-        :return: path length along polyline
-        """
-        assert (
-            isinstance(polyline, np.ndarray)
-            and polyline.ndim == 2
-            and len(polyline[:, 0]) > 2
-        ), "Polyline malformed for path lenth computation p={}".format(polyline)
 
-        distance = np.zeros((len(polyline),))
-        for i in range(1, len(polyline)):
-            distance[i] = distance[i - 1] + np.linalg.norm(
-                polyline[i] - polyline[i - 1]
-            )
-
-        return np.array(distance)
-
-    @staticmethod
-    def _compute_scalar_curvature_from_polyline(polyline: np.ndarray) -> np.ndarray:
-        """
-        Computes scalar curvature along a polyline.
-
-        :param polyline: polyline for which curvature should be calculated
-        :return: curvature along  polyline
-        """
-        # FIXME: WTF ????
-        assert (
-            isinstance(polyline, np.ndarray)
-            and polyline.ndim == 2
-            and len(polyline[:, 0]) > 2
-        ), "Polyline malformed for curvature computation p={}".format(polyline)
-
-        # Derivation to position, not time
-        x_d: np.ndarray = np.gradient(polyline[:, 0])
-        x_dd: np.ndarray = np.gradient(x_d)
-        y_d: np.ndarray = np.gradient(polyline[:, 1])
-        y_dd: np.ndarray = np.gradient(y_d)
-
-        curvature_array: np.ndarray = (x_d * y_dd - x_dd * y_d) / ((x_d**2 + y_d**2) ** (3.0 / 2.0))
-
-        return curvature_array
-
-    @staticmethod
-    def _compute_orientation_from_polyline(polyline: np.ndarray) -> np.ndarray:
-        """
-        Computes orientation along a polyline
-
-        :param polyline: polyline for which orientation should be calculated
-        :return: orientation along polyline
-        """
-        assert (
-            isinstance(polyline, np.ndarray)
-            and len(polyline) > 1
-            and polyline.ndim == 2
-            and len(polyline[0, :]) == 2
-        ), "<Math>: not a valid polyline. polyline = {}".format(polyline)
-        if len(polyline) < 2:
-            raise ValueError("Cannot create orientation from polyline of length < 2")
-
-        orientation = [0]
-        for i in range(1, len(polyline)):
-            pt1 = polyline[i - 1]
-            pt2 = polyline[i]
-            tmp = pt2 - pt1
-            orientation.append(np.arctan2(tmp[1], tmp[0]))
-
-        return np.array(orientation)
     
 
     def orientation(self, position) -> float:
