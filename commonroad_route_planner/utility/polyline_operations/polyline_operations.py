@@ -86,9 +86,9 @@ def remove_duplicate_points(reference_path: np.ndarray) -> np.ndarray:
     return ref_path
 
 
-def _compute_length_of_polyline(polyline: np.ndarray) -> float:
+def compute_length_of_polyline(polyline: np.ndarray) -> float:
     """
     Computes length of reference path
     """
     inter_point_distance: np.ndarray = compute_interpoint_distances_from_polyline(polyline)
-    return float(np.sum(polyline))
+    return float(np.sum(inter_point_distance))
