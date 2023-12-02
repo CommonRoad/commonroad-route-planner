@@ -87,8 +87,8 @@ class TestPointsOutsideLaneletNetwork(unittest.TestCase):
             planning_problem,
             use_predecessors_to_pass_through_goal_state=False,
         )
-        candidate_holder = route_planner.plan_routes()
-        route = candidate_holder.retrieve_first_route(retrieve_shortest=True)
+        route_selector = route_planner.plan_routes()
+        route = route_selector.retrieve_shortest_route(retrieve_shortest=True)
         
         # Create shapely route
         shapely_route_line: ShapelyLineString = ShapelyLineString(route.reference_path)

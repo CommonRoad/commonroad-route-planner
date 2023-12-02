@@ -34,7 +34,8 @@ from commonroad_route_planner.planners.networkx import (
     ReversedNetworkxRoutePlanner,
 )
 from commonroad_route_planner.planners.survival import NoGoalFoundRoutePlanner
-from commonroad_route_planner.route import Route, RouteCandidateHolder, RouteType
+from commonroad_route_planner.route import Route, RouteType
+from commonroad_route_planner.route_selector import RouteSelector
 from commonroad_route_planner.utility.route import (lanelet_orientation_at_position, relative_orientation)
 from commonroad_route_planner.utility.overtake_init_state import OvertakeInitState
 
@@ -375,7 +376,7 @@ class RoutePlanner:
 
 
 
-    def plan_routes(self) -> RouteCandidateHolder:
+    def plan_routes(self) -> RouteSelector:
         """Plans routes for every pair of start/goal lanelets.
 
         If no goal lanelet ID is given then return a survival route.
@@ -414,7 +415,7 @@ class RoutePlanner:
         if(len(list_routes) == 0):
             raise ValueError(f'[CR Route Planner] planner {self.planner} could not find a single route')
 
-        return RouteCandidateHolder(
+        return RouteSelector(
             self.lanelet_network,
             self.state_initial,
             self.goal_region,

@@ -12,7 +12,7 @@ from shapely import Polygon as ShapelyPolygon
 
 # commonrad
 from commonroad.common.file_reader import CommonRoadFileReader
-from commonroad.geometry.shape import ShapeGroup as CRShapeGroup, Rectangle
+from commonroad.geometry.shape import ShapeGroup as CRShapeGroup
 
 # Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
@@ -98,8 +98,8 @@ class TestGoalReached(unittest.TestCase):
                 planning_problem,
                 use_predecessors_to_pass_through_goal_state=False,
             )
-            candidate_holder = route_planner.plan_routes()
-            route = candidate_holder.retrieve_first_route(retrieve_shortest=True)
+            route_selector = route_planner.plan_routes()
+            route = route_selector.retrieve_shortest_route(retrieve_shortest=True)
             
             # create shapely objects
             shapely_route_line: ShapelyLineString = ShapelyLineString(route.reference_path)

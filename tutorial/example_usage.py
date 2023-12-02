@@ -14,6 +14,10 @@ from commonroad_route_planner.utility.visualization import visualize_route
 
 # typing
 from typing import List
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from commonroad_route_planner.route_selector import RouteSelector
+    from commonroad_route_planner.route import Route
 
 
 def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
@@ -48,11 +52,11 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
             use_predecessors_to_pass_through_goal_state=False,
         )
         # plan routes, and save the routes in a route candidate holder
-        candidate_holder = route_planner.plan_routes()
+        route_selector: "RouteSelector" = route_planner.plan_routes()
 
         # ========== retrieving routes =========== #
         # here we retrieve the first route in the list, this is equivalent to: route = list_routes[0]
-        route = candidate_holder.retrieve_first_route(retrieve_shortest=True)
+        route: "Route" = route_selector.retrieve_shortest_route(retrieve_shortest=True)
         print(f"[Time] Retrieving first route took {perf_counter() - t_start}")
 
         # Add dummy start position and test additional point generation
@@ -69,8 +73,8 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
 
         # option 2: retrieve all routes
-        list_routes, num_route_candidates = candidate_holder.retrieve_all_routes()
-        print(f"Number of route candidates: {num_route_candidates}")
+        list_routes, num_routes_retrieved = route_selector.retrieve_all_routes()
+        print(f"Number of routes retrieved: {num_routes_retrieved}")
 
         # ========== visualization =========== #
         visualize_route(
