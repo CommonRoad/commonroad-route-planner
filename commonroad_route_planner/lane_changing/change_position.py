@@ -74,25 +74,29 @@ class LaneChangePositionHandler:
         would be [0 - 0.25], [0.25 -0.5], [0.5 - 0.75] and [0.75 - 1.0] for these four lanes.
         """
 
-        # returns a list of consecutive instructions
-        # e.g. input: [0, 0, 1, 1, 0, 1] output: [[0, 0], [1, 1], [0], [1]]
+        # generates a list of consecutive instructions
+        # e.g. input: [0, 0, 1, 1, 0, 1] output: [[0, 0], [1, 1], [0], [1]], meaning [drinve, lane_change, drive, lane_change]
         consecutive_instructions: List[Tuple[float, float]] = [
             list(v) for k, v in itertools.groupby(self.instructions)
         ]
 
-        upper_bounds: List[float] = []
+        upper_bounds: List[float] = list()
         lower_bounds: List[float] = [0.0]
-        for instructions in consecutive_instructions:
-            for idx, instruction in enumerate(instructions):
-                if instruction == 0:
+        
+        # Construct upper bounds
+        for instruction_group in consecutive_instructions:
+            for idx, instruction in enumerate(instruction_group):
+                if(instruction == 0):
                     # goes till the end of the lanelet
                     bound_upper = 1.0
                 else:
                     # goes only till a specific portion
-                    bound_upper = (idx + 1) / (len(instructions) + 1)
+                    bound_upper = (idx + 1) / (len(instruction_group) + 1)
 
                 upper_bounds.append(bound_upper)
 
+
+        # Construct lower bound
         if len(upper_bounds) > 1:
             for idx in range(1, len(upper_bounds)):
                 if np.isclose(upper_bounds[idx - 1], 1.0):
@@ -100,6 +104,7 @@ class LaneChangePositionHandler:
                 else:
                     lower_bounds.append(upper_bounds[idx - 1])
 
+        # Sanity check
         if(not (len(lower_bounds) == len(upper_bounds) == len(self.instructions))):
             raise ValueError(f'Length of instructions do not add up')
         
