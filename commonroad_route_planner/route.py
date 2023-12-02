@@ -11,7 +11,7 @@ from commonroad.scenario.scenario import Scenario
 # own code base
 from commonroad_route_planner.utility.route import (chaikins_corner_cutting,
                                                     resample_polyline)
-from commonroad_route_planner.pseudo_dataclasses.lanelet_section import LaneletSection
+from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
 from commonroad_route_planner.lane_changing.change_position import LaneChangePositionHandler
 import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
 
