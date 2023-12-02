@@ -65,7 +65,7 @@ class TestGoalReached(unittest.TestCase):
 
         
 
-    def _analyse_scenarios(self, scenarios: List[str], use_cr2023_challenge: bool = False, path_scenarios: str = None) -> Tuple[List[str], List[str]]:
+    def _analyse_scenarios(self, scenarios: List[str], use_cr2023_challenge: bool = False, scenarios_path: str = None) -> Tuple[List[str], List[str]]:
         """
         Test if polyline of reference path intersects with goal.
         Returns (success_scenarios, failed_scenarios)
@@ -75,12 +75,12 @@ class TestGoalReached(unittest.TestCase):
         success_scenarios: List[str] = list()
         failed_scenarios: List[str] = list()
         
-        if(path_scenarios is not None):
-            path_scenarios = Path(path_scenarios)
+        if(scenarios_path is not None):
+            path_scenarios = Path(scenarios_path)
         elif(use_cr2023_challenge):
             path_scenarios = Path(__file__).parents[1] / "tutorial/commonroad_challenge_2023"
         else:
-            path_scenarios = Path(__file__).parents[1] /  "/scenarios"
+            path_scenarios = Path(__file__).parents[1] / "scenarios"
 
         for filename in scenarios:
             print(f"Testing scenario {filename}")
@@ -128,3 +128,7 @@ class TestGoalReached(unittest.TestCase):
                     
         return success_scenarios, failed_scenarios
                     
+                    
+if __name__ == "__main__":
+    asdf = TestGoalReached()
+    asdf.test_goalreached()
