@@ -48,7 +48,7 @@ class TestGoalReached(unittest.TestCase):
         
         # TODO: Make this actually work
         if(development):
-            scenarios_with_problem: List[str] = ["USA_Peach-3_1_T-1", "USA_US101-22_1_T-1", "USA_US101-29_1_T-1"]
+            scenarios_with_problem: List[str] = ["USA_Peach-3_1_T-1", "USA_US101-22_1_T-1", "USA_US101-29_1_T-1", "ZAM_Turorial-1_2_T-1_modified"]
             success_scenarios_hard, failed_scenarios_hard = self._analyse_scenarios(scenarios_with_problem, use_cr2023_challenge=False)
             print(f'Tested hard scnearios:')
             print(f'  >>  successes: {len(success_scenarios_hard)}')
@@ -127,4 +127,3 @@ class TestGoalReached(unittest.TestCase):
                     
                     
         return success_scenarios, failed_scenarios
-                    
