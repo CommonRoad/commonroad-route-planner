@@ -92,3 +92,71 @@ def compute_length_of_polyline(polyline: np.ndarray) -> float:
     """
     inter_point_distance: np.ndarray = compute_interpoint_distances_from_polyline(polyline)
     return float(np.sum(inter_point_distance))
+
+
+
+
+def sample_polyline(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
+    """
+    Samples polyline with a given step in meter.
+    """
+    return resample_polyline(polyline, step)
+
+
+def resample_polyline_with_length_check(polyline, step=2) -> np.ndarray:
+    """Resamples polyline with length check."""
+    length = np.linalg.norm(polyline[-1] - polyline[0])
+    if length > step:
+        polyline = resample_polyline(polyline, step)
+    else:
+        polyline = resample_polyline(polyline, length / 10.0)
+
+    return polyline
+
+
+def resample_polyline(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
+    """Resamples the input polyline with the specified step size.
+
+    The distances between each pair of consecutive vertices are examined. If it is larger than the step size,
+    a new sample is added in between.
+
+    :param polyline: polyline with 2D points
+    :param step: minimum distance between each consecutive pairs of vertices
+    :return: resampled polyline
+    """
+    if len(polyline) < 2:
+        return np.array(polyline)
+
+    polyline_new = [polyline[0]]
+
+    current_idx = 0
+    current_position = step
+    current_distance = np.linalg.norm(polyline[0] - polyline[1])
+
+    # iterate through all pairs of vertices of the polyline
+    while current_idx < len(polyline) - 1:
+        if current_position <= current_distance:
+            # add new sample and increase current position
+            ratio = current_position / current_distance
+            polyline_new.append(
+                (1 - ratio) * polyline[current_idx] + ratio * polyline[current_idx + 1]
+            )
+            current_position += step
+
+        else:
+            # move on to the next pair of vertices
+            current_idx += 1
+            # if we are out of vertices, then break
+            if current_idx >= len(polyline) - 1:
+                break
+            # deduct the distance of previous vertices from the position
+            current_position = current_position - current_distance
+            # compute new distances of vertices
+            current_distance = np.linalg.norm(
+                polyline[current_idx + 1] - polyline[current_idx]
+            )
+
+    # add the last vertex
+    polyline_new.append(polyline[-1])
+
+    return np.array(polyline_new)

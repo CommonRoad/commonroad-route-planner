@@ -48,7 +48,7 @@ class LaneChangePositionHandler:
         """Computes lane change instruction for planned routes
 
         The instruction is a list of 0s and 1s, with 0 indicating  no lane change is required
-        (driving straight forward0, and 1 indicating that a lane change (to the left or right) is required.
+        (driving straight forward=0, and 1 indicating that a lane change (to the left or right) is required.
         """
         self.instructions: List[int] = list()
         for idx, id_lanelet in enumerate(self.lanelet_id_sequence[:-1]):
@@ -75,7 +75,7 @@ class LaneChangePositionHandler:
         """
 
         # generates a list of consecutive instructions
-        # e.g. input: [0, 0, 1, 1, 0, 1] output: [[0, 0], [1, 1], [0], [1]], meaning [drinve, lane_change, drive, lane_change]
+        # e.g. input: [0, 0, 1, 1, 0, 1] output: [[0, 0], [1, 1], [0], [1]], meaning [drive, lane_change, drive, lane_change]
         consecutive_instructions: List[Tuple[float, float]] = [
             list(v) for k, v in itertools.groupby(self.instructions)
         ]

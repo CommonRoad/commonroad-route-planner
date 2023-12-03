@@ -9,7 +9,7 @@ from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.scenario import Scenario
 
 # own code base
-from commonroad_route_planner.utility.route import (chaikins_corner_cutting,
+from commonroad_route_planner.utility.route_util import (chaikins_corner_cutting,
                                                     resample_polyline)
 from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
 from commonroad_route_planner.lane_changing.change_position import LaneChangePositionHandler
@@ -100,24 +100,27 @@ class Route:
         """
         self.lane_change_position_handler: LaneChangePositionHandler = LaneChangePositionHandler(self.lanelet_ids, 
                                                                                                  self.lanelet_network)
-        reference_path: np.ndarray = self._compute_reference_path(self.lane_change_position_handler.lanelet_portions)
-        reference_path: np.ndarray = pops.remove_duplicate_points(reference_path)
-        reference_path_smoothed: np.ndarray = chaikins_corner_cutting(reference_path)
+        
+        reference_path_stair: np.ndarray = self._compute_reference_path_as_stair_function(self.lane_change_position_handler.lanelet_portions)
+        reference_path_star_without_duplicated: np.ndarray = pops.remove_duplicate_points(reference_path_stair)
+        reference_path_smoothed: np.ndarray = chaikins_corner_cutting(reference_path_star_without_duplicated)
         
         self.reference_path: np.ndarray = reference_path_smoothed
 
         
 
-    def _compute_reference_path(
+    def _compute_reference_path_as_stair_function(
         self,
-        list_portions,
-        num_vertices_lane_change_max=6,
-        percentage_vertices_lane_change_max=0.1,
-        step_resample=1.0,
+        lanelet_portions: List[int],
+        num_vertices_lane_change_max: int=6,
+        percentage_vertices_lane_change_max: float=0.1,
+        step_resample: float=1.0,
     ):
         """Computes reference path stair function given the list of portions of each lanelet
 
         :param list_portions
+        
+        # TODO: sounds not very pracitcal??
         :param num_vertices_lane_change_max: number of vertices to perform lane change.
                                              if set to 0, it will produce a zigzagged polyline.
         :param percentage_vertices_lane_change_max: maximum percentage of vertices that should be used for lane change.
@@ -125,23 +128,30 @@ class Route:
         
         # TODO Refactor
         
-        reference_path = None
+        reference_path: np.ndarray = None
         num_lanelets_in_route = len(self.lanelet_ids)
+        
+        
         for idx, id_lanelet in enumerate(self.lanelet_ids):
-            lanelet = self.lanelet_network.find_lanelet_by_id(id_lanelet)
-            # resample the center vertices to prevent too few vertices with too large distances
-            vertices_resampled = resample_polyline(
-                lanelet.center_vertices, step_resample
-            )
-            num_vertices = len(vertices_resampled)
-            num_vertices_lane_change = min(
+            
+            # Sample the center vertices of the lanelet as foundation for the reference path
+            lanelet: "Lanelet" = self.lanelet_network.find_lanelet_by_id(id_lanelet)
+            centerline_vertices: np.ndarray = pops.sample_polyline(lanelet.center_vertices, step_resample)
+            num_vertices: int = len(centerline_vertices)
+            
+            
+            # FIXME: Does not sound very practical
+            # Number of vertices to be used in the lane change
+            num_vertices_lane_change: int = min(
                 int(num_vertices * percentage_vertices_lane_change_max) + 1,
                 num_vertices_lane_change_max,
             )
 
-            if reference_path is None:
-                idx_start = int(list_portions[idx][0] * num_vertices)
-                idx_end = int(list_portions[idx][1] * num_vertices)
+
+            # First time computation at initial lanelet
+            if(reference_path is None):
+                idx_start = int(lanelet_portions[idx][0] * num_vertices)
+                idx_end = int(lanelet_portions[idx][1] * num_vertices)
                 # prevent index out of bound
                 idx_end = max(idx_end, 1)
                 # reserve some vertices if it is not the last lanelet
@@ -150,29 +160,35 @@ class Route:
                     # prevent index out of bound
                     idx_end = max(idx_end, 1)
 
-                reference_path = vertices_resampled[idx_start:idx_end, :]
+                reference_path: np.ndarray = centerline_vertices[idx_start:idx_end, :]
+                
+                
+            # Concatenate new parts to old reference path  
             else:
                 idx_start = (
-                    int(list_portions[idx][0] * num_vertices) + num_vertices_lane_change
+                    int(lanelet_portions[idx][0] * num_vertices) + num_vertices_lane_change
                 )
                 # prevent index out of bound
                 idx_start = min(idx_start, num_vertices - 1)
 
-                idx_end = int(list_portions[idx][1] * num_vertices)
+                idx_end = int(lanelet_portions[idx][1] * num_vertices)
                 # reserve some vertices if it is not the last lanelet
                 if idx != (num_lanelets_in_route - 1):
                     idx_end = idx_end - num_vertices_lane_change
                     # prevent index out of bound
                     idx_end = max(idx_end, 1)
 
-                path_to_be_concatenated = vertices_resampled[idx_start:idx_end, :]
+                path_to_be_concatenated: np.ndarray = centerline_vertices[idx_start:idx_end, :]
 
-                reference_path = np.concatenate(
+                reference_path: np.ndarray = np.concatenate(
                     (reference_path, path_to_be_concatenated), axis=0
                 )
 
-        reference_path = resample_polyline(reference_path, 2)
+        # Resample polyline for better distance
+        reference_path: np.ndarray = pops.sample_polyline(reference_path, 2)
+        
         return reference_path
+        
 
 
 

@@ -10,7 +10,7 @@
 #########################################################
 
 # typing
-from typing import List, Set, Tuple
+from typing import List, Set
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from commonroad.scenario.lanelet import Lanelet, LaneletNetwork
@@ -82,6 +82,9 @@ class LaneletSection:
             else:
                 # Explicit termination for better readability
                 return
+        else:
+            # Explicit termination for better readability
+            return
             
             
     
@@ -99,6 +102,9 @@ class LaneletSection:
             else:
                 # Explicit termination for better readability
                 return
+        else:
+            # Explicit termination for better readability
+            return
             
             
     
