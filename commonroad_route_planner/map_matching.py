@@ -1,3 +1,5 @@
+__author__ = "Florian Finkeldei"
+
 import logging
 from typing import List
 
@@ -8,6 +10,9 @@ from commonroad.scenario.state import InitialState, State
 
 
 class MapMatcher:
+    """
+    Takes a given trajectory from the past and tries to match the points to lanelets
+    """
     def __init__(self, lanelet_network: LaneletNetwork):
         self.lanelet_network: LaneletNetwork = lanelet_network
 

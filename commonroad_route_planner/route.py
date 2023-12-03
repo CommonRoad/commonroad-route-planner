@@ -124,7 +124,7 @@ class Route:
         :param percentage_vertices_lane_change_max: maximum percentage of vertices that should be used for lane change.
         """
         
-        # TODO Refactor
+        # TODO Refactor, since this does not consider that the reference path is actually intersecting with the goal region, if existing.
         
         reference_path: np.ndarray = None
         num_lanelets_in_route = len(self.lanelet_ids)
@@ -153,14 +153,14 @@ class Route:
             if(reference_path is None):
                 idx_start = int(instruction.lanelet_portions[0] * num_vertices)
                 idx_end = int(instruction.lanelet_portions[1] * num_vertices)
-                # prevent index out of bound
-                idx_end = max(idx_end, 1)
+
                 # reserve some vertices if it is not the last lanelet
                 if idx != (num_lanelets_in_route - 1):
                     idx_end = idx_end - num_vertices_lane_change
-                    # prevent index out of bound
-                    idx_end = max(idx_end, 1)
+                    
 
+                # Since we are rounding down, make sure that idx_end is not zero
+                idx_end = max(idx_end, 1)
                 reference_path: np.ndarray = centerline_vertices[idx_start:idx_end, :]
                 
                 
@@ -169,7 +169,7 @@ class Route:
                 idx_start = (
                     int(instruction.lanelet_portions[0] * num_vertices) + num_vertices_lane_change
                 )
-                # prevent index out of bound
+                # prevent index out of bound, since we are alway rounding down
                 idx_start = min(idx_start, num_vertices - 1)
 
                 idx_end = int(instruction.lanelet_portions[1] * num_vertices)
