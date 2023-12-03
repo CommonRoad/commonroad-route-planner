@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 
 from commonroad.common.file_reader import CommonRoadFileReader
-from commonroad_route_planner.utility.map_matching import MapMatcher
+from commonroad_route_planner.map_matching import MapMatcher
 
 
 class TestMapMatching(unittest.TestCase):

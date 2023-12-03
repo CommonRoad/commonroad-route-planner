@@ -3,7 +3,7 @@ import pathlib
 from commonroad.common.file_reader import CommonRoadFileReader
 
 import commonroad_route_planner
-from commonroad_route_planner.utility.map_matching import MapMatcher
+from commonroad_route_planner.map_matching import MapMatcher
 
 scenario, planning_problem = CommonRoadFileReader(
     pathlib.Path(commonroad_route_planner.__file__).parent.joinpath(
