@@ -16,7 +16,7 @@ from commonroad.scenario.state import InitialState
 
 # own code base
 from commonroad_route_planner.route import Route
-from commonroad_route_planner.utility.route import (sort_lanelet_ids_by_goal,
+from commonroad_route_planner.utility.route_util import (sort_lanelet_ids_by_goal,
                                                     sort_lanelet_ids_by_orientation)
 
 

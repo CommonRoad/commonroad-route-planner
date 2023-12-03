@@ -48,7 +48,7 @@ from commonroad_route_planner.planners.networkx import (
 from commonroad_route_planner.planners.survival import NoGoalFoundRoutePlanner
 from commonroad_route_planner.route import Route, RouteType
 from commonroad_route_planner.route_selector import RouteSelector
-from commonroad_route_planner.utility.route import (lanelet_orientation_at_position, relative_orientation)
+from commonroad_route_planner.utility.route_util import (lanelet_orientation_at_position, relative_orientation)
 from commonroad_route_planner.utility.overtake_init_state import OvertakeInitState
 
 # typing

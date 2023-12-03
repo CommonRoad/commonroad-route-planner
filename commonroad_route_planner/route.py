@@ -9,10 +9,9 @@ from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.scenario import Scenario
 
 # own code base
-from commonroad_route_planner.utility.route_util import (chaikins_corner_cutting,
-                                                    resample_polyline)
+from commonroad_route_planner.utility.route_util import (chaikins_corner_cutting)
 from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
-from commonroad_route_planner.lane_changing.change_position import LaneChangePositionHandler
+from commonroad_route_planner.lane_changing.change_position import LaneChangePositionHandler, LaneChangeInstruction
 import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
 
 
@@ -101,7 +100,7 @@ class Route:
         self.lane_change_position_handler: LaneChangePositionHandler = LaneChangePositionHandler(self.lanelet_ids, 
                                                                                                  self.lanelet_network)
         
-        reference_path_stair: np.ndarray = self._compute_reference_path_as_stair_function(self.lane_change_position_handler.lanelet_portions)
+        reference_path_stair: np.ndarray = self._compute_reference_path_as_stair_function()
         reference_path_star_without_duplicated: np.ndarray = pops.remove_duplicate_points(reference_path_stair)
         reference_path_smoothed: np.ndarray = chaikins_corner_cutting(reference_path_star_without_duplicated)
         
@@ -111,7 +110,6 @@ class Route:
 
     def _compute_reference_path_as_stair_function(
         self,
-        lanelet_portions: List[int],
         num_vertices_lane_change_max: int=6,
         percentage_vertices_lane_change_max: float=0.1,
         step_resample: float=1.0,
@@ -139,6 +137,9 @@ class Route:
             centerline_vertices: np.ndarray = pops.sample_polyline(lanelet.center_vertices, step_resample)
             num_vertices: int = len(centerline_vertices)
             
+            # get driving instruction object for lanelet
+            instruction: LaneChangeInstruction = self.lane_change_position_handler.get_driving_instruction_for_lanelet(lanelet)
+            
             
             # FIXME: Does not sound very practical
             # Number of vertices to be used in the lane change
@@ -150,8 +151,8 @@ class Route:
 
             # First time computation at initial lanelet
             if(reference_path is None):
-                idx_start = int(lanelet_portions[idx][0] * num_vertices)
-                idx_end = int(lanelet_portions[idx][1] * num_vertices)
+                idx_start = int(instruction.lanelet_portions[0] * num_vertices)
+                idx_end = int(instruction.lanelet_portions[1] * num_vertices)
                 # prevent index out of bound
                 idx_end = max(idx_end, 1)
                 # reserve some vertices if it is not the last lanelet
@@ -166,12 +167,12 @@ class Route:
             # Concatenate new parts to old reference path  
             else:
                 idx_start = (
-                    int(lanelet_portions[idx][0] * num_vertices) + num_vertices_lane_change
+                    int(instruction.lanelet_portions[0] * num_vertices) + num_vertices_lane_change
                 )
                 # prevent index out of bound
                 idx_start = min(idx_start, num_vertices - 1)
 
-                idx_end = int(lanelet_portions[idx][1] * num_vertices)
+                idx_end = int(instruction.lanelet_portions[1] * num_vertices)
                 # reserve some vertices if it is not the last lanelet
                 if idx != (num_lanelets_in_route - 1):
                     idx_end = idx_end - num_vertices_lane_change
