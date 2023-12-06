@@ -88,10 +88,10 @@ class RouteCandidateHolder:
                     if(included_lanelet_ids is None):
                         selected_route = route
                         break
-                    elif(self.check_routes_includes_lanelets(included_lanelet_ids)):
+                    elif(self.check_routes_includes_lanelets(route, included_lanelet_ids)):
                         # additionally check if lanelets are included
-                            selected_route = route
-                            break
+                        selected_route = route
+                        break
             else:
                 raise ValueError(f'[CR Route Planner] could not find a well oriented route. Perhaps increase distance threshold')
 
