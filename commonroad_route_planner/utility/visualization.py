@@ -1,3 +1,13 @@
+#######################################
+#
+# TODO: Refactor
+#
+#
+#
+#
+#
+##########################################
+
 import os
 
 import matplotlib.pyplot as plt
@@ -45,7 +55,7 @@ def visualize_route(route: Route, scenario_name: str,
     if draw_route_lanelets:
 
         list_lanelets = []
-        for id_lanelet in route.list_ids_lanelets:
+        for id_lanelet in route.lanelet_ids:
             lanelet = route.scenario.lanelet_network.find_lanelet_by_id(id_lanelet)
             list_lanelets.append(lanelet)
         lanelet_network = LaneletNetwork.create_from_lanelet_list(list_lanelets)

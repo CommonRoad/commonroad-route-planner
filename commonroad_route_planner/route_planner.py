@@ -7,6 +7,19 @@ __email__ = "tobias.mascetta@tum.de"
 __status__ = "Release"
 
 
+#############################################################
+#
+#
+#  FIXME: Refactor implementation
+#
+#
+#
+#
+#
+#
+#
+######################################################################
+
 import logging
 from enum import Enum
 import warnings
@@ -31,11 +44,11 @@ from commonroad.scenario.state import InitialState
 # Own code base
 from commonroad_route_planner.planners.networkx import (
     NetworkxRoutePlanner,
-    ReversedNetworkxRoutePlanner,
 )
 from commonroad_route_planner.planners.survival import NoGoalFoundRoutePlanner
-from commonroad_route_planner.route import Route, RouteCandidateHolder, RouteType
-from commonroad_route_planner.utility.route import (lanelet_orientation_at_position, relative_orientation)
+from commonroad_route_planner.route import Route, RouteType
+from commonroad_route_planner.route_selector import RouteSelector
+from commonroad_route_planner.utility.route_util import (lanelet_orientation_at_position, relative_orientation)
 from commonroad_route_planner.utility.overtake_init_state import OvertakeInitState
 
 # typing
@@ -106,10 +119,10 @@ class RoutePlanner:
         Reasoning
         ----------
         Otherwise, an occuring edge-case would be that
-        the rear axel of the vehicle is before the first point of the ref path, which makes
+        the rear axel of the vehicle is after the last point of the ref path, which makes
         Frenet-Localization problematic.
 
-        If the closest point to the initial position is the first point of the reference path and their
+        If the closest point to the final position is the last point of the reference path and their
         distance is below a certain threshold (currently infinity), additional points are being placed
         """
 
@@ -139,17 +152,11 @@ class RoutePlanner:
 
     class Backend(Enum):
         """Supported backend for constructing the routes.
-
-        NETWORKX: uses built-in functions from the networkx package, tends to change lanes later
-        NETWORKX_REVERSED: uses built-in functions from the networkx package, tends to change lanes earlier
-        PRIORITY_QUEUE: uses A-star search to find routes, lane changing maneuver depends on the heuristic cost
         """
 
         # FIXME: This is a bad implementation
 
         NETWORKX = "networkx"
-        #NETWORKX_REVERSED = "networkx_reversed"
-        #PRIORITY_QUEUE = "priority_queue"
 
         @classmethod
         def values(cls):
@@ -231,9 +238,9 @@ class RoutePlanner:
         self._set_lanelet_ids_for_start_and_overtake()
         self._set_goal_lanelet_ids()
 
-        # if there are no lanelets of the goal, activate the survival route planner
+        # if there are no lanelets of the goal, activate the NoGoalFound planner
         if(len(self.ids_lanelets_goal) == 0):
-            warnings.warn(f'[CR Route Planner] starting Survival-Mode Planner, since no goal information was found')
+            warnings.warn(f'[CR Route Planner] starting NoGoalFound Planner, since no goal information was found')
             self.planner = NoGoalFoundRoutePlanner(self.lanelet_network, self.ids_lanelets_permissible)
 
         # check different backend
@@ -375,7 +382,7 @@ class RoutePlanner:
 
 
 
-    def plan_routes(self) -> RouteCandidateHolder:
+    def plan_routes(self) -> RouteSelector:
         """Plans routes for every pair of start/goal lanelets.
 
         If no goal lanelet ID is given then return a survival route.
@@ -414,7 +421,7 @@ class RoutePlanner:
         if(len(list_routes) == 0):
             raise ValueError(f'[CR Route Planner] planner {self.planner} could not find a single route')
 
-        return RouteCandidateHolder(
+        return RouteSelector(
             self.lanelet_network,
             self.state_initial,
             self.goal_region,
