@@ -44,8 +44,10 @@ class RouteSelector(RouteCandidateHolder):
         
     
     def retrieve_shortest_route(self,
-                             retrieve_shortest: bool = True) -> Route:
+                            retrieve_shortest: bool = True,
+                            included_lanelet_ids: List[int] = None) -> Route:
         """
         Retrieves shortest route object.
+        Optionally can be forced to go through specific lanelets (currently WIP)
         """
-        return self.retrieve_first_route(retrieve_shortest=retrieve_shortest)
+        return self.retrieve_first_route(retrieve_shortest=retrieve_shortest, included_lanelet_ids=included_lanelet_ids)
