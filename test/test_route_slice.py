@@ -1,5 +1,6 @@
 import unittest
 from pathlib import Path
+from time import perf_counter
 
 # commonrad
 from commonroad.common.file_reader import CommonRoadFileReader
@@ -77,9 +78,13 @@ class TestRouteSlice(unittest.TestCase):
             # FIXME: Currently there is a bug in the garching map, it is centimeter not meter....
             point = route.reference_path[idx, :]
 
+            t_0 = perf_counter()
+
             route_slice: "RouteSlice" = route.get_route_slice_from_position(x=point[0], y=point[1],
                                                                             distance_ahead_in_m=30000,
                                                                             distance_behind_in_m=700)
+
+            print(f'Slicing took {perf_counter() - t_0}s')
 
             if(development):
                 visualize_route(
