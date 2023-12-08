@@ -60,26 +60,44 @@ class RouteCandidateHolder:
 
 
     def retrieve_first_route(self,
-                             retrieve_shortest: bool = True) -> Route:
+                             retrieve_shortest: bool = True,
+                             included_lanelet_ids: List[int] = None) -> Route:
         """
         Retrieves the first Route object.
 
         If retrieve shortest, the shortest route is used and orientation of the lanelet is checked.
-        """        
+        """
+
+        selected_route: Route = None
+
+        # No routes
         if(len(self.route_candidates) == 0):
             raise ValueError(f'[CR Route Planner] Not a single route candidate was found')
 
+        # one route
         elif(len(self.route_candidates) == 1 or not retrieve_shortest):
-            return self.route_candidates[0]
+            selected_route = self.route_candidates[0]
 
+        # multpiple routes
         else:
             sorted_routes: List[Route] = sorted(self.route_candidates, key=lambda x: x.length_reference_path, reverse=False)
 
             for route in sorted_routes:
+                # check init state orientation
                 if(self._heuristic_check_matching_orientation_of_initial_state(route.reference_path)):
-                    return route
+                    if(included_lanelet_ids is None):
+                        selected_route = route
+                        break
+                    elif(self.check_routes_includes_lanelets(route, included_lanelet_ids)):
+                        # additionally check if lanelets are included
+                        selected_route = route
+                        break
+            else:
+                raise ValueError(f'[CR Route Planner] could not find a well oriented route. Perhaps increase distance threshold')
 
-            raise ValueError(f'[CR Route Planner] could not find a well oriented route. Perhaps increase distance threshold')
+
+        return selected_route
+
 
 
     def _heuristic_check_matching_orientation_of_initial_state(self, reference_path: np.ndarray,
@@ -98,6 +116,30 @@ class RouteCandidateHolder:
             return True
         else:
             return False
+
+
+    @staticmethod
+    def check_routes_includes_lanelets(route: Route,
+                                        lanelet_ids_to_go_through: List[int]) -> bool:
+        """
+        Checks wheter lanelets are included.
+        """
+
+        lanelet_ids: Set[int] = set(lanelet_ids_to_go_through)
+        route_ids: Set[int] = set(route.lanelet_ids)
+        if(lanelet_ids.issubset(route_ids)):
+            return True
+        else:
+            return False
+
+        raise ValueError(f'Could not find a route that has all lanelets in it')
+
+
+
+
+
+
+
 
 
     def retrieve_all_routes(self) -> Tuple[List[Route], int]:

@@ -24,13 +24,18 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         lanelet_network: LaneletNetwork,
         set_ids_permissible_lanelets=None,
         overtake_states: List[OvertakeInitState]=None,
+        extended_search: bool = False,
         allow_diagonal=False,
     ):
         super().__init__(lanelet_network, set_ids_permissible_lanelets)
         if overtake_states is None:
             overtake_states = set()
         self.overtake_states = overtake_states
-        self.allow_diagonal = allow_diagonal
+        self.allow_diagonal: bool = allow_diagonal
+
+        # These lanelets must be included if possible
+        self.extended_search: bool = extended_search
+
         self.digraph = self._create_graph_from_lanelet_network()
         if self.allow_diagonal:
             self._add_diagonal_edges()
@@ -49,15 +54,28 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
             raise NoSourceLaneletIdException
 
         try:
-            list_lanelets = list(
-                nx.all_shortest_paths(
-                    self.digraph,
-                    source=id_lanelet_start,
-                    target=id_lanelet_goal,
-                    weight="weight",
-                    method="dijkstra",
+            # default that the shortest path is needed without additional lanelets included
+            if(self.extended_search is False):
+                list_lanelets = list(
+                    nx.all_shortest_paths(
+                        self.digraph,
+                        source=id_lanelet_start,
+                        target=id_lanelet_goal,
+                        weight="weight",
+                        method="dijkstra",
+                    )
                 )
-            )
+
+            else:
+                # special case that lanelets should be included --> increases runtime
+                list_lanelets = list(
+                    nx.all_simple_paths(
+                        self.digraph,
+                        source=id_lanelet_start,
+                        target=id_lanelet_goal,
+                    )
+                )
+
         except nx.exception.NetworkXNoPath:
             # it is a normal behaviour because of the overlapping lanelets in a road network
             _logger.debug(

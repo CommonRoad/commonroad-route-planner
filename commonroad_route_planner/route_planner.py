@@ -173,6 +173,7 @@ class RoutePlanner:
                  lanelet_network: LaneletNetwork = None,
                  state_initial: InitialState = None,
                  goal_region: GoalRegion = None,
+                 extended_search: bool = False,
                  types_lanelets_forbidden: Set[LaneletType] = None,
                  allow_diagonal=False,
                  backend: Backend = Backend.NETWORKX,
@@ -203,6 +204,9 @@ class RoutePlanner:
         # start and goal
         self.state_initial: InitialState = state_initial if state_initial else planning_problem.initial_state
         self.goal_region: GoalRegion = goal_region if goal_region else planning_problem.goal
+
+        # included lanelet ids
+        self.extended_search: bool = extended_search
 
         # set scenario, if it exists
         if(scenario):
@@ -249,6 +253,7 @@ class RoutePlanner:
                 self.lanelet_network,
                 self.ids_lanelets_permissible,
                 self.overtake_states,
+                self.extended_search,
                 self.allow_diagonal)
 
         else:
