@@ -18,8 +18,13 @@ from commonroad.visualization.mp_renderer import MPRenderer
 
 from commonroad_route_planner.route import Route
 
+from typing import Union
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from commonroad_route_planner.utility.route_slice.route_slice import RouteSlice
 
-def visualize_route(route: Route, scenario_name: str,
+
+def visualize_route(route: Union[Route, "RouteSlice"], scenario_name: str,
                     save_img: bool = True,
                     save_path: str = os.path.join(os.getcwd(), 'img'),
                     draw_route_lanelets=False, draw_reference_path=False,
