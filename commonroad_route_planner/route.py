@@ -1,6 +1,8 @@
 from enum import Enum
 import numpy as np
 
+# third party
+from scipy.spatial.kdtree import KDTree
 
 
 # commonroad
@@ -13,6 +15,7 @@ from commonroad_route_planner.utility.route_util import (chaikins_corner_cutting
 from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
 from commonroad_route_planner.lane_changing.change_position import LaneChangePositionHandler, LaneChangeInstruction
 import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
+from commonroad_route_planner.utility.route_slice.route_slice import RouteSlice
 
 
 
@@ -73,7 +76,7 @@ class Route:
 
         A section is a list of lanelet ids that are adjacent to a given lanelet.
         """
-        if(len(self.list_sections) == 0):
+        if(len(self.sections) == 0):
             # compute list of sections
             for id_lanelet in self.lanelet_ids:
                 current_lanelet: "Lanelet" = self.lanelet_network.find_lanelet_by_id(id_lanelet)
@@ -189,7 +192,22 @@ class Route:
         reference_path: np.ndarray = pops.sample_polyline(reference_path, 2)
         
         return reference_path
-        
+
+
+
+    def get_route_slice_from_position(self, x: float, y:float,
+                                      distance_ahead_in_m: float=30,
+                                      distance_behind_in_m: float=7) -> RouteSlice:
+        """
+        Takes an x and y coordinate, finds, the closest point on the reference path and returns slice of the reference
+        path around that point with the distance ahead and behind.
+        """
+        return RouteSlice(
+            self,
+            x, y,
+            distance_ahead_in_m=distance_ahead_in_m,
+            distance_behind_in_m=distance_behind_in_m
+        )
 
 
 

@@ -1,6 +1,7 @@
 import numpy as np
 
 
+
 def compute_interpoint_distances_from_polyline(polyline: np.ndarray) -> np.ndarray:
     """
     Computes the path length of a polyline, i.e. the reference path
@@ -160,3 +161,5 @@ def resample_polyline(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
     polyline_new.append(polyline[-1])
 
     return np.array(polyline_new)
+
+
