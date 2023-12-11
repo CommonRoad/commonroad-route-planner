@@ -59,6 +59,7 @@ class RouteSlice:
 
         # save additional information about sliced reference path
         self.interpoint_distances: np.ndarray = pops.compute_interpoint_distances_from_polyline(self.reference_path)
+        self.path_length_per_point: np.ndarray = pops.compute_path_length_per_point(self.reference_path)
         self.length_reference_path: float = pops.compute_length_of_polyline(self.reference_path)
         self.path_orientation: np.ndarray = pops.compute_orientation_from_polyline(self.reference_path)
         self.path_curvature: np.ndarray = pops.compute_scalar_curvature_from_polyline(self.reference_path)

@@ -4,6 +4,26 @@ import numpy as np
 
 def compute_interpoint_distances_from_polyline(polyline: np.ndarray) -> np.ndarray:
     """
+    Computes distance between to consecutive points
+    :return: path length along polyline
+    """
+    assert (
+        isinstance(polyline, np.ndarray)
+        and polyline.ndim == 2
+        and len(polyline[:, 0]) > 2
+    ), "Polyline malformed for path lenth computation p={}".format(polyline)
+
+    distance = np.zeros((len(polyline),))
+    for i in range(1, len(polyline)):
+        distance[i] = np.linalg.norm(
+            polyline[i] - polyline[i - 1]
+        )
+
+    return np.array(distance)
+
+
+def compute_path_length_per_point(polyline: np.ndarray) -> np.ndarray:
+    """
     Computes the path length of a polyline, i.e. the reference path
     :return: path length along polyline
     """
@@ -20,8 +40,6 @@ def compute_interpoint_distances_from_polyline(polyline: np.ndarray) -> np.ndarr
         )
 
     return np.array(distance)
-
-
 
 
 

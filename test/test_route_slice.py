@@ -81,12 +81,12 @@ class TestRouteSlice(unittest.TestCase):
             t_0 = perf_counter()
 
             route_slice: "RouteSlice" = route.get_route_slice_from_position(x=point[0], y=point[1],
-                                                                            distance_ahead_in_m=30000,
-                                                                            distance_behind_in_m=700)
+                                                                            distance_ahead_in_m=30,
+                                                                            distance_behind_in_m=7)
 
             print(f'Slicing took {perf_counter() - t_0}s')
 
-            if(development):
+            if(True):
                 visualize_route(
                     route_slice,
                     filename.split(".")[0],
@@ -94,7 +94,5 @@ class TestRouteSlice(unittest.TestCase):
                     draw_route_lanelets=True,
                     draw_reference_path=True,
                 )
-
-
 
 
