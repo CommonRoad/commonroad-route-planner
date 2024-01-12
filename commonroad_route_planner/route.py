@@ -63,10 +63,27 @@ class Route:
         self.lane_change_position_handler: LaneChangePositionHandler = None
         self._generate_reference_path()
 
+        self.interpoint_distances: np.ndarray = None
+        self.path_length_per_point: np.ndarray = None
+        self.length_reference_path: np.ndarray = None
+        self.path_orientation: np.ndarray = None
+        self.path_curvature: np.ndarray = None
+        self.update_geometric_ref_path_properties()
+
+
+
+    def update_geometric_ref_path_properties(self, reference_path: np.ndarray=None):
+        """
+        Updates the geometric properties of ref path.
+        If reference path is specified, the new reference path will be updated and resamples before.
+        """
+        if(reference_path is not None):
+            self.reference_path = reference_path
+
         # save additional information about the reference path
         self.interpoint_distances: np.ndarray = pops.compute_interpoint_distances_from_polyline(self.reference_path)
         self.path_length_per_point: np.ndarray = pops.compute_path_length_per_point(self.reference_path)
-        self.length_reference_path: np.ndarray = pops.compute_length_of_polyline(self.reference_path)
+        self.length_reference_path: float = pops.compute_length_of_polyline(self.reference_path)
         self.path_orientation: np.ndarray = pops.compute_orientation_from_polyline(self.reference_path)
         self.path_curvature: np.ndarray = pops.compute_scalar_curvature_from_polyline(self.reference_path)
 
