@@ -82,6 +82,7 @@ class Route:
 
         # save additional information about the reference path
         self.interpoint_distances: np.ndarray = pops.compute_interpoint_distances_from_polyline(self.reference_path)
+        self.average_interpoint_distance: float = np.mean(self.interpoint_distances, axis=0)
         self.path_length_per_point: np.ndarray = pops.compute_path_length_per_point(self.reference_path)
         self.length_reference_path: float = pops.compute_length_of_polyline(self.reference_path)
         self.path_orientation: np.ndarray = pops.compute_orientation_from_polyline(self.reference_path)

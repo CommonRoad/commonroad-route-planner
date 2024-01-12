@@ -21,6 +21,7 @@ from commonroad.scenario.lanelet import Lanelet
 
 # Own code base
 from commonroad_route_planner.route import Route
+import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
 
 # typing
 from typing import List
@@ -75,7 +76,8 @@ class RouteExtendor:
         """
         if(len(successor_ids) == 1):
             successor_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(successor_ids[0])
-            centerline: np.ndarray = successor_lanelet.center_vertices
+            centerline: np.ndarray = pops.sample_polyline(successor_lanelet.center_vertices,
+                                                          step=self.route.average_interpoint_distance)
             reference_path: np.ndarray = np.concatenate(
                 (self.route.reference_path, centerline), axis=0
             )
@@ -92,9 +94,10 @@ class RouteExtendor:
         """
         if(len(predecessor_ids) == 1):
             predecessor_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(predecessor_ids[0])
-            centerline: np.ndarray = predecessor_lanelet.center_vertices
+            centerline: np.ndarray = pops.sample_polyline(predecessor_lanelet.center_vertices,
+                                                          step=self.route.average_interpoint_distance)
             reference_path: np.ndarray = np.concatenate(
-                (self.route.reference_path, centerline), axis=0
+                (centerline, self.route.reference_path), axis=0
             )
 
             # Resample polyline for better distance
@@ -179,7 +182,7 @@ class RouteExtendor:
 
         # check if there is a successor lane.
         first_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(self.route.lanelet_ids[0])
-        predecessor_ids: List[int] = first_lanelet.successor
+        predecessor_ids: List[int] = first_lanelet.predecessor
         if(len(predecessor_ids) == 0):
             self._perform_no_predecessor_extension(
                                                 additional_lenght_in_meters,
