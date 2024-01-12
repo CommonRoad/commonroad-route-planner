@@ -13,7 +13,7 @@ import numpy as np
 
 
 # third party
-from scipy.spatial.kdtree import KDTree
+from scipy.interpolate import interpn
 
 
 # commonroad
@@ -47,22 +47,18 @@ class RouteExtendor:
 
         reference_path = copy.copy(self.route.reference_path)
 
-        # check if the closest point to the final position is last point
-        nn_distance, nn_idx = KDTree(reference_path).query(reference_path[-1])
+        # get distance between first two points to know what the pseudo-uniform sampling would be
+        point_0: np.ndarray = reference_path[-2, :]
+        point_1: np.ndarray = reference_path[-1, :]
+        distance: float = np.linalg.norm(point_1 - point_0)
+        num_new_points: int = math.ceil(additional_lenght_in_meters / distance)
 
-        if (nn_idx == reference_path.shape[0] - 1 and nn_distance < distance_threshold_in_meters):
-            # get distance between first two points to know what the pseudo-uniform sampling would be
-            point_0: np.ndarray = reference_path[-2, :]
-            point_1: np.ndarray = reference_path[-1, :]
-            distance: float = np.linalg.norm(point_1 - point_0)
-            num_new_points: int = math.ceil(additional_lenght_in_meters / distance)
+        delta_x: float = float(point_1[0] - point_0[0])
+        delta_y: float = float(point_1[1] - point_0[1])
 
-            delta_x: float = float(point_1[0] - point_0[0])
-            delta_y: float = float(point_1[1] - point_0[1])
-
-            for idx in range(1, num_new_points + 1):
-                new_point: np.ndarray = np.asarray([point_1[0] + idx * delta_x, point_1[1] + idx * delta_y])
-                reference_path: np.ndarray = np.vstack((reference_path, new_point))
+        for idx in range(1, num_new_points + 1):
+            new_point: np.ndarray = np.asarray([point_1[0] + idx * delta_x, point_1[1] + idx * delta_y])
+            reference_path: np.ndarray = np.vstack((reference_path, new_point))
 
         self.route.update_geometric_ref_path_properties(reference_path=reference_path)
 
@@ -74,18 +70,20 @@ class RouteExtendor:
         """
         Use successor road of end lanelet for extension
         """
-        if(len(successor_ids) == 1):
-            successor_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(successor_ids[0])
-            centerline: np.ndarray = pops.sample_polyline(successor_lanelet.center_vertices,
-                                                          step=self.route.average_interpoint_distance)
-            reference_path: np.ndarray = np.concatenate(
-                (self.route.reference_path, centerline), axis=0
-            )
-
-            # Resample polyline for better distance
-            self.route.update_geometric_ref_path_properties(reference_path=reference_path)
+        if(len(successor_ids) > 1):
+            raise NotImplementedError('Not Implemented')
         else:
-            raise NotImplementedError('Currently not implemented')
+            successor_id = successor_ids[0]
+        successor_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(successor_id)
+        centerline: np.ndarray = pops.sample_polyline(successor_lanelet.center_vertices,
+                                                      step=self.route.average_interpoint_distance)
+        reference_path: np.ndarray = np.concatenate(
+            (self.route.reference_path, centerline), axis=0
+        )
+
+        # Resample polyline for better distance
+        self.route.update_geometric_ref_path_properties(reference_path=reference_path)
+
 
 
     def _perform_predecessor_extension(self, predecessor_ids: List[int]):
@@ -115,22 +113,18 @@ class RouteExtendor:
         performs extension for no predecessor at start
         """
         reference_path = copy.copy(self.route.reference_path)
+        # get distance between first two points to know what the pseudo-uniform sampling would be
+        point_0: np.ndarray = reference_path[0, :]
+        point_1: np.ndarray = reference_path[1, :]
+        distance: float = np.linalg.norm(point_1 - point_0)
+        num_new_points: int = math.ceil(additional_lenght_in_meters / distance)
 
-        nn_distance, nn_idx = KDTree(reference_path).query(reference_path[0])
+        delta_x: float = float(point_1[0] - point_0[0])
+        delta_y: float = float(point_1[1] - point_0[1])
 
-        if (nn_idx == 0 and nn_distance < distance_threshold_in_meters):
-            # get distance between first two points to know what the pseudo-uniform sampling would be
-            point_0: np.ndarray = reference_path[0, :]
-            point_1: np.ndarray = reference_path[1, :]
-            distance: float = np.linalg.norm(point_1 - point_0)
-            num_new_points: int = math.ceil(additional_lenght_in_meters / distance)
-
-            delta_x: float = float(point_1[0] - point_0[0])
-            delta_y: float = float(point_1[1] - point_0[1])
-
-            for idx in range(1, num_new_points + 1):
-                new_point: np.ndarray = np.asarray([point_0[0] - idx * delta_x, point_0[1] - idx * delta_y])
-                reference_path: np.ndarray = np.vstack((new_point, reference_path))
+        for idx in range(1, num_new_points + 1):
+            new_point: np.ndarray = np.asarray([point_0[0] - idx * delta_x, point_0[1] - idx * delta_y])
+            reference_path: np.ndarray = np.vstack((new_point, reference_path))
 
 
         self.route.update_geometric_ref_path_properties(reference_path=reference_path)
