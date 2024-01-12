@@ -12,10 +12,6 @@ import math
 import numpy as np
 
 
-# third party
-from scipy.interpolate import interpn
-
-
 # commonroad
 from commonroad.scenario.lanelet import Lanelet
 
@@ -34,13 +30,14 @@ class RouteExtendor:
     Extends a given route.
     """
 
-    def __init__(self, route: Route) -> None:
+    def __init__(self, route: Route,
+                 extrapolation_length: float = 5.0) -> None:
         self.route: Route = route
+        #additional_lenght_in_meters
+        self.extrapolation_length: float = extrapolation_length
 
 
-    def _perform_no_successor_extension(self,
-                                       additional_lenght_in_meters: float = 5.0,
-                                       distance_threshold_in_meters: float = np.inf) -> None:
+    def _perform_no_successor_extension(self) -> None:
         """
         Performs extension for no successor at end
         """
@@ -51,7 +48,7 @@ class RouteExtendor:
         point_0: np.ndarray = reference_path[-2, :]
         point_1: np.ndarray = reference_path[-1, :]
         distance: float = np.linalg.norm(point_1 - point_0)
-        num_new_points: int = math.ceil(additional_lenght_in_meters / distance)
+        num_new_points: int = math.ceil(self.extrapolation_length / distance)
 
         delta_x: float = float(point_1[0] - point_0[0])
         delta_y: float = float(point_1[1] - point_0[1])
@@ -71,7 +68,16 @@ class RouteExtendor:
         Use successor road of end lanelet for extension
         """
         if(len(successor_ids) > 1):
-            raise NotImplementedError('Not Implemented')
+            # Algorithm
+            # ---------
+            # 1. Extrapolate last two points
+            # 2. Check on which lanelets most of the extrapolated points go
+            # 2.B Edge Case T-Junction -> No points --> Choose random
+            # 2.B Tie-Break: Chose longer, chose random lanenelet
+            # 3. Chose that lanelet
+            pass
+
+
         else:
             successor_id = successor_ids[0]
         successor_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(successor_id)
@@ -106,9 +112,7 @@ class RouteExtendor:
 
 
 
-    def _perform_no_predecessor_extension(self,
-                                       additional_lenght_in_meters: float = 5.0,
-                                       distance_threshold_in_meters: float = np.inf) -> None:
+    def _perform_no_predecessor_extension(self) -> None:
         """
         performs extension for no predecessor at start
         """
@@ -117,7 +121,7 @@ class RouteExtendor:
         point_0: np.ndarray = reference_path[0, :]
         point_1: np.ndarray = reference_path[1, :]
         distance: float = np.linalg.norm(point_1 - point_0)
-        num_new_points: int = math.ceil(additional_lenght_in_meters / distance)
+        num_new_points: int = math.ceil(self.extrapolation_length / distance)
 
         delta_x: float = float(point_1[0] - point_0[0])
         delta_y: float = float(point_1[1] - point_0[1])
@@ -132,9 +136,7 @@ class RouteExtendor:
 
 
 
-    def extend_reference_path_at_end(self,
-                                       additional_lenght_in_meters: float = 5.0,
-                                       distance_threshold_in_meters: float = np.inf) -> None:
+    def extend_reference_path_at_end(self) -> None:
         """
         Adds additional points at the end along a line between first two points of reference path.
         Returns new reference path and success indicator
@@ -155,21 +157,15 @@ class RouteExtendor:
         last_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(self.route.lanelet_ids[-1])
         successor_ids: List[int] = last_lanelet.successor
         if(len(successor_ids) == 0):
-            self._perform_no_successor_extension(
-                                                additional_lenght_in_meters,
-                                                distance_threshold_in_meters)
+            self._perform_no_successor_extension()
         elif(len(successor_ids) == 1):
             self._perform_successor_extension(successor_ids)
 
         else:
-            self._perform_no_successor_extension(
-                                                additional_lenght_in_meters,
-                                                distance_threshold_in_meters)
+            self._perform_no_successor_extension()
 
 
-    def extend_reference_path_at_start(self,
-                                       additional_lenght_in_meters: float = 5.0,
-                                       distance_threshold_in_meters: float = np.inf) -> None:
+    def extend_reference_path_at_start(self) -> None:
         """
         Adds additional points at the beginning of the route
         """
@@ -178,31 +174,24 @@ class RouteExtendor:
         first_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(self.route.lanelet_ids[0])
         predecessor_ids: List[int] = first_lanelet.predecessor
         if(len(predecessor_ids) == 0):
-            self._perform_no_predecessor_extension(
-                                                additional_lenght_in_meters,
-                                                distance_threshold_in_meters)
+            self._perform_no_predecessor_extension()
 
         elif (len(predecessor_ids) == 1):
             self._perform_predecessor_extension(predecessor_ids)
 
         else:
-            self._perform_no_predecessor_extension(
-                additional_lenght_in_meters,
-                distance_threshold_in_meters)
+            self._perform_no_predecessor_extension()
 
 
 
-    def extend_reference_path_at_start_and_end(self,
-                                     additional_lenght_in_meters: float = 5.0,
-                                     distance_threshold_in_meters: float = np.inf) -> None:
+    def extend_reference_path_at_start_and_end(self) -> None:
         """
         Extends both at start and end
         """
-        self.extend_reference_path_at_end(additional_lenght_in_meters=additional_lenght_in_meters,
-                                                              distance_threshold_in_meters=distance_threshold_in_meters)
+        self.extend_reference_path_at_end()
 
-        self.extend_reference_path_at_start(additional_lenght_in_meters=additional_lenght_in_meters,
-                                                              distance_threshold_in_meters=distance_threshold_in_meters)
+        self.extend_reference_path_at_start()
+
 
 
     def get_route(self) -> Route:
