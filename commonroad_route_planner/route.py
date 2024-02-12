@@ -20,7 +20,7 @@ from commonroad_route_planner.utility.route_slice.route_slice import RouteSlice
 
 
 # typing
-from typing import List, Set
+from typing import List, Set, Union
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from commonroad.scenario.scenario import LaneletNetwork, Lanelet
@@ -50,6 +50,7 @@ class Route:
         # a section is a list of lanelet ids that are adjacent to a lanelet in the route
         # FIXME: What are these sections good for???
         self.sections: List[LaneletSection] = list()
+        self._calc_route_sections()
 
         if permissible_lanelet_ids is None:
             self.permissible_lanelet_ids: Set[int] = {
@@ -99,7 +100,7 @@ class Route:
 
 
 
-    def retrieve_route_sections(self):
+    def _calc_route_sections(self):
         """Retrieves route sections for lanelets in the route.
 
         A section is a list of lanelet ids that are adjacent to a given lanelet.
@@ -108,7 +109,7 @@ class Route:
             # compute list of sections
             for id_lanelet in self.lanelet_ids:
                 current_lanelet: "Lanelet" = self.lanelet_network.find_lanelet_by_id(id_lanelet)
-                current_section: LaneletSection = LaneletSection(current_lanelet, self.lanelet_network, self.permissible_lanelet_ids)
+                current_section: LaneletSection = LaneletSection(current_lanelet, self.lanelet_network)
                 
                 # TODO: check if that weird check has some meening?
                 
@@ -236,6 +237,16 @@ class Route:
             distance_ahead_in_m=distance_ahead_in_m,
             distance_behind_in_m=distance_behind_in_m
         )
+
+
+    def get_lanelet_section(self, lanelet_id: int) -> Union[LaneletSection, None]:
+        """
+        Takes lanelet id and retrieves lanelet section
+        """
+        if(lanelet_id not in self.lanelet_ids):
+            raise ValueError('Lanelet id not part of route')
+
+        return LaneletSection.get_section_by_lanelet_id(lanelet_id)
 
 
 
