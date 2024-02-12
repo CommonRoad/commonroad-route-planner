@@ -63,10 +63,37 @@ class Route:
         self.lane_change_position_handler: LaneChangePositionHandler = None
         self._generate_reference_path()
 
+        self.interpoint_distances: np.ndarray = None
+        self.average_interpoint_distance: float = None
+        self.path_length_per_point: np.ndarray = None
+        self.length_reference_path: np.ndarray = None
+        self.path_orientation: np.ndarray = None
+        self.path_curvature: np.ndarray = None
+        self.update_geometric_ref_path_properties()
+
+
+
+    def update_geometric_ref_path_properties(self,
+                                             reference_path: np.ndarray=None,
+                                             default_resample_step: float=2):
+        """
+        Updates the geometric properties of ref path.
+        If reference path is specified, the new reference path will be updated and resamples before.
+        """
+        if(reference_path is not None):
+            if(self.average_interpoint_distance is not None):
+                resample_step: float = self.average_interpoint_distance
+            else:
+                resample_step: float = default_resample_step
+
+            self.reference_path = pops.sample_polyline(reference_path,
+                                 step=resample_step)
+
         # save additional information about the reference path
         self.interpoint_distances: np.ndarray = pops.compute_interpoint_distances_from_polyline(self.reference_path)
+        self.average_interpoint_distance: float = np.mean(self.interpoint_distances, axis=0)
         self.path_length_per_point: np.ndarray = pops.compute_path_length_per_point(self.reference_path)
-        self.length_reference_path: np.ndarray = pops.compute_length_of_polyline(self.reference_path)
+        self.length_reference_path: float = pops.compute_length_of_polyline(self.reference_path)
         self.path_orientation: np.ndarray = pops.compute_orientation_from_polyline(self.reference_path)
         self.path_curvature: np.ndarray = pops.compute_scalar_curvature_from_polyline(self.reference_path)
 

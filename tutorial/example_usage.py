@@ -10,6 +10,7 @@ from commonroad.common.file_reader import CommonRoadFileReader
 # Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
 from commonroad_route_planner.utility.visualization import visualize_route
+from commonroad_route_planner.utility.route_extension.route_extendor import RouteExtendor
 
 
 # typing
@@ -61,17 +62,13 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         route: "Route" = route_selector.retrieve_shortest_route(retrieve_shortest=True)
         print(f"[Time] Retrieving first route took {perf_counter() - t_start}")
 
-        # Add dummy start position and test additional point generation
-        dummy_start_position: np.ndarray = route.reference_path[0, :]
-        route.reference_path, success = RoutePlanner.extend_reference_path_at_start(
-            route.reference_path, dummy_start_position
-        )
+        # Init route extendor
+        route_extendor: RouteExtendor = RouteExtendor(route)
+        # Extend reference path at start and end
+        route_extendor.extend_reference_path_at_start_and_end()
 
-        # Add dummy end position and test additional point generation
-        dummy_end_position: np.ndarray = route.reference_path[-1, :]
-        route.reference_path, success = RoutePlanner.extend_reference_path_at_end(
-            route.reference_path, dummy_end_position
-        )
+        # This is unnecessary but shows that the route_extendor modified the route object
+        route: Route = route_extendor.get_route()
 
 
         # option 2: retrieve all routes
