@@ -23,6 +23,7 @@ class TestRouteSlice(unittest.TestCase):
         scenario_name: str = "ZAM_Turorial-1_2_T-1_modified"
         lanelet_id: int = 1
         adjacent_lanelets_ids: List[int] = [1, 2, 3]
+        has_neighbors: bool = True
 
         path_scenarios = Path(__file__).parents[1] / "scenarios"
 
@@ -57,3 +58,14 @@ class TestRouteSlice(unittest.TestCase):
                              )
         else:
             print(f'Got expected route section {sorted(lanelet_section.adjacent_lanelet_ids, reverse=False)}')
+
+
+        if(has_neighbors != lanelet_section.has_neighbors()):
+            raise ValueError(f"Expected has_neighbors={has_neighbors} \n"
+                             f"\t but got {lanelet_section.has_neighbors()}"
+                             )
+
+        else:
+            print(f'Got expected expected has_neighbors={lanelet_section.has_neighbors()}')
+
+

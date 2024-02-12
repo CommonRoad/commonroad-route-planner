@@ -58,8 +58,15 @@ class LaneletSection:
         self.adjacent_lanelets: List["Lanelet"] = list()
         self.adjacent_lanelet_ids: List[int] = list()
         self._init_adjacent_lanelets()
-        
-    
+
+
+    def has_neighbors(self) -> bool:
+        """
+        Returns true if this section consits of more than one route
+        """
+        return True if(len(self.adjacent_lanelets) > 1) else False
+
+
     
     def _init_adjacent_lanelets(self) -> None:
         """Recursively gets adj_left and adj_right lanelets of the given lanelet."""
