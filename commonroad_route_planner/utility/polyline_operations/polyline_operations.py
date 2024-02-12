@@ -114,23 +114,12 @@ def compute_length_of_polyline(polyline: np.ndarray) -> float:
 
 
 
-
 def sample_polyline(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
     """
     Samples polyline with a given step in meter.
     """
     return resample_polyline(polyline, step)
 
-
-def resample_polyline_with_length_check(polyline, step=2) -> np.ndarray:
-    """Resamples polyline with length check."""
-    length = np.linalg.norm(polyline[-1] - polyline[0])
-    if length > step:
-        polyline = resample_polyline(polyline, step)
-    else:
-        polyline = resample_polyline(polyline, length / 10.0)
-
-    return polyline
 
 
 def resample_polyline(polyline: np.ndarray, step: float = 2.0) -> np.ndarray:
