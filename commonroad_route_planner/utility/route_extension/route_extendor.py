@@ -75,7 +75,7 @@ class RouteExtendor:
             # 2.B Edge Case T-Junction -> No points --> Choose random
             # 2.B Tie-Break: Chose longer, chose random lanenelet
             # 3. Chose that lanelet
-            pass
+            raise NotImplementedError(f'Currently not implemented')
 
 
         else:
