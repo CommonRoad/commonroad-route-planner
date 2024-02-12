@@ -8,6 +8,7 @@ __status__ = "Release"
 
 import copy
 import math
+import warnings
 
 import numpy as np
 
@@ -68,18 +69,17 @@ class RouteExtendor:
         Use successor road of end lanelet for extension
         """
         if(len(successor_ids) > 1):
-            # Algorithm
+            # Maybe better Algorithm
             # ---------
             # 1. Extrapolate last two points
             # 2. Check on which lanelets most of the extrapolated points go
             # 2.B Edge Case T-Junction -> No points --> Choose random
             # 2.B Tie-Break: Chose longer, chose random lanenelet
             # 3. Chose that lanelet
-            raise NotImplementedError(f'Currently not implemented')
+            if (len(successor_ids) > 1):
+                warnings.warn(f'Current lane has more than one successor, choosing first')
 
-
-        else:
-            successor_id = successor_ids[0]
+        successor_id = successor_ids[0]
         successor_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(successor_id)
         centerline: np.ndarray = pops.sample_polyline(successor_lanelet.center_vertices,
                                                       step=self.route.average_interpoint_distance)
@@ -96,18 +96,18 @@ class RouteExtendor:
         """
         Use successor road of end lanelet for extension
         """
-        if(len(predecessor_ids) == 1):
-            predecessor_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(predecessor_ids[0])
-            centerline: np.ndarray = pops.sample_polyline(predecessor_lanelet.center_vertices,
-                                                          step=self.route.average_interpoint_distance)
-            reference_path: np.ndarray = np.concatenate(
-                (centerline, self.route.reference_path), axis=0
-            )
+        if(len(predecessor_ids) > 1):
+            warnings.warn(f'Current lane has more than one predecessor, choosing first')
+        predecessor_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(predecessor_ids[0])
+        centerline: np.ndarray = pops.sample_polyline(predecessor_lanelet.center_vertices,
+                                                      step=self.route.average_interpoint_distance)
+        reference_path: np.ndarray = np.concatenate(
+            (centerline, self.route.reference_path), axis=0
+        )
 
-            # Resample polyline for better distance
-            self.route.update_geometric_ref_path_properties(reference_path=reference_path)
-        else:
-            raise NotImplementedError('Currently not implemented')
+        # Resample polyline for better distance
+        self.route.update_geometric_ref_path_properties(reference_path=reference_path)
+
 
 
 
