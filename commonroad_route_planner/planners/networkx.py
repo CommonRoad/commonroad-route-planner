@@ -25,20 +25,17 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         set_ids_permissible_lanelets=None,
         overtake_states: List[OvertakeInitState]=None,
         extended_search: bool = False,
-        allow_diagonal=False,
     ):
         super().__init__(lanelet_network, set_ids_permissible_lanelets)
         if overtake_states is None:
             overtake_states = set()
         self.overtake_states = overtake_states
-        self.allow_diagonal: bool = allow_diagonal
 
         # These lanelets must be included if possible
         self.extended_search: bool = extended_search
 
         self.digraph = self._create_graph_from_lanelet_network()
-        if self.allow_diagonal:
-            self._add_diagonal_edges()
+
 
     def find_routes(self, id_lanelet_start, id_lanelet_goal) -> List:
         """Find all shortest paths using networkx module
@@ -165,73 +162,3 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
 
         return graph
 
-    def _add_diagonal_edges(self):
-        """Builds a graph from the lanelet network allowing diagonal lane changes
-
-        :return: created graph from lanelet network with diagonal lane changes
-        """
-        # check for each lanelet for diagonal successors
-        for lanelet in self.lanelet_network.lanelets:
-            # check if lanelet has id_successor
-            # add edge if succeeding lanelet
-            for id_successor in lanelet.successor:
-                successor_lanelet = self.lanelet_network.find_lanelet_by_id(
-                    id_successor
-                )
-                self.digraph.add_edge(
-                    lanelet.lanelet_id,
-                    successor_lanelet.lanelet_id,
-                    {"weight": lanelet.distance[-1]},
-                )
-
-                # check for diagonal left succeeding lanelet
-                if successor_lanelet.adj_left and lanelet.adj_left_same_direction:
-                    self.digraph.add_edge(
-                        lanelet.lanelet_id, successor_lanelet.adj_left, {"weight": 0}
-                    )
-
-                # check for diagonal right succeeding lanelet
-                if successor_lanelet.adj_right and lanelet.adj_right_same_direction:
-                    self.digraph.add_edge(
-                        lanelet.lanelet_id, successor_lanelet.adj_right, {"weight": 0}
-                    )
-
-            # check if succeeding lanelet of right lanelet (e.g. turning lane highway)
-            if lanelet.adj_right and lanelet.adj_right_same_direction:
-                l_right = self.lanelet_network.find_lanelet_by_id(lanelet.adj_right)
-
-                # check for diagonal right succeeding lanelet
-                for right_successor in l_right.successor:
-                    # if not already in graph add it
-                    if not self.digraph.has_edge(lanelet.lanelet_id, right_successor):
-                        self.digraph.add_edge(
-                            lanelet.lanelet_id, right_successor, {"weight": 0}
-                        )
-
-            # check if succeeding lanelet of right lanelet (e.g. turning lane highway)
-            if lanelet.adj_left and lanelet.adj_left_same_direction:
-                l_left = self.lanelet_network.find_lanelet_by_id(lanelet.adj_left)
-
-                # check for diagonal left succeeding lanelet
-                for left_successor in l_left.successor:
-                    # if not already in graph add it
-                    if not self.digraph.has_edge(lanelet.lanelet_id, left_successor):
-                        self.digraph.add_edge(
-                            lanelet.lanelet_id, left_successor, {"weight": 0}
-                        )
-
-
-class ReversedNetworkxRoutePlanner(NetworkxRoutePlanner):
-    def __init__(
-        self,
-        lanelet_network: LaneletNetwork,
-        set_ids_permissible_lanelets=None,
-        ids_lanelets_start_overtake=None,
-    ):
-        super().__init__(
-            lanelet_network, set_ids_permissible_lanelets, ids_lanelets_start_overtake
-        )
-
-    def _create_longitudinal_graph(self) -> nx.DiGraph:
-        graph = super()._create_longitudinal_graph()
-        return nx.reverse(graph)

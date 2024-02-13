@@ -10,7 +10,7 @@ __status__ = "Release"
 #############################################################
 #
 #
-#  FIXME: Refactor implementation
+#  TODO: Refactor!
 #
 #
 #
