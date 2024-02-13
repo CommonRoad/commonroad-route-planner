@@ -150,7 +150,7 @@ class Route:
 
         :param list_portions
         
-        # TODO: sounds not very pracitcal??
+        # TODO: sounds not very practical??
         :param num_vertices_lane_change_max: number of vertices to perform lane change.
                                              if set to 0, it will produce a zigzagged polyline.
         :param percentage_vertices_lane_change_max: maximum percentage of vertices that should be used for lane change.
@@ -253,10 +253,19 @@ class Route:
     def orientation(self, longitudinal_position: float) -> float:
         """
         Calculates orientation of lane given a longitudinal position along lane
-
-        :param position: longitudinal position
-        :returns orientation of lane at a given position
         """
         return np.interp(longitudinal_position, self.interpoint_distances, self.path_orientation)
+
+
+
+    ######################## Dummy Properties to comply with old interface ################################
+
+
+    @property
+    def list_ids_lanelets(self) -> List[int]:
+        """
+        Dummy interface for old lanelet ids
+        """
+        return self.lanelet_ids
 
 
