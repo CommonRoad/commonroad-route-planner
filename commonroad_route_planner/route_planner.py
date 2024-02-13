@@ -171,8 +171,7 @@ class RoutePlanner:
                 self.lanelet_network,
                 self.ids_lanelets_permissible,
                 self.overtake_states,
-                self.extended_search,
-                self.allow_diagonal)
+                self.extended_search)
 
         else:
             raise NotImplementedError(f'There are lanelets at the goal state, but the backend does not match:'
