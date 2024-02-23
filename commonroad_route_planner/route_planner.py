@@ -68,95 +68,28 @@ class RoutePlanner:
     """
 
 
-    class Backend(Enum):
-        """Supported backend for constructing the routes.
-        """
-
-        # FIXME: This is a bad implementation
-
-        NETWORKX = "networkx"
-
-        @classmethod
-        def values(cls):
-            return [item.value for item in cls]
-
-        @classmethod
-        def keys(cls):
-            return [item for item in cls]
 
 
     def __init__(self,
-                 scenario: Scenario = None,
-                 planning_problem: PlanningProblem = None,
-                 lanelet_network: LaneletNetwork = None,
-                 state_initial: InitialState = None,
-                 goal_region: GoalRegion = None,
-                 extended_search: bool = False,
-                 types_lanelets_forbidden: Set[LaneletType] = None,
-                 allow_diagonal=False,
-                 backend: Backend = Backend.NETWORKX,
-                 # FIXME: Not working correctly
-                 use_predecessors_to_pass_through_goal_state: bool = False):
+                 scenario: Scenario,
+                 planning_problem: PlanningProblem,
+                 extended_search: bool = False
+                 ) -> None:
         """Initialization of a RoutePlanner object.
-
-        :param scenario: scenario on which the routes should be planned
-        :param planning_problem: planning problem for which the routes should be planned
-        :param lanelet_network: lanelet network on which the routes should be planned
-        :param state_initial: initial state for which the routes should be planned
-        :param goal_region: goal region for which the routes should be planned
-        :param types_lanelets_forbidden: set of lanelet types which should be avoided during route planning
-        :param allow_diagonal: indicates whether diagonal movements are allowed - experimental
-        :param backend: the backend to be used
-        :param use_predecessors_to_pass_through_goal_state: indicates whether the reference path should pass through the goal state (position).
         """
 
-        # setting backend
-        if(backend not in self.Backend.keys() and backend not in self.Backend.values()):
-            raise NotImplementedError(f'[CR Route Planner] backend {backend} not implemented')
-        self.backend = backend
+        self.lanelet_network: LaneletNetwork = scenario.lanelet_network
 
-        # set lanelet network
-        self.lanelet_network: LaneletNetwork = lanelet_network if lanelet_network else scenario.lanelet_network
+        self.planning_problem: PlanningProblem = planning_problem
 
-
-        # start and goal
-        self.state_initial: InitialState = state_initial if state_initial else planning_problem.initial_state
-        self.goal_region: GoalRegion = goal_region if goal_region else planning_problem.goal
-
-        # included lanelet ids
         self.extended_search: bool = extended_search
 
-        # set scenario, if it exists
-        if(scenario):
-            self.scenario_id = scenario.scenario_id
-            Route.scenario = scenario
-        else:
-            self.scenario_id = "None"
-
-        # set planning problem, if it exists
-        if(planning_problem):
-            Route.planning_problem = planning_problem
-
-        if(types_lanelets_forbidden is None):
-            types_lanelets_forbidden = set()
-        self.set_types_lanelets_forbidden: Set = types_lanelets_forbidden
-
-        # Bool params
-        self.allow_diagonal = allow_diagonal
-        self.use_predecessors_to_pass_through_goal_state = use_predecessors_to_pass_through_goal_state
-
-        # find permissible lanelets
-        list_lanelets_filtered = self._filter_lanelets_by_type(
-            self.lanelet_network.lanelets, self.set_types_lanelets_forbidden)
-
-        self.ids_lanelets_permissible: Set = {
-            lanelet_permissible.lanelet_id for lanelet_permissible in list_lanelets_filtered}
 
         # examine initial and goal lanelet ids
-        self.id_lanelets_start = list()
+        self.id_lanelets_start: List[int] = list()
         self.overtake_states = list()
-        self.ids_lanelets_goal = list()
-        self.ids_lanelets_goal_original = list()
+        self.ids_lanelets_goal: List[int] = list()
+        self.ids_lanelets_goal_original: List[int] = list()
         self._set_lanelet_ids_for_start_and_overtake()
         self._set_goal_lanelet_ids()
 
@@ -166,23 +99,14 @@ class RoutePlanner:
             self.planner = NoGoalFoundRoutePlanner(self.lanelet_network, self.ids_lanelets_permissible)
 
         # check different backend
-        elif self.backend == RoutePlanner.Backend.NETWORKX:
+        else:
             self.planner = NetworkxRoutePlanner(
                 self.lanelet_network,
-                self.ids_lanelets_permissible,
                 self.overtake_states,
-                self.extended_search,
-                self.allow_diagonal)
+                self.extended_search
+            )
 
-        else:
-            raise NotImplementedError(f'There are lanelets at the goal state, but the backend does not match:'
-                                      f'ids_lanelet_goal {self.ids_lanelets_permissible}  --  backend {self.backend}')
 
-        # set route type
-        if(self.ids_lanelets_goal is None):
-            self.route_type = RouteType.SURVIVAL
-        else:
-            self.route_type = RouteType.REGULAR
 
 
 
