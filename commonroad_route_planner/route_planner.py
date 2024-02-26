@@ -21,21 +21,15 @@ __status__ = "Release"
 ######################################################################
 
 import logging
-from enum import Enum
 import warnings
-import math
 
 import numpy as np
 
 
-# third party
-from scipy.spatial.kdtree import KDTree
-
 
 # commonroad
-from commonroad.planning.goal import GoalRegion
 from commonroad.planning.planning_problem import PlanningProblem
-from commonroad.scenario.lanelet import Lanelet, LaneletNetwork, LaneletType
+from commonroad.scenario.lanelet import Lanelet, LaneletNetwork
 from commonroad.scenario.scenario import Scenario
 from commonroad.scenario.state import InitialState
 
@@ -46,7 +40,6 @@ from commonroad_route_planner.planners.networkx import (
     NetworkxRoutePlanner,
 )
 from commonroad_route_planner.planners.survival import NoGoalFoundRoutePlanner
-from commonroad_route_planner.route import Route, RouteType
 from commonroad_route_planner.route_selector import RouteSelector
 from commonroad_route_planner.utility.route_util import (lanelet_orientation_at_position, relative_orientation)
 from commonroad_route_planner.utility.overtake_init_state import OvertakeInitState

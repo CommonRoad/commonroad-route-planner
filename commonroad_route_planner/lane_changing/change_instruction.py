@@ -1,3 +1,18 @@
+########################################################
+#
+# TODO: Implement students new stuff
+#
+#
+#
+#
+#
+#
+#
+###########################################################
+
+
+
+
 from collections import defaultdict
 
 
@@ -12,9 +27,6 @@ class LaneChangeInstruction:
     """
     Lanechange instruction, saving the respective lanechange information
     """
-    
-    # TODO: make dataclass
-    
     cnt: int = 0
     dict_lanelet_to_instruction = defaultdict()
     
@@ -30,7 +42,11 @@ class LaneChangeInstruction:
             return None
     
     
-    def __init__(self, lanelet: "Lanelet", instruction_markes: List[int], lanelet_portions: Tuple[float, float]) -> None:
+    def __init__(self,
+                 lanelet: "Lanelet",
+                 instruction_markes: List[int],
+                 lanelet_portions: Tuple[float, float]
+                 ) -> None:
                
         
         self.lanelet: "Lanelet" = lanelet

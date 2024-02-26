@@ -1,6 +1,6 @@
 ########################################################
 #
-# TODO: Refactor
+# TODO: Implement students new stuff
 #
 #
 #
@@ -99,7 +99,7 @@ class LaneChangePositionHandler:
 
         # generates a list of consecutive instructions
         # e.g. input: [0, 0, 1, 1, 0, 1] output: [[0, 0], [1, 1], [0], [1]], meaning [drive, lane_change, drive, lane_change]
-        consecutive_instructions: List[Tuple[float, float]] = [
+        consecutive_instructions: List[List[float]] = [
             list(v) for k, v in itertools.groupby(self._instruction_markers)
         ]
 
