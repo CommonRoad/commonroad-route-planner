@@ -45,13 +45,21 @@ class RouteCandidateHolder:
         """
 
         self._logger = logger
+
         self._lanelet_network: LaneletNetwork = lanelet_network
+        self._prohibited_lanelet_ids: List[int] = prohibited_lanelet_ids if(prohibited_lanelet_ids is not None) else list()
+
         self._initial_state: InitialState = initial_state
         self._goal_region: GoalRegion = goal_region
 
         # create a list of Route objects for all routes found by the route planner which is not empty
         self._route_candidates: List[Route] = [
-            Route(lanelet_network, route, prohibited_lanelet_ids)
+            Route(
+                lanelet_network=lanelet_network,
+                lanelet_ids=route,
+                prohibited_lanelet_ids=prohibited_lanelet_ids,
+                logger=self._logger
+            )
             for route in route_candidates if route
         ]
         self._num_route_candidates: int = len(self._route_candidates)
