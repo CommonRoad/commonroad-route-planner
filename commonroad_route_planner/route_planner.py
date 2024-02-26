@@ -1,24 +1,10 @@
-__author__ = "Daniel Tar, Peter Kocsis, Edmond Irani Liu, Luis Gressenbuch, Tobias Mascetta"
+__author__ = "Tobias Mascetta, Daniel Tar, Peter Kocsis, Edmond Irani Liu, Luis Gressenbuch"
 __copyright__ = ""
 __credits__ = [""]
-__version__ = "2022.3"
+__version__ = "2024.3"
 __maintainer__ = "Tobias Mascetta, Gerald Wuersching"
 __email__ = "tobias.mascetta@tum.de"
 __status__ = "Release"
-
-
-#############################################################
-#
-#
-#  FIXME: Refactor implementation
-#
-#
-#
-#
-#
-#
-#
-######################################################################
 
 import logging
 import warnings
@@ -76,6 +62,8 @@ class RoutePlanner:
         :param scenario: cr scenario
         :param planning_problem: cr planning problem
         :param extended_search: necessary, if not the shortest route is searched, e.g. if a specific lanelet must be included
+        :param prohibited_lanelet_ids: lanelets ids that must not be used
+        :param logging_level: logging level
         """
 
         self._logging_level = logging_level
@@ -143,6 +131,10 @@ class RoutePlanner:
         Updates planning problem and recomputes necessary parts.
         Returns a new route selector.
 
+        :param planning_problem: planning problem to update
+        :param extended_search: whether extended search should be used
+        :param prohibited_lanelet_ids: which lanelet ids must not be included in the route
+
         :return: route selector object
         """
         self._planning_problem = planning_problem
@@ -193,7 +185,9 @@ class RoutePlanner:
 
 
 
-    def _get_filtered_ids(self, ids_lanelets_to_filter: List[int]) -> List[int]:
+    def _get_filtered_ids(self,
+                          ids_lanelets_to_filter: List[int]
+                          ) -> List[int]:
         """Filters lanelets with the list of ids of forbidden lanelets.
 
         :param ids_lanelets_to_filter: The list of the lanelet ids which should be filtered

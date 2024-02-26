@@ -12,7 +12,7 @@ from commonroad.scenario.state import InitialState
 from commonroad.visualization.mp_renderer import MPRenderer
 
 # own code base
-from commonroad_route_planner.route import Route
+from commonroad_route_planner.route import Route, RouteSlice
 
 # typing
 from typing import Union, List
