@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from time import perf_counter
+import sys
 
 import numpy as np
 
@@ -33,6 +34,57 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         "USA_Peach-4_1_T-1",
         
     ]
+
+    scenario, planning_problem_set = CommonRoadFileReader(
+        f"/home/tmasc/route_planner/commonroad-route-planner/scenarios/DEU_Aachen-9_50_I-1.xml"
+    ).open()
+    # retrieve the first planning problem in the problem set
+    planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
+
+    t_start = perf_counter()
+    # ========== route planning =========== #
+    # instantiate a route planner with the scenario and the planning problem
+    route_planner = RoutePlanner(
+        scenario,
+        planning_problem
+    )
+    # plan routes, and save the routes in a route candidate holder
+    route_selector: "RouteSelector" = route_planner.plan_routes()
+
+    # ========== retrieving routes =========== #
+    # here we retrieve the first route in the list, this is equivalent to: route = list_routes[0]
+    route: "Route" = route_selector.retrieve_shortest_route(retrieve_shortest=True)
+    print(f"[Time] Retrieving first route took {perf_counter() - t_start}")
+
+    # Init route extendor
+    route_extendor: RouteExtendor = RouteExtendor(route)
+    # Extend reference path at start and end
+    route_extendor.extend_reference_path_at_start_and_end()
+
+    # This is unnecessary but shows that the route_extendor modified the route object
+    route: Route = route_extendor.get_route()
+
+    # option 2: retrieve all routes
+    list_routes, num_routes_retrieved = route_selector.retrieve_all_routes()
+    print(f"Number of routes retrieved: {num_routes_retrieved}")
+
+    # ========== visualization =========== #
+    visualize_route(
+        route=route,
+        scenario=scenario,
+        planning_problem=planning_problem,
+        save_img=False,
+        draw_route_lanelets=True,
+        draw_reference_path=True,
+    )
+
+    print(f"checked {(0 * 100 / len(os.listdir(path_scenarios))):.2f}% of scenarios")
+
+    print(f" \n \n")
+
+    sys.exit()
+
+
 
     for idx, filename in enumerate(sorted(os.listdir(path_scenarios))):
         id_scenario = filename.split(".")[0]
@@ -87,6 +139,8 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         print(f"checked {(idx*100/len(os.listdir(path_scenarios))):.2f}% of scenarios")
 
         print(f" \n \n")
+
+
 
 
 

@@ -102,6 +102,7 @@ class RoutePlanner:
         self._overtake_states = list()
         self._ids_lanelets_goal: List[int] = list()
         self._init_lanelet_ids_for_start_and_overtake()
+        self._init_goal_lanelet_ids()
 
 
         self._planner: Union[NetworkxRoutePlanner, NoGoalFoundRoutePlanner] = None
@@ -254,6 +255,7 @@ class RoutePlanner:
 
         # sanity check
         if(not hasattr(initial_state, "position")):
+            self._logger.error(f'No initial position in the given planning problem found')
             raise ValueError(f'No initial position in the given planning problem found')
 
         # Add start lanelets
@@ -291,6 +293,49 @@ class RoutePlanner:
             raise ValueError(f'No initial lanelet ids found')
 
 
+    def _init_goal_lanelet_ids(self) -> None:
+        """
+        Sets the goal lanelet ids in the attribute.
+        Takes first goal polygon for uncertain goal position
+        """
+
+        # If the goal region is directly defined by lanelets, use it
+        if (hasattr(self._planning_problem.goal, "lanelets_of_goal_position")):
+            if (self._planning_problem.goal.lanelets_of_goal_position is None):
+                self._logger.warning(f'[CR Route Planner] lanelets_of_goal_position not given')
+
+            else:
+                for goal_lanelet_ids in self._planning_problem.goal.lanelets_of_goal_position.values():
+                    self._ids_lanelets_goal.extend(self._get_filtered_ids(goal_lanelet_ids))
+
+
+        # if the goal region has a state list, also use it
+        if(hasattr(self._planning_problem.goal, "state_list")):
+            for idx, state in enumerate(self._planning_problem.goal.state_list):
+
+                if(not hasattr(state, "position")):
+                    self._logger.warning(f'[CR Route Planner] goal state of state list has no position entry, will pass')
+                    continue
+
+
+                # set goal position, which can either be defined by center for regions or by position
+                if(hasattr(state.position, "center")):
+                    goal_position: np.ndarray = state.position.center
+                else:
+                    # For uncertain position route planner takes first polygon
+                    self._logger.warning(f'[CR Route Planner] For uncertain positions, CR route planner uses the center of the first shape')
+                    goal_position: np.ndarray = state.position.shapes[0].center
+
+                for lanelet_id_list in self.lanelet_network.find_lanelet_by_position([goal_position]):
+                    self._ids_lanelets_goal.extend(lanelet_id_list)
+
+            # remove duplicated and filter for permitted lanelets
+            self.ids_lanelets_goal = self._get_filtered_ids(list(set(self._ids_lanelets_goal)))
+
+        if(len(self.ids_lanelets_goal) == 0):
+            warnings.warn(f'[CR Route Planner] Could not find a single goal position or lane')
+            self._logger.warning(
+                f'[CR Route Planner] Could not find a single goal position or lane')
 
 
 
