@@ -8,6 +8,7 @@
 #
 #
 ###################################################################################
+import logging
 
 # commonroad
 from commonroad.planning.goal import GoalRegion
@@ -38,14 +39,17 @@ class RouteSelector(RouteCandidateHolder):
                  initial_state: InitialState,
                  goal_region: GoalRegion,
                  route_candidates: List[List[int]],
-                 prohibited_lanelet_ids: List[int]) -> None:
+                 prohibited_lanelet_ids: List[int],
+                 logger: logging.Logger
+                 ) -> None:
         
         super().__init__(
             lanelet_network=lanelet_network,
             initial_state=initial_state,
             goal_region=goal_region,
             route_candidates=route_candidates,
-            prohibited_lanelet_ids
+            prohibited_lanelet_ids=prohibited_lanelet_ids,
+            logger=logger
             )
         
         

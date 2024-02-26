@@ -1,3 +1,4 @@
+import logging
 from enum import Enum
 import numpy as np
 
@@ -40,8 +41,11 @@ class Route:
     def __init__(self,
                  lanelet_network: LaneletNetwork,
                  lanelet_ids: List[int],
+                 logger: logging.Logger,
                  prohibited_lanelet_ids: List[int] = None
                  )->None:
+
+        self._logger = logger
 
         self._lanelet_network: LaneletNetwork = lanelet_network
 
@@ -52,7 +56,7 @@ class Route:
         self._sections: List[LaneletSection] = list()
         self._calc_route_sections()
 
-        self._prohibited_lanelet_ids: List[int]  = prohibited_lanelet_ids
+        self._prohibited_lanelet_ids: List[int]  = prohibited_lanelet_ids if(lanelet_ids is not None) else list()
 
         # generate reference path from the list of lanelet ids leading to goal
         self._reference_path: np.ndarray = None
@@ -62,10 +66,84 @@ class Route:
         self._interpoint_distances: np.ndarray = None
         self._average_interpoint_distance: float = None
         self._path_length_per_point: np.ndarray = None
-        self._length_reference_path: np.ndarray = None
+        self._length_reference_path: float = None
         self._path_orientation: np.ndarray = None
         self._path_curvature: np.ndarray = None
         self.update_geometric_ref_path_properties()
+
+
+
+
+    @property
+    def list_ids_lanelets(self) -> List[int]:
+        """
+        Dummy interface for old lanelet ids
+
+        :return: list of lanelet id in route
+        """
+        return self._lanelet_ids
+
+
+
+    @property
+    def lanelet_ids(self) -> List[int]:
+        """
+        :return: list of lanelet id in route
+        """
+        return self._lanelet_ids
+
+
+
+    @property
+    def reference_path(self) -> np.ndarray:
+        """
+        :return (n,2) np ndarray of points of ref path
+        """
+        return self._reference_path
+
+    @property
+    def interpoint_distances(self) -> np.ndarray:
+        """
+        :return: (n,1) distance between points
+        """
+        return self._interpoint_distances
+
+    @property
+    def average_interpoint_distance(self) -> float:
+        """
+        :return: average interpoint distance of route
+        """
+        return self._average_interpoint_distance
+
+
+    @property
+    def length_reference_path(self) -> float:
+        """
+        :return: total length of reference path
+        """
+        return self._length_reference_path
+
+    @property
+    def path_length_per_point(self) -> np.ndarray:
+        """
+        :return: (n,1) np ndarray of path length for each point
+        """
+        return self._path_length_per_point
+
+    @property
+    def path_oriententation(self) -> np.ndarray:
+        """
+        :return: (n,1) per point orientation values in rad
+        """
+        return self._path_orientation
+
+
+    @property
+    def path_curvature(self) -> np.ndarray:
+        """
+        :return: (n,1) per point curvature of reference path
+        """
+        return self._path_curvature
 
 
 
@@ -92,6 +170,53 @@ class Route:
         self._length_reference_path: float = pops.compute_length_of_polyline(self._reference_path)
         self._path_orientation: np.ndarray = pops.compute_orientation_from_polyline(self._reference_path)
         self._path_curvature: np.ndarray = pops.compute_scalar_curvature_from_polyline(self._reference_path)
+
+
+
+
+    def get_route_slice_from_position(self,
+                                      x: float,
+                                      y:float,
+                                      distance_ahead_in_m: float = 30,
+                                      distance_behind_in_m: float = 7
+                                      ) -> RouteSlice:
+        """
+        Takes an x and y coordinate, finds, the closest point on the reference path and returns slice of the reference
+        path around that point with the distance ahead and behind.
+
+        :param x: x-position
+        :param y: y-position
+        :param distance_ahead_in_m: how long the path should continue in front of position
+        :param distance_behind_in_m: how long the path should continue after position
+
+        :return: route slice
+        """
+        return RouteSlice(
+            self,
+            x, y,
+            distance_ahead_in_m=distance_ahead_in_m,
+            distance_behind_in_m=distance_behind_in_m
+        )
+
+
+    def get_lanelet_section(self, lanelet_id: int) -> Union[LaneletSection, None]:
+        """
+        Takes lanelet id and retrieves lanelet section
+
+        :param lanelet_id: lanelet id for which the lanelet section should be returned
+
+        :return: lanelet section or none
+        """
+        if(lanelet_id not in self._lanelet_ids):
+            self._logger.error('Lanelet id not part of route')
+            raise ValueError('Lanelet id not part of route')
+
+        return LaneletSection.get_section_by_lanelet_id(lanelet_id)
+
+
+
+
+
 
 
 
@@ -219,38 +344,5 @@ class Route:
 
 
 
-    def get_route_slice_from_position(self, x: float, y:float,
-                                      distance_ahead_in_m: float=30,
-                                      distance_behind_in_m: float=7) -> RouteSlice:
-        """
-        Takes an x and y coordinate, finds, the closest point on the reference path and returns slice of the reference
-        path around that point with the distance ahead and behind.
-        """
-        return RouteSlice(
-            self,
-            x, y,
-            distance_ahead_in_m=distance_ahead_in_m,
-            distance_behind_in_m=distance_behind_in_m
-        )
-
-
-    def get_lanelet_section(self, lanelet_id: int) -> Union[LaneletSection, None]:
-        """
-        Takes lanelet id and retrieves lanelet section
-        """
-        if(lanelet_id not in self._lanelet_ids):
-            raise ValueError('Lanelet id not part of route')
-
-        return LaneletSection.get_section_by_lanelet_id(lanelet_id)
-
-
-
-
-    @property
-    def list_ids_lanelets(self) -> List[int]:
-        """
-        Dummy interface for old lanelet ids
-        """
-        return self._lanelet_ids
 
 
