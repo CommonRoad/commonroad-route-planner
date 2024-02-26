@@ -37,7 +37,8 @@ class TestPointsOutsideLaneletNetwork(unittest.TestCase):
             'USA_Peach-3_1_T-1.xml', 
             'USA_US101-22_1_T-1.xml', 
             'USA_US101-32_1_T-1.xml', 
-            'ZAM_Zip-1_6_T-1.xml'
+            'ZAM_Zip-1_6_T-1.xml',
+            "DEU_Stu-1_49_I-1.xml"
         ]
         
         # TODO: Make the scenarios from the ignored list above work
