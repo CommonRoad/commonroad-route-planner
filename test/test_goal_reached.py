@@ -102,7 +102,7 @@ class TestGoalReached(unittest.TestCase):
             route = route_selector.retrieve_shortest_route(retrieve_shortest=True)
             
             # create shapely objects
-            shapely_route_line: ShapelyLineString = ShapelyLineString(route.reference_path)
+            shapely_route_line: ShapelyLineString = ShapelyLineString(route._reference_path)
             
             shapely_goal_polygons: List[ShapelyPolygon] = list()
             for state in planning_problem.goal.state_list:

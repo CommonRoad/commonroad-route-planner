@@ -34,42 +34,37 @@ class RouteType(Enum):
 
 
 class Route:
-    """A route in a commonroad scenario."""
+    """
+    A route in a commonroad scenario.
+    """
+    def __init__(self,
+                 lanelet_network: LaneletNetwork,
+                 lanelet_ids: List[int],
+                 prohibited_lanelet_ids: List[int] = None
+                 )->None:
 
-    scenario: Scenario = None
-    planning_problem: PlanningProblem = None
-
-    def __init__(self, lanelet_network: LaneletNetwork, lanelet_ids: List[int],
-                 permissible_lanelet_ids: Set[int] = None):
-
-        self.lanelet_network: LaneletNetwork = lanelet_network
+        self._lanelet_network: LaneletNetwork = lanelet_network
 
         # a route is created given the list of lanelet ids from start to goal
-        self.lanelet_ids: List[int] = lanelet_ids
+        self._lanelet_ids: List[int] = lanelet_ids
 
         # a section is a list of lanelet ids that are adjacent to a lanelet in the route
-        # FIXME: What are these sections good for???
-        self.sections: List[LaneletSection] = list()
+        self._sections: List[LaneletSection] = list()
         self._calc_route_sections()
 
-        if permissible_lanelet_ids is None:
-            self.permissible_lanelet_ids: Set[int] = {
-                lanelet.lanelet_id for lanelet in self.lanelet_network.lanelets
-            }
-        else:
-            self.permissible_lanelet_ids: Set[int]  = permissible_lanelet_ids
+        self._prohibited_lanelet_ids: List[int]  = prohibited_lanelet_ids
 
         # generate reference path from the list of lanelet ids leading to goal
-        self.reference_path: np.ndarray = None
-        self.lane_change_position_handler: LaneChangePositionHandler = None
+        self._reference_path: np.ndarray = None
+        self._lane_change_position_handler: LaneChangePositionHandler = None
         self._generate_reference_path()
 
-        self.interpoint_distances: np.ndarray = None
-        self.average_interpoint_distance: float = None
-        self.path_length_per_point: np.ndarray = None
-        self.length_reference_path: np.ndarray = None
-        self.path_orientation: np.ndarray = None
-        self.path_curvature: np.ndarray = None
+        self._interpoint_distances: np.ndarray = None
+        self._average_interpoint_distance: float = None
+        self._path_length_per_point: np.ndarray = None
+        self._length_reference_path: np.ndarray = None
+        self._path_orientation: np.ndarray = None
+        self._path_curvature: np.ndarray = None
         self.update_geometric_ref_path_properties()
 
 
@@ -82,38 +77,38 @@ class Route:
         If reference path is specified, the new reference path will be updated and resamples before.
         """
         if(reference_path is not None):
-            if(self.average_interpoint_distance is not None):
-                resample_step: float = self.average_interpoint_distance
+            if(self._average_interpoint_distance is not None):
+                resample_step: float = self._average_interpoint_distance
             else:
                 resample_step: float = default_resample_step
 
-            self.reference_path = pops.sample_polyline(reference_path,
-                                 step=resample_step)
+            self._reference_path = pops.sample_polyline(reference_path,
+                                                        step=resample_step)
 
         # save additional information about the reference path
-        self.interpoint_distances: np.ndarray = pops.compute_interpoint_distances_from_polyline(self.reference_path)
-        self.average_interpoint_distance: float = np.mean(self.interpoint_distances, axis=0)
-        self.path_length_per_point: np.ndarray = pops.compute_path_length_per_point(self.reference_path)
-        self.length_reference_path: float = pops.compute_length_of_polyline(self.reference_path)
-        self.path_orientation: np.ndarray = pops.compute_orientation_from_polyline(self.reference_path)
-        self.path_curvature: np.ndarray = pops.compute_scalar_curvature_from_polyline(self.reference_path)
+        self._interpoint_distances: np.ndarray = pops.compute_interpoint_distances_from_polyline(self._reference_path)
+        self._average_interpoint_distance: float = np.mean(self._interpoint_distances, axis=0)
+        self._path_length_per_point: np.ndarray = pops.compute_path_length_per_point(self._reference_path)
+        self._length_reference_path: float = pops.compute_length_of_polyline(self._reference_path)
+        self._path_orientation: np.ndarray = pops.compute_orientation_from_polyline(self._reference_path)
+        self._path_curvature: np.ndarray = pops.compute_scalar_curvature_from_polyline(self._reference_path)
 
 
 
     def _calc_route_sections(self):
-        """Retrieves route sections for lanelets in the route.
+        """Retrieves route _sections for lanelets in the route.
 
         A section is a list of lanelet ids that are adjacent to a given lanelet.
         """
-        if(len(self.sections) == 0):
-            # compute list of sections
-            for id_lanelet in self.lanelet_ids:
-                current_lanelet: "Lanelet" = self.lanelet_network.find_lanelet_by_id(id_lanelet)
-                current_section: LaneletSection = LaneletSection(current_lanelet, self.lanelet_network)
+        if(len(self._sections) == 0):
+            # compute list of _sections
+            for id_lanelet in self._lanelet_ids:
+                current_lanelet: "Lanelet" = self._lanelet_network.find_lanelet_by_id(id_lanelet)
+                current_section: LaneletSection = LaneletSection(current_lanelet, self._lanelet_network)
                 
                 # TODO: check if that weird check has some meening?
                 
-                self.sections.append(current_section)
+                self._sections.append(current_section)
                 
                 
     
@@ -129,14 +124,14 @@ class Route:
 
         :return: reference path in 2d numpy array ([[x0, y0], [x1, y1], ...])
         """
-        self.lane_change_position_handler: LaneChangePositionHandler = LaneChangePositionHandler(self.lanelet_ids, 
-                                                                                                 self.lanelet_network)
+        self._lane_change_position_handler: LaneChangePositionHandler = LaneChangePositionHandler(self._lanelet_ids,
+                                                                                                  self._lanelet_network)
         
         reference_path_stair: np.ndarray = self._compute_reference_path_as_stair_function()
         reference_path_star_without_duplicated: np.ndarray = pops.remove_duplicate_points(reference_path_stair)
         reference_path_smoothed: np.ndarray = chaikins_corner_cutting(reference_path_star_without_duplicated)
         
-        self.reference_path: np.ndarray = reference_path_smoothed
+        self._reference_path: np.ndarray = reference_path_smoothed
 
         
 
@@ -159,18 +154,18 @@ class Route:
         # TODO Refactor, since this does not consider that the reference path is actually intersecting with the goal region, if existing.
         
         reference_path: np.ndarray = None
-        num_lanelets_in_route = len(self.lanelet_ids)
+        num_lanelets_in_route = len(self._lanelet_ids)
         
         
-        for idx, id_lanelet in enumerate(self.lanelet_ids):
+        for idx, id_lanelet in enumerate(self._lanelet_ids):
             
             # Sample the center vertices of the lanelet as foundation for the reference path
-            lanelet: "Lanelet" = self.lanelet_network.find_lanelet_by_id(id_lanelet)
+            lanelet: "Lanelet" = self._lanelet_network.find_lanelet_by_id(id_lanelet)
             centerline_vertices: np.ndarray = pops.sample_polyline(lanelet.center_vertices, step_resample)
             num_vertices: int = len(centerline_vertices)
             
             # get driving instruction object for lanelet
-            instruction: LaneChangeInstruction = self.lane_change_position_handler.get_driving_instruction_for_lanelet(lanelet)
+            instruction: LaneChangeInstruction = self._lane_change_position_handler.get_driving_instruction_for_lanelet(lanelet)
             
             
             # FIXME: Does not sound very practical
@@ -243,22 +238,12 @@ class Route:
         """
         Takes lanelet id and retrieves lanelet section
         """
-        if(lanelet_id not in self.lanelet_ids):
+        if(lanelet_id not in self._lanelet_ids):
             raise ValueError('Lanelet id not part of route')
 
         return LaneletSection.get_section_by_lanelet_id(lanelet_id)
 
 
-
-    def orientation(self, longitudinal_position: float) -> float:
-        """
-        Calculates orientation of lane given a longitudinal position along lane
-        """
-        return np.interp(longitudinal_position, self.interpoint_distances, self.path_orientation)
-
-
-
-    ######################## Dummy Properties to comply with old interface ################################
 
 
     @property
@@ -266,6 +251,6 @@ class Route:
         """
         Dummy interface for old lanelet ids
         """
-        return self.lanelet_ids
+        return self._lanelet_ids
 
 

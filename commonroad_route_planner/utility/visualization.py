@@ -60,7 +60,7 @@ def visualize_route(route: Union[Route, "RouteSlice"], scenario_name: str,
     if draw_route_lanelets:
 
         list_lanelets = []
-        for id_lanelet in route.lanelet_ids:
+        for id_lanelet in route._lanelet_ids:
             lanelet = route.scenario.lanelet_network.find_lanelet_by_id(id_lanelet)
             list_lanelets.append(lanelet)
         lanelet_network = LaneletNetwork.create_from_lanelet_list(list_lanelets)
@@ -93,7 +93,7 @@ def visualize_route(route: Union[Route, "RouteSlice"], scenario_name: str,
 
     # draw reference path with dots
     if draw_reference_path:
-        for position in route.reference_path:
+        for position in route._reference_path:
             occ_pos = Circle(radius=0.3, center=position)
             renderer.draw_params.shape.facecolor = "#ff477e"
             occ_pos.draw(renderer)
@@ -123,7 +123,7 @@ def obtain_plot_limits_from_routes(route, border=15):
     y_min_values = list()
     y_max_values = list()
     for route_lanelet_id in route.list_ids_lanelets:
-        lanelet = route.scenario.lanelet_network.find_lanelet_by_id(route_lanelet_id)
+        lanelet = route.scenario._lanelet_network.find_lanelet_by_id(route_lanelet_id)
         x_min_values.append(lanelet.center_vertices[:, 0].min())
         x_max_values.append(lanelet.center_vertices[:, 0].max())
         y_min_values.append(lanelet.center_vertices[:, 1].min())
@@ -139,10 +139,10 @@ def obtain_plot_limits_from_routes(route, border=15):
 
 
 def obtain_plot_limits_from_reference_path(route, border=10):
-    x_min = min(route.reference_path[:, 0])
-    x_max = max(route.reference_path[:, 0])
-    y_min = min(route.reference_path[:, 1])
-    y_max = max(route.reference_path[:, 1])
+    x_min = min(route._reference_path[:, 0])
+    x_max = max(route._reference_path[:, 0])
+    y_min = min(route._reference_path[:, 1])
+    y_max = max(route._reference_path[:, 1])
 
     plot_limits = [x_min - border, x_max + border, y_min - border, y_max + border]
     return plot_limits

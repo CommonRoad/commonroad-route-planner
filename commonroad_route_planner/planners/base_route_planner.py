@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from typing import List
+from logging import Logger
 
 from commonroad.scenario.lanelet import LaneletNetwork
 
@@ -8,11 +9,13 @@ class BaseRoutePlanner(metaclass=ABCMeta):
     def __init__(
         self,
         lanelet_network: LaneletNetwork,
+        logger: Logger,
         prohibited_lanelet_ids: List[int] = None
     ):
         """
         Base class for a route planner.
         """
+        self._logger = logger
         self._lanelet_network = lanelet_network
         self._prohibited_lanelet_ids: List[int] = prohibited_lanelet_ids if(prohibited_lanelet_ids is not None) else list()
 

@@ -87,7 +87,7 @@ class LaneChangePositionHandler:
     def _compute_lanelet_portion(self) -> None:
         """Computes the portion of the center vertices of the lanelets required to construct the reference path
 
-        This is done by first grouping the instructions into consecutive sections (each with only 0s or 1s).
+        This is done by first grouping the instructions into consecutive _sections (each with only 0s or 1s).
         For the group of 0s, as no lane change is required, the whole lanelet is used; for the group of 1s,
         the upper limit of the portion is computed within the group as (idx_lanelet in the group) / (num_lanelets).
         For example, if there are three consecutive lane changes (assuming three lanes are all parallel), the proportion

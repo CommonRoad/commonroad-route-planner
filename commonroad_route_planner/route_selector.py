@@ -33,21 +33,36 @@ class RouteSelector(RouteCandidateHolder):
     Selects a route from the route planner, per default the shortest route.
     """
     
-    def __init__(self, lanelet_network: LaneletNetwork,
-                 state_initial: InitialState, goal_region: GoalRegion,
-                 route_candidates: List[List[int]], ids_lanelets_permissible: Set):
+    def __init__(self,
+                 lanelet_network: LaneletNetwork,
+                 initial_state: InitialState,
+                 goal_region: GoalRegion,
+                 route_candidates: List[List[int]],
+                 prohibited_lanelet_ids: List[int]) -> None:
         
-        super().__init__(lanelet_network,
-                        state_initial, goal_region,
-                        route_candidates, ids_lanelets_permissible)
+        super().__init__(
+            lanelet_network=lanelet_network,
+            initial_state=initial_state,
+            goal_region=goal_region,
+            route_candidates=route_candidates,
+            prohibited_lanelet_ids
+            )
         
         
     
     def retrieve_shortest_route(self,
-                            retrieve_shortest: bool = True,
-                            included_lanelet_ids: List[int] = None) -> Route:
+                                retrieve_shortest: bool = True,
+                                included_lanelet_ids: List[int] = None
+                                ) -> Route:
         """
         Retrieves shortest route object.
-        Optionally can be forced to go through specific lanelets (currently WIP)
+        Optionally can be forced to go through specific lanelets.
+
+        :param retrieve_shortest: if True, will only find shortest distance routes,
+        :param included_lanelet_ids: forces planner to go throug lanelets, if possible. Will ignore retrieve_shortest
+
+        :return: route instance
         """
-        return self.retrieve_first_route(retrieve_shortest=retrieve_shortest, included_lanelet_ids=included_lanelet_ids)
+        return self.retrieve_first_route(retrieve_shortest=retrieve_shortest,
+                                         included_lanelet_ids=included_lanelet_ids
+                                         )

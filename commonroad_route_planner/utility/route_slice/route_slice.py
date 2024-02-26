@@ -36,9 +36,9 @@ class RouteSlice:
         # original route
         self.original_route: "Route" = route
         self.scenario: "Scenario" = self.original_route.scenario
-        self.lanelet_network: "LaneletNetwork" = self.original_route.lanelet_network
+        self.lanelet_network: "LaneletNetwork" = self.original_route._lanelet_network
         self.planning_problem: "PlanningProblem" = self.original_route.planning_problem
-        self.lanelet_ids: List[int] = self.original_route.lanelet_ids
+        self.lanelet_ids: List[int] = self.original_route._lanelet_ids
 
         # query point
         self.x: float = x
@@ -72,12 +72,12 @@ class RouteSlice:
         path around that point with the distance ahead and behind.
         """
         point: np.ndarray = np.asarray([self.x, self.y], float)
-        _, point_idx = KDTree(self.original_route.reference_path).query(point)
+        _, point_idx = KDTree(self.original_route._reference_path).query(point)
 
         running_distance: float = 0
         self.point_idx_ahead: int = point_idx
-        for idx in range(point_idx + 1, self.original_route.reference_path.shape[0] - 1):
-            running_distance += abs(self.original_route.interpoint_distances[idx])
+        for idx in range(point_idx + 1, self.original_route._reference_path.shape[0] - 1):
+            running_distance += abs(self.original_route._interpoint_distances[idx])
             self.point_idx_ahead = idx
             if (running_distance >= self.distance_ahead_in_m):
                 break
@@ -85,12 +85,12 @@ class RouteSlice:
         running_distance = 0
         self.point_idx_behind = point_idx
         for idx in reversed(range(0, point_idx - 1)):
-            running_distance += abs(self.original_route.interpoint_distances[idx])
+            running_distance += abs(self.original_route._interpoint_distances[idx])
             self.point_idx_behind = idx
             if (running_distance >= self.distance_behind_in_m):
                 break
 
-        self.reference_path = self.original_route.reference_path[self.point_idx_behind:self.point_idx_ahead, :]
+        self.reference_path = self.original_route._reference_path[self.point_idx_behind:self.point_idx_ahead, :]
 
         if(self.reference_path is None or len(self.reference_path) == 0):
             raise ValueError(f'Could not slice reference path={self.reference_path}')

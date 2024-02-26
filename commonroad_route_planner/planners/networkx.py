@@ -13,7 +13,7 @@ from commonroad_route_planner.utility.overtake_init_state import OvertakeInitSta
 
 
 # typing
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 
 _logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ _logger = logging.getLogger(__name__)
 class NetworkxRoutePlanner(BaseRoutePlanner):
     def __init__(self,
                 lanelet_network: LaneletNetwork,
+                logger: logging.Logger,
                 prohibited_lanelet_ids: List[int] = None,
                 overtake_states: List[OvertakeInitState]=None,
                 extended_search: bool = False,
@@ -35,7 +36,8 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         """
         super().__init__(
             lanelet_network=lanelet_network,
-            prohibited_lanelet_ids=prohibited_lanelet_ids
+            prohibited_lanelet_ids=prohibited_lanelet_ids,
+            logger=logger
         )
 
         self._overtake_states: List[OvertakeInitState] = overtake_states if(overtake_states is not None) else list()
@@ -65,7 +67,7 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
 
     def find_routes(self,
                     id_lanelet_start: int,
-                    id_lanelet_goal: int
+                    id_lanelet_goal: Union[int, None],
                     ) -> List[List[int]]:
         """Find all shortest paths using networkx module
 
@@ -104,7 +106,7 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
 
         except nx.exception.NetworkXNoPath:
             # it is a normal behaviour because of the overlapping lanelets in a road network
-            _logger.debug(
+            self._logger.error(
                 f"The goal lanelet with ID [{id_lanelet_goal}] cannot be reached from the start lanelet with ID [{id_lanelet_start}]"
             )
         return lanelets_ids

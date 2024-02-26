@@ -91,7 +91,7 @@ class TestIncludedLanelets(unittest.TestCase):
 
 
 
-            if(set(included_lanelet_ids).issubset(route.lanelet_ids)):
+            if(set(included_lanelet_ids).issubset(route._lanelet_ids)):
                success_scenarios.append(filename)
             else:
                 failed_scenarios.append(filename)

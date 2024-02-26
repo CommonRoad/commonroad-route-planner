@@ -91,7 +91,7 @@ class TestPointsOutsideLaneletNetwork(unittest.TestCase):
         route = route_selector.retrieve_shortest_route(retrieve_shortest=True)
         
         # Create shapely route
-        shapely_route_line: ShapelyLineString = ShapelyLineString(route.reference_path)
+        shapely_route_line: ShapelyLineString = ShapelyLineString(route._reference_path)
         
         # Create scaled ab version of road compolement
         road_network_polygon: ShapelyPolygon = None

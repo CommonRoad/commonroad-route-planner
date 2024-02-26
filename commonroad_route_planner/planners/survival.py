@@ -1,3 +1,5 @@
+import logging
+
 from commonroad_route_planner.planners.base_route_planner import BaseRoutePlanner
 
 
@@ -13,6 +15,7 @@ if TYPE_CHECKING:
 class NoGoalFoundRoutePlanner(BaseRoutePlanner):
     def __init__(self,
                  lanelet_network: "LaneletNetwork",
+                 logger: logging.Logger,
                  prohibited_lanelet_ids: List[int],
                  threshold_network_exploring: int = 20) -> None:
         """
@@ -23,7 +26,12 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
         :param threshold_network_exploring: depth threshold for exploration
         """
 
-        super(NoGoalFoundRoutePlanner, self).__init__(lanelet_network, prohibited_lanelet_ids)
+        super(NoGoalFoundRoutePlanner, self).__init__(
+            lanelet_network=lanelet_network,
+            prohibited_lanelet_ids=prohibited_lanelet_ids,
+            logger=logger
+        )
+
         self._threshold_network_exploring: int = threshold_network_exploring
 
 
@@ -85,6 +93,7 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
 
 
         if(len(route) == 0):
+            self._logger.error(f'[CR Route Planner] No goal found Route planner could not find a Route'')
             raise ValueError(f'[CR Route Planner] No goal found Route planner could not find a Route')
 
         return route

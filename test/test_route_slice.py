@@ -76,7 +76,7 @@ class TestRouteSlice(unittest.TestCase):
 
         for idx in range_object:
             # FIXME: Currently there is a bug in the garching map, it is centimeter not meter....
-            point = route.reference_path[idx, :]
+            point = route._reference_path[idx, :]
 
             t_0 = perf_counter()
 
