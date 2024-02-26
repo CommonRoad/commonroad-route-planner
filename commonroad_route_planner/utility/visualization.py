@@ -61,7 +61,7 @@ def visualize_route(route: Union[Route, "RouteSlice"],
     if draw_route_lanelets:
 
         list_lanelets = []
-        for id_lanelet in route._lanelet_ids:
+        for id_lanelet in route.lanelet_ids:
             lanelet = scenario.lanelet_network.find_lanelet_by_id(id_lanelet)
             list_lanelets.append(lanelet)
         lanelet_network = LaneletNetwork.create_from_lanelet_list(list_lanelets)
@@ -168,10 +168,10 @@ def obtain_plot_limits_from_reference_path(route: Union[Route, RouteSlice],
 
     :return: list [xmin, xmax, ymin, xmax] of plot limits
     """
-    x_min = min(route.reference_path[:, 0])
-    x_max = max(route.reference_path[:, 0])
-    y_min = min(route.reference_path[:, 1])
-    y_max = max(route.reference_path[:, 1])
+    x_min = min(route._reference_path[:, 0])
+    x_max = max(route._reference_path[:, 0])
+    y_min = min(route._reference_path[:, 1])
+    y_max = max(route._reference_path[:, 1])
 
     plot_limits = [x_min - border, x_max + border, y_min - border, y_max + border]
     return plot_limits

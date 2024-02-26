@@ -92,6 +92,13 @@ class Route:
         """
         return self._lanelet_ids
 
+    @property
+    def lanelet_network(self) -> LaneletNetwork:
+        """
+        :return: lanelet network of route
+        """
+        return self._lanelet_network
+
 
 
     @property
@@ -131,7 +138,7 @@ class Route:
         return self._path_length_per_point
 
     @property
-    def path_oriententation(self) -> np.ndarray:
+    def path_orientation(self) -> np.ndarray:
         """
         :return: (n,1) per point orientation values in rad
         """
