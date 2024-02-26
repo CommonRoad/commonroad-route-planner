@@ -32,8 +32,10 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
     ignored_scenarios: List = [
         "USA_Lanker-2_6_T-1",
         "USA_Peach-4_1_T-1",
+        "DEU_Stu-1_49_I-1"
         
     ]
+
 
 
     for idx, filename in enumerate(sorted(os.listdir(path_scenarios))):

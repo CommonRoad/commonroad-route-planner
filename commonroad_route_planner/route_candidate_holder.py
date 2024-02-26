@@ -97,8 +97,6 @@ class RouteCandidateHolder:
         :return: route object
         """
 
-        selected_route: Route = None
-
         # No routes
         if(len(self._route_candidates) == 0):
             self._logger.error(f'[CR Route Planner] Not a single route candidate was found')
@@ -110,11 +108,11 @@ class RouteCandidateHolder:
 
         # multpiple routes
         else:
-            sorted_routes: List[Route] = sorted(self._route_candidates, key=lambda x: x._length_reference_path, reverse=False)
+            sorted_routes: List[Route] = sorted(self._route_candidates, key=lambda x: x.length_reference_path, reverse=False)
 
             for route in sorted_routes:
                 # check init state orientation
-                if(self._heuristic_check_matching_orientation_of_initial_state(route._reference_path)):
+                if(self._heuristic_check_matching_orientation_of_initial_state(route.reference_path)):
                     if(included_lanelet_ids is None):
                         selected_route = route
                         break
