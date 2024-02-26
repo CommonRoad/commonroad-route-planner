@@ -231,8 +231,6 @@ class Route:
                 current_lanelet: "Lanelet" = self._lanelet_network.find_lanelet_by_id(id_lanelet)
                 current_section: LaneletSection = LaneletSection(current_lanelet, self._lanelet_network)
                 
-                # TODO: check if that weird check has some meening?
-                
                 self._sections.append(current_section)
                 
                 

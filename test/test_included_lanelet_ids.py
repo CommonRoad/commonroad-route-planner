@@ -70,8 +70,7 @@ class TestIncludedLanelets(unittest.TestCase):
             route_planner = RoutePlanner(
                 scenario=scenario,
                 planning_problem=planning_problem,
-                extended_search=True,
-                use_predecessors_to_pass_through_goal_state=False,
+                extended_search=True
             )
 
             included_lanelet_ids: List[int] = [1932]

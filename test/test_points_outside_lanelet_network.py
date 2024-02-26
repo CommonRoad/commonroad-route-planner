@@ -84,8 +84,7 @@ class TestPointsOutsideLaneletNetwork(unittest.TestCase):
         # Plan route
         route_planner = RoutePlanner(
             scenario,
-            planning_problem,
-            use_predecessors_to_pass_through_goal_state=False,
+            planning_problem
         )
         route_selector = route_planner.plan_routes()
         route = route_selector.retrieve_shortest_route(retrieve_shortest=True)

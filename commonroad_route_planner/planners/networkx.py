@@ -27,7 +27,6 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
                 extended_search: bool = False,
                 ) -> None:
         """
-        # TODO: Add params
 
         :param lanelet_network: cr lanelet network
         :param prohibited_lanelet_ids: ids of lanelets that must not be included

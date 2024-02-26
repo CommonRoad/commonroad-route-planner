@@ -51,8 +51,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         # instantiate a route planner with the scenario and the planning problem
         route_planner = RoutePlanner(
             scenario,
-            planning_problem,
-            use_predecessors_to_pass_through_goal_state=False,
+            planning_problem
         )
         # plan routes, and save the routes in a route candidate holder
         route_selector: "RouteSelector" = route_planner.plan_routes()
@@ -77,8 +76,9 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
         # ========== visualization =========== #
         visualize_route(
-            route,
-            id_scenario,
+            route=route,
+            scenario=scenario,
+            planning_problem=planning_problem,
             save_img=save_imgs,
             draw_route_lanelets=True,
             draw_reference_path=True,

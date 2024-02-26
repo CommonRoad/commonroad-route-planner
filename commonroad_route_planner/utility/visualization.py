@@ -1,47 +1,40 @@
-#######################################
-#
-# TODO: Refactor
-#
-#
-#
-#
-#
-##########################################
-
 import os
 
 import matplotlib.pyplot as plt
+
+
+# commonrodad
+from commonroad.scenario.scenario import Scenario
+from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.geometry.shape import Circle, Rectangle
 from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.state import InitialState
 from commonroad.visualization.mp_renderer import MPRenderer
 
+# own code base
 from commonroad_route_planner.route import Route
 
+# typing
 from typing import Union
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from commonroad_route_planner.utility.route_slice.route_slice import RouteSlice
 
 
-def visualize_route(route: Union[Route, "RouteSlice"], scenario_name: str,
+def visualize_route(route: Union[Route, "RouteSlice"],
+                    scenario:Scenario,
+                    planning_problem: PlanningProblem,
                     save_img: bool = True,
                     save_path: str = os.path.join(os.getcwd(), 'img'),
                     draw_route_lanelets=False, draw_reference_path=False,
-                    size_x=10):
-    """Visualizes the given route.
-
-    :param route: route object to be visualized
-    :param draw_route_lanelets: flag to indicate if the lanelets should be visualized
-    :param draw_reference_path: flag to indicate if the reference path should be visualized
-    :param size_x: size of the x-axis of the figure
+                    size_x=10
+                    ) -> None:
     """
-    assert route.scenario, "scenario attribute is not set of Route object"
+    Visualizes the given route.
+    """
 
     # obtain plot limits for a better visualization.
-    # we can obtain them through the lanelets or the reference path
     plot_limits = obtain_plot_limits_from_reference_path(route)
-    # plot_limits = obtain_plot_limits_from_routes(route)
 
     # set the figure size and ratio
     ratio_x_y = (plot_limits[1] - plot_limits[0]) / (plot_limits[3] - plot_limits[2])
@@ -49,19 +42,18 @@ def visualize_route(route: Union[Route, "RouteSlice"], scenario_name: str,
     # instantiate a renderer for plotting
     renderer = MPRenderer(plot_limits=plot_limits, figsize=(size_x, size_x / ratio_x_y))
 
-    # draw scenario and planning problem
-    route.scenario.draw(renderer)
-    if route.planning_problem:
-        route.planning_problem.draw(renderer)
+    scenario.draw(renderer)
+    planning_problem.draw(renderer)
+
     # draw the initial state of the planning problem
-    draw_state(renderer, route.planning_problem.initial_state)
+    draw_state(renderer, planning_problem.initial_state)
 
     # draw lanelets of the route
     if draw_route_lanelets:
 
         list_lanelets = []
         for id_lanelet in route._lanelet_ids:
-            lanelet = route.scenario.lanelet_network.find_lanelet_by_id(id_lanelet)
+            lanelet = scenario.lanelet_network.find_lanelet_by_id(id_lanelet)
             list_lanelets.append(lanelet)
         lanelet_network = LaneletNetwork.create_from_lanelet_list(list_lanelets)
 
@@ -102,10 +94,10 @@ def visualize_route(route: Union[Route, "RouteSlice"], scenario_name: str,
     renderer.render()
 
     plt.margins(0, 0)
-    plt.title(str(scenario_name))
+    plt.title(str(scenario.scenario_id))
 
     if(save_img):
-        save_name: str = os.path.join(save_path, scenario_name)
+        save_name: str = os.path.join(save_path, str(scenario.scenario_id))
         plt.savefig(save_name, format='png')
     else:
         plt.show()

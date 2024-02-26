@@ -35,11 +35,14 @@ class LaneChangePositionHandler:
     Handling where to do the lane change
     """
     
-    def __init__(self, lanelet_id_sequence: List[int], lanelet_network: "LaneletNetwork") -> None:
+    def __init__(self,
+                 lanelet_id_sequence: List[int],
+                 lanelet_network: "LaneletNetwork"
+                 ) -> None:
         
-        # FIXME still bad since the instructions implicitly still assume same index as lanelet_id_sequence without checking
-        self.lanelet_id_sequence: List[int] = lanelet_id_sequence
-        self.lanelet_network: "LaneletNetwork" = lanelet_network
+        # FIXME still bad since the instructions implicitly still assume same index as _lanelet_id_sequence without checking
+        self._lanelet_id_sequence: List[int] = lanelet_id_sequence
+        self._lanelet_network: "LaneletNetwork" = lanelet_network
         
         self._instruction_markers: List[int] = None
         self._compute_lane_change_instructions()
@@ -57,7 +60,7 @@ class LaneChangePositionHandler:
         """
         
         for idx, instr in enumerate(self._instruction_markers):
-            lanelet: "Lanelet" = self.lanelet_network.find_lanelet_by_id(self.lanelet_id_sequence[idx])
+            lanelet: "Lanelet" = self._lanelet_network.find_lanelet_by_id(self._lanelet_id_sequence[idx])
             instruction: LaneChangeInstruction = LaneChangeInstruction(lanelet, self._instruction_markers[idx], self._lanelet_portions[idx])
             self.dict_lanelet_to_instructions[lanelet] = instruction
             
@@ -71,9 +74,9 @@ class LaneChangePositionHandler:
         (driving straight forward=0, and 1 indicating that a lane change (to the left or right) is required.
         """
         self._instruction_markers: List[int] = list()
-        for idx, id_lanelet in enumerate(self.lanelet_id_sequence[:-1]):
+        for idx, id_lanelet in enumerate(self._lanelet_id_sequence[:-1]):
             # Check if the next lanelet in the sequence is a direct successor. If yes, no lane change is require
-            if (self.lanelet_id_sequence[idx + 1] in self.lanelet_network.find_lanelet_by_id(id_lanelet).successor):
+            if (self._lanelet_id_sequence[idx + 1] in self._lanelet_network.find_lanelet_by_id(id_lanelet).successor):
                 self._instruction_markers.append(0)
             else:
                 self._instruction_markers.append(1)

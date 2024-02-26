@@ -91,6 +91,7 @@ class RoutePlanner:
             level=logging_level
         )
 
+        self._scenario:Scenario = scenario
         self._lanelet_network: LaneletNetwork = scenario.lanelet_network
         self._planning_problem: PlanningProblem = planning_problem
 
@@ -106,6 +107,13 @@ class RoutePlanner:
         self._planner: Union[NetworkxRoutePlanner, NoGoalFoundRoutePlanner] = None
         self._init_planner()
 
+
+    @property
+    def scenario(self) -> Scenario:
+        """
+        :return: cr scenario
+        """
+        return self._scenario
 
     @property
     def lanelet_network(self) -> LaneletNetwork:
@@ -184,7 +192,8 @@ class RoutePlanner:
             initial_state=self._planning_problem.initial_state,
             goal_region=self._planning_problem.goal,
             route_candidates=routes,
-            prohibited_lanelet_ids=self._prohibited_lanelet_ids
+            prohibited_lanelet_ids=self._prohibited_lanelet_ids,
+            logger=self._logger
         )
 
 

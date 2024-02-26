@@ -93,7 +93,7 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
 
 
         if(len(route) == 0):
-            self._logger.error(f'[CR Route Planner] No goal found Route planner could not find a Route'')
+            self._logger.error(f'[CR Route Planner] No goal found Route planner could not find a Route')
             raise ValueError(f'[CR Route Planner] No goal found Route planner could not find a Route')
 
         return route
