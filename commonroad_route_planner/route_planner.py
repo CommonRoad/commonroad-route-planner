@@ -52,7 +52,7 @@ from commonroad_route_planner.utility.route_util import (lanelet_orientation_at_
 from commonroad_route_planner.utility.overtake_init_state import OvertakeInitState
 
 # typing
-from typing import Generator, List, Set, Tuple
+from typing import Generator, List, Set, Tuple, Union
 
 #  _logger = logging.getLogger(__name__)
 
@@ -60,11 +60,11 @@ from typing import Generator, List, Set, Tuple
 class RoutePlanner:
     """Main class for planning routes in CommonRoad scenarios.
 
-    This is a high-level planner that plans on the lanelet level. It returns the best routes for each pair
+    This is a high-level _planner that plans on the lanelet level. It returns the best routes for each pair
     of start/goal lanelets, with each route in the form of an ordered list of lanelet IDs. Depending on the
     utilized backend, the best route may have the shortest distance (if using NETWORKX and NETWORKX_REVERSED)
     or may have the lowest cost computed per the heuristic function (if using PRIORITY_QUEUE).
-    In survival scenarios (no goal lanelet), the planner advances in the order of forward, right, left when possible.
+    In survival scenarios (no goal lanelet), the _planner advances in the order of forward, right, left when possible.
     """
 
 
@@ -75,35 +75,50 @@ class RoutePlanner:
                  planning_problem: PlanningProblem,
                  extended_search: bool = False
                  ) -> None:
-        """Initialization of a RoutePlanner object.
+        """
+        Initialization of a RoutePlanner object.
+
+        :param scenario: cr scenario
+        :param planning_problem: cr planning problem
+        :param extended_search: necessary, if not the shortest route is searched, e.g. if a specific lanelet must be included
         """
 
-        self.lanelet_network: LaneletNetwork = scenario.lanelet_network
+        self._lanelet_network: LaneletNetwork = scenario.lanelet_network
 
-        self.planning_problem: PlanningProblem = planning_problem
+        self._planning_problem: PlanningProblem = planning_problem
 
-        self.extended_search: bool = extended_search
+        self._extended_search: bool = extended_search
 
 
         # examine initial and goal lanelet ids
-        self.id_lanelets_start: List[int] = list()
-        self.overtake_states = list()
-        self.ids_lanelets_goal: List[int] = list()
-        self.ids_lanelets_goal_original: List[int] = list()
+        self._id_lanelets_start: List[int] = list()
+        self._overtake_states = list()
+        self._ids_lanelets_goal: List[int] = list()
+        self._ids_lanelets_goal_original: List[int] = list()
         self._set_lanelet_ids_for_start_and_overtake()
         self._set_goal_lanelet_ids()
 
-        # if there are no lanelets of the goal, activate the NoGoalFound planner
-        if(len(self.ids_lanelets_goal) == 0):
+
+        self._planner: Union[NetworkxRoutePlanner, NoGoalFoundRoutePlanner] = None
+        self._init_planner()
+
+
+
+    def _init_planner(self) -> None:
+        """
+        Initialize planner
+        """
+        # if there are no lanelets of the goal, activate the NoGoalFound _planner
+        if(len(self._ids_lanelets_goal) == 0):
             warnings.warn(f'[CR Route Planner] starting NoGoalFound Planner, since no goal information was found')
-            self.planner = NoGoalFoundRoutePlanner(self.lanelet_network, self.ids_lanelets_permissible)
+            self._planner = NoGoalFoundRoutePlanner(self._lanelet_network, self._ids_lanelets_permissible)
 
         # check different backend
         else:
-            self.planner = NetworkxRoutePlanner(
-                self.lanelet_network,
-                self.overtake_states,
-                self.extended_search
+            self._planner = NetworkxRoutePlanner(
+                lanelet_network=self._lanelet_network,
+                overtake_states=self._overtake_states,
+                extended_search=self._extended_search
             )
 
 
@@ -122,8 +137,8 @@ class RoutePlanner:
 
         # FIXME: Why is only the lanelet at index 0 used
         # Add start lanelets
-        self.id_lanelets_start = (self._get_filtered_ids(
-            self.lanelet_network.find_lanelet_by_position([self.state_initial.position])[0]))
+        self._id_lanelets_start = (self._get_filtered_ids(
+            self._lanelet_network.find_lanelet_by_position([self.state_initial.position])[0]))
 
 
         # Check if any of the start positions are during an overtake:
@@ -133,28 +148,28 @@ class RoutePlanner:
         if (hasattr(self.state_initial, "orientation") and not self.state_initial.is_uncertain_orientation):
             orientation = self.state_initial.orientation
 
-            for id_lanelet_start in self.id_lanelets_start:
-                lanelet: Lanelet = self.lanelet_network.find_lanelet_by_id(id_lanelet_start)
+            for id_lanelet_start in self._id_lanelets_start:
+                lanelet: Lanelet = self._lanelet_network.find_lanelet_by_id(id_lanelet_start)
                 lanelet_angle = lanelet_orientation_at_position(lanelet, self.state_initial.position)
 
                 # Check if the angle difference is larger than 90 degrees
                 if(abs(relative_orientation(orientation, lanelet_angle)) > 0.5 * np.pi):
                     if (lanelet.adj_left is not None and not lanelet.adj_left_same_direction
                             and lanelet.adj_left in self.ids_lanelets_permissible):
-                        overtake_state = OvertakeInitState(id_lanelet_start, lanelet.adj_left, self.lanelet_network)
-                        self.overtake_states.append(overtake_state)
+                        overtake_state = OvertakeInitState(id_lanelet_start, lanelet.adj_left, self._lanelet_network)
+                        self._overtake_states.append(overtake_state)
 
 
                     elif (lanelet.adj_right is not None and not lanelet.adj_right_same_direction and
                           lanelet.adj_right in self.ids_lanelets_permissible):
-                        overtake_state = OvertakeInitState(id_lanelet_start, lanelet.adj_right, self.lanelet_network)
-                        self.overtake_states.append(overtake_state)
+                        overtake_state = OvertakeInitState(id_lanelet_start, lanelet.adj_right, self._lanelet_network)
+                        self._overtake_states.append(overtake_state)
 
 
-        if(len(self.id_lanelets_start) > 1):
+        if(len(self._id_lanelets_start) > 1):
             warnings.warn("Multiple start lanelet IDs: some may fail to reach goal lanelet")
 
-        if(len(self.id_lanelets_start) == 0):
+        if(len(self._id_lanelets_start) == 0):
             raise ValueError(f'No initial lanelet ids found')
 
 
@@ -175,11 +190,11 @@ class RoutePlanner:
 
             else:
                 for list_ids_lanelets_pos_goal in self.goal_region.lanelets_of_goal_position.values():
-                    self.ids_lanelets_goal.extend(self._get_filtered_ids(list_ids_lanelets_pos_goal))
+                    self._ids_lanelets_goal.extend(self._get_filtered_ids(list_ids_lanelets_pos_goal))
 
 
         # TODO: Why is this necessary
-        if(self.ids_lanelets_goal):
+        if(self._ids_lanelets_goal):
             self.use_predecessors_to_pass_through_goal_state = False
 
         # if the goal region has a state list, also use it
@@ -195,34 +210,34 @@ class RoutePlanner:
                 if(hasattr(state.position, "center")):
                     goal_position: np.ndarray = state.position.center
                 else:
-                    # For uncertain position route planner takes first polygon
-                    warnings.warn(f'[CR Route Planner] For uncertain positions, CR route planner uses the center of the first shape')
+                    # For uncertain position route _planner takes first polygon
+                    warnings.warn(f'[CR Route Planner] For uncertain positions, CR route _planner uses the center of the first shape')
                     goal_position: np.ndarray = state.position.shapes[0].center
 
                 # use predecessors to pass through goal state
                 if(self.use_predecessors_to_pass_through_goal_state):
-                    for lanelet_id_list in self.lanelet_network.find_lanelet_by_position([goal_position]):
+                    for lanelet_id_list in self._lanelet_network.find_lanelet_by_position([goal_position]):
                         for lanelet_id in lanelet_id_list:
-                            lanelet: Lanelet = self.lanelet_network.find_lanelet_by_id(lanelet_id)
-                            self.ids_lanelets_goal.extend(lanelet.predecessor)
+                            lanelet: Lanelet = self._lanelet_network.find_lanelet_by_id(lanelet_id)
+                            self._ids_lanelets_goal.extend(lanelet.predecessor)
 
                     # TODO: weird fallback
                     # if lanelets are empty afterwards, use normal method
-                    if(len(self.ids_lanelets_goal) == 0):
+                    if(len(self._ids_lanelets_goal) == 0):
                         warnings.warn(f'[CR Route Planner] want to use predecessors but could not generate goal')
                         self.use_predecessors_to_pass_through_goal_state = False
-                        for lanelet_id_list in self.lanelet_network.find_lanelet_by_position([goal_position]):
-                            self.ids_lanelets_goal.extend(lanelet_id_list)
+                        for lanelet_id_list in self._lanelet_network.find_lanelet_by_position([goal_position]):
+                            self._ids_lanelets_goal.extend(lanelet_id_list)
 
                 # use normal mode of computing the lanes
                 else:
-                    for lanelet_id_list in self.lanelet_network.find_lanelet_by_position([goal_position]):
-                        self.ids_lanelets_goal.extend(lanelet_id_list)
+                    for lanelet_id_list in self._lanelet_network.find_lanelet_by_position([goal_position]):
+                        self._ids_lanelets_goal.extend(lanelet_id_list)
 
             # remove duplicated and filter for permitted lanelets
-            self.ids_lanelets_goal = self._get_filtered_ids(list(set(self.ids_lanelets_goal)))
+            self._ids_lanelets_goal = self._get_filtered_ids(list(set(self._ids_lanelets_goal)))
 
-        if(not self.ids_lanelets_goal):
+        if(not self._ids_lanelets_goal):
             warnings.warn(f'[CR Route Planner] Could not find a single goal position or lane')
 
 
@@ -239,23 +254,23 @@ class RoutePlanner:
         list_routes: List[List[int]] = list()
 
         # For each start lanelet, find route to each goal lanelet
-        for id_lanelet_start in self.id_lanelets_start:
-            # if survival route planner
-            if(len(self.ids_lanelets_goal) == 0):
-                list_routes.append(self.planner.find_routes(id_lanelet_start, None))
+        for id_lanelet_start in self._id_lanelets_start:
+            # if survival route _planner
+            if(len(self._ids_lanelets_goal) == 0):
+                list_routes.append(self._planner.find_routes(id_lanelet_start, None))
 
             else:
-            # if normal planner iterate through goal lanelet ids
-                for id_lanelet_goal in self.ids_lanelets_goal:
-                    ids_lanelets = self.planner.find_routes(
+            # if normal _planner iterate through goal lanelet ids
+                for id_lanelet_goal in self._ids_lanelets_goal:
+                    ids_lanelets = self._planner.find_routes(
                         id_lanelet_start, id_lanelet_goal
                     )
 
                     if self.use_predecessors_to_pass_through_goal_state:
                         list_routes.extend(ids_lanelets)
                         # append the original goal lanelet back to the found route
-                        # FIXME: self.ids_lanelets_goal_original
-                        #for id_lanelet_goal_original in self.ids_lanelets_goal_original:
+                        # FIXME: self._ids_lanelets_goal_original
+                        #for id_lanelet_goal_original in self._ids_lanelets_goal_original:
                         #    for list_ids_lanelets in ids_lanelets:
                         #        list_routes.append(
                         #            list_ids_lanelets + [id_lanelet_goal_original]
@@ -266,10 +281,10 @@ class RoutePlanner:
 
 
         if(len(list_routes) == 0):
-            raise ValueError(f'[CR Route Planner] planner {self.planner} could not find a single route')
+            raise ValueError(f'[CR Route Planner] _planner {self._planner} could not find a single route')
 
         return RouteSelector(
-            self.lanelet_network,
+            self._lanelet_network,
             self.state_initial,
             self.goal_region,
             list_routes,

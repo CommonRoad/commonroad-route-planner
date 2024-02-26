@@ -28,7 +28,10 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         """
         # TODO: Add params
 
-        :param
+        :param lanelet_network: cr lanelet network
+        :param prohibited_lanelet_ids: ids of lanelets that must not be included
+        :param overtake_states: if initial state is in an overtake situation
+        :param extended_search: necessary, if not the shortest but any route should be included
         """
         super().__init__(
             lanelet_network=lanelet_network,
@@ -39,7 +42,25 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
 
         self._extended_search: bool = extended_search
 
-        self._digraph = self._create_graph_from_lanelet_network()
+        self._digraph: nx.DiGraph = self._create_graph_from_lanelet_network()
+
+
+
+    @property
+    def extended_search(self) -> bool:
+        """
+        :return: whether extended search is used
+        """
+        return self._extended_search
+
+
+    @extended_search.setter
+    def extended_search(self, use_ext_search:bool) -> None:
+        """
+        :param use_ext_search: set to True if extended search should be used
+        """
+        self._extended_search = use_ext_search
+
 
 
     def find_routes(self,
@@ -113,6 +134,8 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
     def _create_longitudinal_graph(self) -> nx.DiGraph:
         """
         Creates longitudinal graph
+
+        :return: created graph from lanelet network
         """
         graph = nx.DiGraph()
         nodes: List[int] = list()
@@ -139,9 +162,12 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         graph.add_edges_from(edges)
         return graph
 
+
     def _create_lateral_graph(self) -> nx.DiGraph:
         """
         Creates lateral graph
+
+        :return: created graph from lanelet network
         """
         graph = nx.DiGraph()
         # network x requires weird tuple based input

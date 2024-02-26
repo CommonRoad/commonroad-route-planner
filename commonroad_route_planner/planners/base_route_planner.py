@@ -19,3 +19,20 @@ class BaseRoutePlanner(metaclass=ABCMeta):
     @abstractmethod
     def find_routes(self, id_lanelet_start: int, id_lanelet_goal: int) -> List[List[int]]:
         pass
+
+
+
+    @property
+    def lanelet_network(self) -> LaneletNetwork:
+        """
+        :return: cr lanelet network
+        """
+        return self._lanelet_network
+
+
+    @property
+    def prohibited_lanelet_ids(self) -> List[int]:
+        """
+        :return: prohibited lanelet ids
+        """
+        return self._prohibited_lanelet_ids

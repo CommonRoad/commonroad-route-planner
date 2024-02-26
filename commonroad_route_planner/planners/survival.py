@@ -11,12 +11,23 @@ if TYPE_CHECKING:
 
 
 class NoGoalFoundRoutePlanner(BaseRoutePlanner):
-    def __init__(self, lanelet_network: "LaneletNetwork", ids_lanelets_permissible: Set,
-                 threshold_network_exploring: int = 20):
-        super(NoGoalFoundRoutePlanner, self).__init__(lanelet_network, ids_lanelets_permissible)
-        self.threshold_network_exploring: int = threshold_network_exploring
+    def __init__(self,
+                 lanelet_network: "LaneletNetwork",
+                 prohibited_lanelet_ids: List[int],
+                 threshold_network_exploring: int = 20) -> None:
+        """
+        Planner if no goal is set.
 
-    def find_routes(self, id_lanelet_start, id_lanelet_goal):
+        :param lanelet_network: cr lanelet network
+        :param prohibited_lanelet_ids: ids of prohibited lanelets
+        :param threshold_network_exploring: depth threshold for exploration
+        """
+
+        super(NoGoalFoundRoutePlanner, self).__init__(lanelet_network, prohibited_lanelet_ids)
+        self._threshold_network_exploring: int = threshold_network_exploring
+
+
+    def find_routes(self, id_lanelet_start: int, id_lanelet_goal: int) -> List[int]:
         """
         Finds a route along the lanelet network for survival scenarios.
 
@@ -28,37 +39,38 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
             # FIXME: The last part is not working
 
         :param id_lanelet_start: the initial lanelet where we start from
+        :param id_lanelet_goal: goal lanelet it
         :return: route that consists of a list of lanelet IDs
         """
         route = list()
         id_lanelet_current = id_lanelet_start
-        lanelet = self.lanelet_network.find_lanelet_by_id(id_lanelet_current)
+        lanelet = self._lanelet_network.find_lanelet_by_id(id_lanelet_current)
 
 
-        loop_cnt = 0
-        while(id_lanelet_current not in route and loop_cnt < self.threshold_network_exploring):
+        loop_cnt: int = 0
+        while(id_lanelet_current not in route and loop_cnt < self._threshold_network_exploring):
             route.append(lanelet.lanelet_id)
 
             found_new_lanelet = False
             if(lanelet.successor):
                 # naively select the first successors
-                lanelet = self.lanelet_network.find_lanelet_by_id(lanelet.successor[0])
+                lanelet = self._lanelet_network.find_lanelet_by_id(lanelet.successor[0])
                 found_new_lanelet = True
 
             if(not found_new_lanelet and lanelet.adj_right and lanelet.adj_right_same_direction):
                 # try to go right
-                lanelet_adj_right = self.lanelet_network.find_lanelet_by_id(lanelet.adj_right)
+                lanelet_adj_right = self._lanelet_network.find_lanelet_by_id(lanelet.adj_right)
                 if(len(lanelet_adj_right.successor) > 0):
                     # right lanelet has successor
-                    lanelet = self.lanelet_network.find_lanelet_by_id(lanelet.adj_right)
+                    lanelet = self._lanelet_network.find_lanelet_by_id(lanelet.adj_right)
                     found_new_lanelet = True
 
             if (not found_new_lanelet and lanelet.adj_left and lanelet.adj_left_same_direction):
                 # try to go left
-                lanelet_adj_left = self.lanelet_network.find_lanelet_by_id(lanelet.adj_left)
+                lanelet_adj_left = self._lanelet_network.find_lanelet_by_id(lanelet.adj_left)
                 if(len(lanelet_adj_left.successor) > 0):
                     # left lanelet has successor
-                    lanelet = self.lanelet_network.find_lanelet_by_id(lanelet.adj_left)
+                    lanelet = self._lanelet_network.find_lanelet_by_id(lanelet.adj_left)
                     found_new_lanelet = True
 
             if not found_new_lanelet:
@@ -73,6 +85,6 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
 
 
         if(len(route) == 0):
-            raise ValueError(f'[CR Route Planner] Survival Route planner could not find a Route')
+            raise ValueError(f'[CR Route Planner] No goal found Route planner could not find a Route')
 
         return route
