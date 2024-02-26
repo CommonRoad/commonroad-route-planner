@@ -82,7 +82,8 @@ class TestIncludedLanelets(unittest.TestCase):
             if(development):
                 visualize_route(
                     route,
-                    filename.split(".")[0],
+                    scenario=scenario,
+                    planning_problem=planning_problem,
                     save_img=False,
                     draw_route_lanelets=True,
                     draw_reference_path=True,

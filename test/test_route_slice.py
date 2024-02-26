@@ -88,10 +88,10 @@ class TestRouteSlice(unittest.TestCase):
             if(True):
                 visualize_route(
                     route_slice,
-                    filename.split(".")[0],
+                    scenario=scenario,
+                    planning_problem=planning_problem,
                     save_img=False,
                     draw_route_lanelets=True,
                     draw_reference_path=True,
                 )
-
 
