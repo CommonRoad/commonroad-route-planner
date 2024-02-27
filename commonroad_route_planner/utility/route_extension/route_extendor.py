@@ -43,7 +43,7 @@ class RouteExtendor:
         Performs extension for no successor at end
         """
 
-        reference_path = copy.copy(self.route.reference_path)
+        reference_path = copy.copy(self.route._reference_path)
 
         # get distance between first two points to know what the pseudo-uniform sampling would be
         point_0: np.ndarray = reference_path[-2, :]
@@ -80,11 +80,11 @@ class RouteExtendor:
                 warnings.warn(f'Current lane has more than one successor, choosing first')
 
         successor_id = successor_ids[0]
-        successor_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(successor_id)
+        successor_lanelet: Lanelet = self.route._lanelet_network.find_lanelet_by_id(successor_id)
         centerline: np.ndarray = pops.sample_polyline(successor_lanelet.center_vertices,
-                                                      step=self.route.average_interpoint_distance)
+                                                      step=self.route._average_interpoint_distance)
         reference_path: np.ndarray = np.concatenate(
-            (self.route.reference_path, centerline), axis=0
+            (self.route._reference_path, centerline), axis=0
         )
 
         # Resample polyline for better distance
@@ -98,11 +98,11 @@ class RouteExtendor:
         """
         if(len(predecessor_ids) > 1):
             warnings.warn(f'Current lane has more than one predecessor, choosing first')
-        predecessor_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(predecessor_ids[0])
+        predecessor_lanelet: Lanelet = self.route._lanelet_network.find_lanelet_by_id(predecessor_ids[0])
         centerline: np.ndarray = pops.sample_polyline(predecessor_lanelet.center_vertices,
-                                                      step=self.route.average_interpoint_distance)
+                                                      step=self.route._average_interpoint_distance)
         reference_path: np.ndarray = np.concatenate(
-            (centerline, self.route.reference_path), axis=0
+            (centerline, self.route._reference_path), axis=0
         )
 
         # Resample polyline for better distance
@@ -116,7 +116,7 @@ class RouteExtendor:
         """
         performs extension for no predecessor at start
         """
-        reference_path = copy.copy(self.route.reference_path)
+        reference_path = copy.copy(self.route._reference_path)
         # get distance between first two points to know what the pseudo-uniform sampling would be
         point_0: np.ndarray = reference_path[0, :]
         point_1: np.ndarray = reference_path[1, :]
@@ -154,7 +154,7 @@ class RouteExtendor:
         # TODO: tmasc --> if there are now significant changes coming, use one class method for both start and end
 
         # check if there is a successor lane.
-        last_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(self.route.lanelet_ids[-1])
+        last_lanelet: Lanelet = self.route._lanelet_network.find_lanelet_by_id(self.route._lanelet_ids[-1])
         successor_ids: List[int] = last_lanelet.successor
         if(len(successor_ids) == 0):
             self._perform_no_successor_extension()
@@ -171,7 +171,7 @@ class RouteExtendor:
         """
 
         # check if there is a successor lane.
-        first_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(self.route.lanelet_ids[0])
+        first_lanelet: Lanelet = self.route._lanelet_network.find_lanelet_by_id(self.route._lanelet_ids[0])
         predecessor_ids: List[int] = first_lanelet.predecessor
         if(len(predecessor_ids) == 0):
             self._perform_no_predecessor_extension()

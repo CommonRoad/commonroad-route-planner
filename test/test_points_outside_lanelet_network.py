@@ -37,7 +37,8 @@ class TestPointsOutsideLaneletNetwork(unittest.TestCase):
             'USA_Peach-3_1_T-1.xml', 
             'USA_US101-22_1_T-1.xml', 
             'USA_US101-32_1_T-1.xml', 
-            'ZAM_Zip-1_6_T-1.xml'
+            'ZAM_Zip-1_6_T-1.xml',
+            "DEU_Stu-1_49_I-1.xml"
         ]
         
         # TODO: Make the scenarios from the ignored list above work
@@ -84,14 +85,13 @@ class TestPointsOutsideLaneletNetwork(unittest.TestCase):
         # Plan route
         route_planner = RoutePlanner(
             scenario,
-            planning_problem,
-            use_predecessors_to_pass_through_goal_state=False,
+            planning_problem
         )
         route_selector = route_planner.plan_routes()
         route = route_selector.retrieve_shortest_route(retrieve_shortest=True)
         
         # Create shapely route
-        shapely_route_line: ShapelyLineString = ShapelyLineString(route.reference_path)
+        shapely_route_line: ShapelyLineString = ShapelyLineString(route._reference_path)
         
         # Create scaled ab version of road compolement
         road_network_polygon: ShapelyPolygon = None

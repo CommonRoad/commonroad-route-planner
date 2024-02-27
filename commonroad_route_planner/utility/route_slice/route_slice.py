@@ -24,45 +24,147 @@ class RouteSlice:
     Slice of a route given a point
     """
 
-    # TODO: maybe inherite from route???
 
-
-
-    def __init__(self, route: "Route",
-                x: float, y: float,
-                distance_ahead_in_m: float = 30,
-                distance_behind_in_m: float = 7):
+    def __init__(self,
+                 route: "Route",
+                 x: float,
+                 y: float,
+                 distance_ahead_in_m: float = 30.0,
+                 distance_behind_in_m: float = 7.0) -> None:
+        """
+        :param route: route object the slice is from
+        :param x: x value of point slice is made from
+        :param x: y value of point slice is made from
+        :param distance_ahead_in_m: how many meters ahead of current vehicle position slice should end
+        :param distance_behind_in_m: how many meters behind the vehicle the slice should end
+        """
 
         # original route
-        self.original_route: "Route" = route
-        self.scenario: "Scenario" = self.original_route.scenario
-        self.lanelet_network: "LaneletNetwork" = self.original_route.lanelet_network
-        self.planning_problem: "PlanningProblem" = self.original_route.planning_problem
-        self.lanelet_ids: List[int] = self.original_route.lanelet_ids
+        self._original_route: "Route" = route
 
         # query point
-        self.x: float = x
-        self.y: float = y
+        self._x: float = x
+        self._y: float = y
 
         # distance along reference path ahead and behind point
-        self.distance_ahead_in_m: float = distance_ahead_in_m
-        self.distance_behind_in_m: float = distance_behind_in_m
+        self._distance_ahead_in_m: float = distance_ahead_in_m
+        self._distance_behind_in_m: float = distance_behind_in_m
 
         # sliced reference path
-        self.reference_path: np.ndarray = None
-        self.point_idx_query: int = None
-        self.point_idx_ahead: int = None
-        self.point_idx_behind: int = None
+        self._reference_path: np.ndarray = None
+        self._point_idx_query: int = None
+        self._point_idx_ahead: int = None
+        self._point_idx_behind: int = None
 
         self._init_route_slice_from_position()
 
+        # lanelet ids
+        self._lanelet_ids: List[int] = list()
+        #self._init_lanelet_ids()
+
 
         # save additional information about sliced reference path
-        self.interpoint_distances: np.ndarray = pops.compute_interpoint_distances_from_polyline(self.reference_path)
-        self.path_length_per_point: np.ndarray = pops.compute_path_length_per_point(self.reference_path)
-        self.length_reference_path: float = pops.compute_length_of_polyline(self.reference_path)
-        self.path_orientation: np.ndarray = pops.compute_orientation_from_polyline(self.reference_path)
-        self.path_curvature: np.ndarray = pops.compute_scalar_curvature_from_polyline(self.reference_path)
+        self._interpoint_distances: np.ndarray = pops.compute_interpoint_distances_from_polyline(self._reference_path)
+        self._average_interpoint_distance: float = np.mean(self._interpoint_distances, axis=0)
+        self._path_length_per_point: np.ndarray = pops.compute_path_length_per_point(self._reference_path)
+        self._length_reference_path: float = pops.compute_length_of_polyline(self._reference_path)
+        self._path_orientation: np.ndarray = pops.compute_orientation_from_polyline(self._reference_path)
+        self._path_curvature: np.ndarray = pops.compute_scalar_curvature_from_polyline(self._reference_path)
+
+
+
+
+
+    @property
+    def original_route(self) -> "Route":
+        """
+        :return: original route the slice is based of
+        """
+        return self._original_route
+
+
+    @property
+    def vehicle_point(self) -> List[float]:
+        """
+        :return: List[x,y] of original point
+        """
+        return [self._x, self._y]
+
+
+
+    @property
+    def lanelet_ids(self) -> List[int]:
+        """
+        :return: list of lanelet ids
+        """
+        return self._lanelet_ids
+
+    @property
+    def distance_ahead_in_m(self) -> float:
+        """
+        :return: distance ahead from original vehicle point
+        """
+        return self._distance_ahead_in_m
+
+
+    @property
+    def distance_behind_in_m(self) -> float:
+        """
+        :return: distance behind from original vehicle point
+        """
+        return self._distance_behind_in_m
+
+
+    @property
+    def reference_path(self) -> np.ndarray:
+        """
+        :return (n,2) np ndarray of points of ref path
+        """
+        return self._reference_path
+
+    @property
+    def interpoint_distances(self) -> np.ndarray:
+        """
+        :return: (n,1) distance between points
+        """
+        return self._interpoint_distances
+
+    @property
+    def average_interpoint_distance(self) -> float:
+        """
+        :return: average interpoint distance of route
+        """
+        return self._average_interpoint_distance
+
+
+    @property
+    def length_reference_path(self) -> float:
+        """
+        :return: total length of reference path
+        """
+        return self._length_reference_path
+
+    @property
+    def path_length_per_point(self) -> np.ndarray:
+        """
+        :return: (n,1) np ndarray of path length for each point
+        """
+        return self._path_length_per_point
+
+    @property
+    def path_orientation(self) -> np.ndarray:
+        """
+        :return: (n,1) per point orientation values in rad
+        """
+        return self._path_orientation
+
+
+    @property
+    def path_curvature(self) -> np.ndarray:
+        """
+        :return: (n,1) per point curvature of reference path
+        """
+        return self._path_curvature
 
 
 
@@ -71,27 +173,65 @@ class RouteSlice:
         Finds, the closest point on the reference path and returns slice of the reference
         path around that point with the distance ahead and behind.
         """
-        point: np.ndarray = np.asarray([self.x, self.y], float)
-        _, point_idx = KDTree(self.original_route.reference_path).query(point)
+        point: np.ndarray = np.asarray([self._x, self._y], float)
+        _, point_idx = KDTree(self._original_route.reference_path).query(point)
 
         running_distance: float = 0
-        self.point_idx_ahead: int = point_idx
-        for idx in range(point_idx + 1, self.original_route.reference_path.shape[0] - 1):
-            running_distance += abs(self.original_route.interpoint_distances[idx])
-            self.point_idx_ahead = idx
-            if (running_distance >= self.distance_ahead_in_m):
+        self._point_idx_ahead: int = point_idx
+        for idx in range(point_idx + 1, self._original_route.reference_path.shape[0] - 1):
+            running_distance += abs(self._original_route.interpoint_distances[idx])
+            self._point_idx_ahead = idx
+            if (running_distance >= self._distance_ahead_in_m):
                 break
 
         running_distance = 0
-        self.point_idx_behind = point_idx
+        self._point_idx_behind = point_idx
         for idx in reversed(range(0, point_idx - 1)):
-            running_distance += abs(self.original_route.interpoint_distances[idx])
-            self.point_idx_behind = idx
-            if (running_distance >= self.distance_behind_in_m):
+            running_distance += abs(self._original_route.interpoint_distances[idx])
+            self._point_idx_behind = idx
+            if (running_distance >= self._distance_behind_in_m):
                 break
 
-        self.reference_path = self.original_route.reference_path[self.point_idx_behind:self.point_idx_ahead, :]
+        self._reference_path = self._original_route.reference_path[self._point_idx_behind:self._point_idx_ahead, :]
 
-        if(self.reference_path is None or len(self.reference_path) == 0):
-            raise ValueError(f'Could not slice reference path={self.reference_path}')
+        if(self._reference_path is None or len(self._reference_path) == 0):
+            raise ValueError(f'Could not slice reference path={self._reference_path}')
+
+
+
+
+    def _init_lanelet_ids(self) -> None:
+        """
+        Checks the value of first and last point of original route and adds all lanelet ids between them
+        """
+
+        # TODO: Debug
+
+        # Find index of first and last point of slice ref path and corresponding lanelet ids
+        behind_point: np.ndarray = self._reference_path[0, :]
+        infront_point: np.ndarray = self._reference_path[-1, :]
+        behind_lanelet_id: int =  self._original_route.lanelet_network.find_lanelet_by_position([behind_point])[0][0]
+        infront_lanelet_id: int = self._original_route.lanelet_network.find_lanelet_by_position([infront_point])[0][0]
+
+        # As the lanelet ids are ordered in the route class we know that every id between behind and front also
+        # has to be part of the route slice
+        behind_idx: int = self.original_route.lanelet_ids.index(behind_lanelet_id)
+        infront_idx: int = self.original_route.lanelet_ids.index(infront_lanelet_id)
+
+        self._lanelet_ids.append(behind_idx)
+        self._lanelet_ids.append(infront_idx)
+
+        for idx in range(behind_idx, infront_idx):
+            self._lanelet_ids.append(self.original_route.lanelet_ids[idx])
+
+        # remove duplicates
+        self._lanelet_ids: List[int] = list(set(self._lanelet_ids))
+
+
+
+
+
+
+
+
 

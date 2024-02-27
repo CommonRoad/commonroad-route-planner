@@ -70,8 +70,7 @@ class TestIncludedLanelets(unittest.TestCase):
             route_planner = RoutePlanner(
                 scenario=scenario,
                 planning_problem=planning_problem,
-                extended_search=True,
-                use_predecessors_to_pass_through_goal_state=False,
+                extended_search=True
             )
 
             included_lanelet_ids: List[int] = [1932]
@@ -83,7 +82,8 @@ class TestIncludedLanelets(unittest.TestCase):
             if(development):
                 visualize_route(
                     route,
-                    filename.split(".")[0],
+                    scenario=scenario,
+                    planning_problem=planning_problem,
                     save_img=False,
                     draw_route_lanelets=True,
                     draw_reference_path=True,
@@ -91,7 +91,7 @@ class TestIncludedLanelets(unittest.TestCase):
 
 
 
-            if(set(included_lanelet_ids).issubset(route.lanelet_ids)):
+            if(set(included_lanelet_ids).issubset(route._lanelet_ids)):
                success_scenarios.append(filename)
             else:
                 failed_scenarios.append(filename)

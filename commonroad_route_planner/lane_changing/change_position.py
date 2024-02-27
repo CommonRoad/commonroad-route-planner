@@ -1,6 +1,6 @@
 ########################################################
 #
-# TODO: Refactor
+# TODO: Implement students new stuff
 #
 #
 #
@@ -35,11 +35,14 @@ class LaneChangePositionHandler:
     Handling where to do the lane change
     """
     
-    def __init__(self, lanelet_id_sequence: List[int], lanelet_network: "LaneletNetwork") -> None:
+    def __init__(self,
+                 lanelet_id_sequence: List[int],
+                 lanelet_network: "LaneletNetwork"
+                 ) -> None:
         
-        # FIXME still bad since the instructions implicitly still assume same index as lanelet_id_sequence without checking
-        self.lanelet_id_sequence: List[int] = lanelet_id_sequence
-        self.lanelet_network: "LaneletNetwork" = lanelet_network
+        # FIXME still bad since the instructions implicitly still assume same index as _lanelet_id_sequence without checking
+        self._lanelet_id_sequence: List[int] = lanelet_id_sequence
+        self._lanelet_network: "LaneletNetwork" = lanelet_network
         
         self._instruction_markers: List[int] = None
         self._compute_lane_change_instructions()
@@ -57,7 +60,7 @@ class LaneChangePositionHandler:
         """
         
         for idx, instr in enumerate(self._instruction_markers):
-            lanelet: "Lanelet" = self.lanelet_network.find_lanelet_by_id(self.lanelet_id_sequence[idx])
+            lanelet: "Lanelet" = self._lanelet_network.find_lanelet_by_id(self._lanelet_id_sequence[idx])
             instruction: LaneChangeInstruction = LaneChangeInstruction(lanelet, self._instruction_markers[idx], self._lanelet_portions[idx])
             self.dict_lanelet_to_instructions[lanelet] = instruction
             
@@ -71,9 +74,9 @@ class LaneChangePositionHandler:
         (driving straight forward=0, and 1 indicating that a lane change (to the left or right) is required.
         """
         self._instruction_markers: List[int] = list()
-        for idx, id_lanelet in enumerate(self.lanelet_id_sequence[:-1]):
+        for idx, id_lanelet in enumerate(self._lanelet_id_sequence[:-1]):
             # Check if the next lanelet in the sequence is a direct successor. If yes, no lane change is require
-            if (self.lanelet_id_sequence[idx + 1] in self.lanelet_network.find_lanelet_by_id(id_lanelet).successor):
+            if (self._lanelet_id_sequence[idx + 1] in self._lanelet_network.find_lanelet_by_id(id_lanelet).successor):
                 self._instruction_markers.append(0)
             else:
                 self._instruction_markers.append(1)
@@ -87,7 +90,7 @@ class LaneChangePositionHandler:
     def _compute_lanelet_portion(self) -> None:
         """Computes the portion of the center vertices of the lanelets required to construct the reference path
 
-        This is done by first grouping the instructions into consecutive sections (each with only 0s or 1s).
+        This is done by first grouping the instructions into consecutive _sections (each with only 0s or 1s).
         For the group of 0s, as no lane change is required, the whole lanelet is used; for the group of 1s,
         the upper limit of the portion is computed within the group as (idx_lanelet in the group) / (num_lanelets).
         For example, if there are three consecutive lane changes (assuming three lanes are all parallel), the proportion
@@ -96,7 +99,7 @@ class LaneChangePositionHandler:
 
         # generates a list of consecutive instructions
         # e.g. input: [0, 0, 1, 1, 0, 1] output: [[0, 0], [1, 1], [0], [1]], meaning [drive, lane_change, drive, lane_change]
-        consecutive_instructions: List[Tuple[float, float]] = [
+        consecutive_instructions: List[List[float]] = [
             list(v) for k, v in itertools.groupby(self._instruction_markers)
         ]
 

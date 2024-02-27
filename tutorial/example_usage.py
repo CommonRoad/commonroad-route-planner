@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from time import perf_counter
+import sys
 
 import numpy as np
 
@@ -31,8 +32,11 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
     ignored_scenarios: List = [
         "USA_Lanker-2_6_T-1",
         "USA_Peach-4_1_T-1",
+        "DEU_Stu-1_49_I-1"
         
     ]
+
+
 
     for idx, filename in enumerate(sorted(os.listdir(path_scenarios))):
         id_scenario = filename.split(".")[0]
@@ -51,8 +55,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         # instantiate a route planner with the scenario and the planning problem
         route_planner = RoutePlanner(
             scenario,
-            planning_problem,
-            use_predecessors_to_pass_through_goal_state=False,
+            planning_problem
         )
         # plan routes, and save the routes in a route candidate holder
         route_selector: "RouteSelector" = route_planner.plan_routes()
@@ -77,8 +80,9 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
         # ========== visualization =========== #
         visualize_route(
-            route,
-            id_scenario,
+            route=route,
+            scenario=scenario,
+            planning_problem=planning_problem,
             save_img=save_imgs,
             draw_route_lanelets=True,
             draw_reference_path=True,
@@ -87,6 +91,8 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         print(f"checked {(idx*100/len(os.listdir(path_scenarios))):.2f}% of scenarios")
 
         print(f" \n \n")
+
+
 
 
 

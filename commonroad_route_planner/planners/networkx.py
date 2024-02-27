@@ -13,31 +13,63 @@ from commonroad_route_planner.utility.overtake_init_state import OvertakeInitSta
 
 
 # typing
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Union
 
 _logger = logging.getLogger(__name__)
 
 
 class NetworkxRoutePlanner(BaseRoutePlanner):
-    def __init__(
-        self,
-        lanelet_network: LaneletNetwork,
-        set_ids_permissible_lanelets=None,
-        overtake_states: List[OvertakeInitState]=None,
-        extended_search: bool = False,
-    ):
-        super().__init__(lanelet_network, set_ids_permissible_lanelets)
-        if overtake_states is None:
-            overtake_states = set()
-        self.overtake_states = overtake_states
 
-        # These lanelets must be included if possible
-        self.extended_search: bool = extended_search
+    def __init__(self,
+                lanelet_network: LaneletNetwork,
+                logger: logging.Logger,
+                prohibited_lanelet_ids: List[int] = None,
+                overtake_states: List[OvertakeInitState]=None,
+                extended_search: bool = False,
+                ) -> None:
+        """
 
-        self.digraph = self._create_graph_from_lanelet_network()
+        :param lanelet_network: cr lanelet network
+        :param prohibited_lanelet_ids: ids of lanelets that must not be included
+        :param overtake_states: if initial state is in an overtake situation
+        :param extended_search: necessary, if not the shortest but any route should be included
+        """
+        super().__init__(
+            lanelet_network=lanelet_network,
+            prohibited_lanelet_ids=prohibited_lanelet_ids,
+            logger=logger
+        )
 
 
-    def find_routes(self, id_lanelet_start, id_lanelet_goal) -> List:
+        self._overtake_states: List[OvertakeInitState] = overtake_states if(overtake_states is not None) else list()
+
+        self._extended_search: bool = extended_search
+
+        self._digraph: nx.DiGraph = self._create_graph_from_lanelet_network()
+
+
+
+    @property
+    def extended_search(self) -> bool:
+        """
+        :return: whether extended search is used
+        """
+        return self._extended_search
+
+
+    @extended_search.setter
+    def extended_search(self, use_ext_search:bool) -> None:
+        """
+        :param use_ext_search: set to True if extended search should be used
+        """
+        self._extended_search = use_ext_search
+
+
+
+    def find_routes(self,
+                    id_lanelet_start: int,
+                    id_lanelet_goal: Union[int, None],
+                    ) -> List[List[int]]:
         """Find all shortest paths using networkx module
 
         This tends to change lane late.
@@ -45,17 +77,17 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         :param id_lanelet_goal: ID of goal lanelet
         :return: list of lists of lanelet IDs
         """
-        list_lanelets = list()
+        lanelets_ids: List[int] = list()
 
-        if id_lanelet_start is None:
+        if(id_lanelet_start is None):
             raise NoSourceLaneletIdException
 
         try:
             # default that the shortest path is needed without additional lanelets included
-            if(self.extended_search is False):
-                list_lanelets = list(
+            if(self._extended_search is False):
+                lanelets_ids: List[List[int]] = list(
                     nx.all_shortest_paths(
-                        self.digraph,
+                        self._digraph,
                         source=id_lanelet_start,
                         target=id_lanelet_goal,
                         weight="weight",
@@ -65,9 +97,9 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
 
             else:
                 # special case that lanelets should be included --> increases runtime
-                list_lanelets = list(
+                lanelets_ids: List[List[int]] = list(
                     nx.all_simple_paths(
-                        self.digraph,
+                        self._digraph,
                         source=id_lanelet_start,
                         target=id_lanelet_goal,
                     )
@@ -75,79 +107,17 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
 
         except nx.exception.NetworkXNoPath:
             # it is a normal behaviour because of the overlapping lanelets in a road network
-            _logger.debug(
+            self._logger.error(
                 f"The goal lanelet with ID [{id_lanelet_goal}] cannot be reached from the start lanelet with ID [{id_lanelet_start}]"
             )
-        return list_lanelets
+        return lanelets_ids
 
-    def _create_longitudinal_graph(self) -> nx.DiGraph:
-        graph = nx.DiGraph()
-        nodes = []
-        edges = []
 
-        for lanelet in self.lanelet_network.lanelets:
-            # only accept allowed lanelets
-            if lanelet.lanelet_id not in self.set_ids_permissible_lanelets:
-                continue
 
-            nodes.append(lanelet.lanelet_id)
-
-            # add edge if succeeding lanelets exist
-            for id_successor in lanelet.successor:
-                if id_successor not in self.set_ids_permissible_lanelets:
-                    continue
-                edges.append(
-                    (lanelet.lanelet_id, id_successor, {"weight": lanelet.distance[-1]})
-                )
-
-        # add all nodes and edges to graph
-        graph.add_nodes_from(nodes)
-        graph.add_edges_from(edges)
-        return graph
-
-    def _create_lateral_graph(self) -> nx.DiGraph:
-        graph = nx.DiGraph()
-        nodes = []
-        edges = []
-
-        for lanelet in self.lanelet_network.lanelets:
-            # only accept allowed lanelets
-            if lanelet.lanelet_id not in self.set_ids_permissible_lanelets:
-                continue
-
-            nodes.append(lanelet.lanelet_id)
-
-            # add edge if left lanelet
-            id_adj_left = lanelet.adj_left
-            if (
-                id_adj_left
-                and lanelet.adj_left_same_direction
-                and id_adj_left in self.set_ids_permissible_lanelets
-            ):
-                edges.append((lanelet.lanelet_id, id_adj_left, {"weight": 4.0}))
-
-            # add edge if right lanelet
-            id_adj_right = lanelet.adj_right
-            if (
-                id_adj_right
-                and lanelet.adj_right_same_direction
-                and id_adj_right in self.set_ids_permissible_lanelets
-            ):
-                edges.append((lanelet.lanelet_id, id_adj_right, {"weight": 4.0}))
-
-        # Edges in case of overtake during starting state
-        for overtake_state in self.overtake_states:
-            edges.append((overtake_state.original_lanelet_id, overtake_state.adjecent_lanelet_id, {"weight": 1.0}))
-
-        # add all nodes and edges to graph
-        graph.add_nodes_from(nodes)
-        graph.add_edges_from(edges)
-        return graph
 
     def _create_graph_from_lanelet_network(self) -> nx.DiGraph:
-        """Builds a graph from the lanelet network
-
-        Edges are added from the successor relations between lanelets.
+        """
+        Builds a graph from the lanelet network. Edges are added from the successor relations between lanelets.
 
         :return: created graph from lanelet network
         """
@@ -157,8 +127,92 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         graph = nx.compose(lon_graph, lat_graph)
 
         # Edges in case of overtake during starting state
-        for overtake_state in self.overtake_states:
+        for overtake_state in self._overtake_states:
             graph.add_edges_from([(overtake_state.original_lanelet_id, overtake_state.adjecent_lanelet_id, {"weight": 0})])
 
         return graph
+
+
+
+    def _create_longitudinal_graph(self) -> nx.DiGraph:
+        """
+        Creates longitudinal graph
+
+        :return: created graph from lanelet network
+        """
+        graph = nx.DiGraph()
+        nodes: List[int] = list()
+        edges: List[Tuple[int, int, Dict[str, float]]] = list()
+
+        for lanelet in self._lanelet_network.lanelets:
+            # only accept allowed lanelets
+            if(lanelet.lanelet_id in self._prohibited_lanelet_ids):
+                continue
+
+            nodes.append(lanelet.lanelet_id)
+
+            # add edge if succeeding lanelets exist
+            for id_successor in lanelet.successor:
+                if(id_successor in self._prohibited_lanelet_ids):
+                    continue
+
+                edges.append(
+                    (lanelet.lanelet_id, id_successor, {"weight": lanelet.distance[-1]})
+                )
+
+        # add all nodes and edges to graph
+        graph.add_nodes_from(nodes)
+        graph.add_edges_from(edges)
+        return graph
+
+
+    def _create_lateral_graph(self) -> nx.DiGraph:
+        """
+        Creates lateral graph
+
+        :return: created graph from lanelet network
+        """
+        graph = nx.DiGraph()
+        # network x requires weird tuple based input
+        nodes: List[int] = list()
+        edges: List[Tuple[int, int, Dict[str, float]]] = list()
+
+        for lanelet in self._lanelet_network.lanelets:
+            # only accept allowed lanelets
+            if(lanelet.lanelet_id in self._prohibited_lanelet_ids):
+                continue
+
+            nodes.append(lanelet.lanelet_id)
+
+            # add edge if left lanelet
+            id_adj_left:int = lanelet.adj_left
+            if (
+                id_adj_left
+                and lanelet.adj_left_same_direction
+                and id_adj_left not in self._prohibited_lanelet_ids
+            ):
+                edges.append((lanelet.lanelet_id, id_adj_left, {"weight": 4.0}))
+
+            # add edge if right lanelet
+            id_adj_right:int = lanelet.adj_right
+            if (
+                id_adj_right
+                and lanelet.adj_right_same_direction
+                and id_adj_right not in self._prohibited_lanelet_ids
+            ):
+                edges.append((lanelet.lanelet_id, id_adj_right, {"weight": 4.0}))
+
+        # Edges in case of overtake during starting state
+        for overtake_state in self._overtake_states:
+            edges.append((overtake_state.original_lanelet_id, overtake_state.adjecent_lanelet_id, {"weight": 1.0}))
+
+        # add all nodes and edges to graph
+        graph.add_nodes_from(nodes)
+        graph.add_edges_from(edges)
+        return graph
+
+
+
+
+
 

@@ -63,8 +63,7 @@ class TestRouteSlice(unittest.TestCase):
         route_planner = RoutePlanner(
             scenario=scenario,
             planning_problem=planning_problem,
-            extended_search=True,
-            use_predecessors_to_pass_through_goal_state=False,
+            extended_search=True
         )
 
         included_lanelet_ids: List[int] = [1932]
@@ -76,7 +75,7 @@ class TestRouteSlice(unittest.TestCase):
 
         for idx in range_object:
             # FIXME: Currently there is a bug in the garching map, it is centimeter not meter....
-            point = route.reference_path[idx, :]
+            point = route._reference_path[idx, :]
 
             t_0 = perf_counter()
 
@@ -89,10 +88,10 @@ class TestRouteSlice(unittest.TestCase):
             if(True):
                 visualize_route(
                     route_slice,
-                    filename.split(".")[0],
+                    scenario=scenario,
+                    planning_problem=planning_problem,
                     save_img=False,
                     draw_route_lanelets=True,
                     draw_reference_path=True,
                 )
-
 
