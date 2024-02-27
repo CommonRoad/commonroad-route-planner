@@ -44,9 +44,11 @@ class Vector2D:
         self._entries: np.ndarray = np.asarray([p_end[0] - p_start[0], p_end[1] - p_start[1]])
         self._norm: float = math.sqrt((self._entries[0]) ** 2 + (self._entries[1]) ** 2)
 
-        self._angle_to_x: float = math.acos(
-            np.dot(self._entries, [1, 0]) / (self._norm * 1)
-        )
+        # FIXME: Only ever gets smaller angle, we need the correct one!
+        # Check: https://stackoverflow.com/questions/14066933/direct-way-of-computing-the-clockwise-angle-between-two-vectors
+        dot = self._entries[0]
+        det = self._entries[1]
+        self._angle_to_x = math.atan2(det, dot)
 
         if(self._norm == 0):
             raise ValueError(f'Norm of vector is zero. This class is not meant for zero vectors.')

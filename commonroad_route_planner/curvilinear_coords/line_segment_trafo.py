@@ -123,15 +123,29 @@ class LineSegmentTrafo:
 
 
 if __name__ == "__main__":
+    # 
     start_point = np.asarray([0, 0])
     end_point = np.asarray([2, 2])
     line_segment = LineSegmentTrafo(start_point, end_point)
     converted_point: np.ndarray = line_segment.convert_point_cartesian_curvilinear_segment(
-        x=1,
-        y=3
+        x=1.5,
+        y=1.5
     )
 
-    converted_orientation: float = line_segment.convert_cartesian_orientation_to_curvilinear_segment(theta_rad=np.pi/2    )
+    converted_orientation: float = line_segment.convert_cartesian_orientation_to_curvilinear_segment(theta_rad=0)
+
+    print(converted_point, converted_orientation)
+
+    # Switch line direction
+    start_point = np.asarray([2, 2])
+    end_point = np.asarray([0, 0])
+    line_segment = LineSegmentTrafo(start_point, end_point)
+    converted_point: np.ndarray = line_segment.convert_point_cartesian_curvilinear_segment(
+        x=0.5,
+        y=0.5
+    )
+
+    converted_orientation: float = line_segment.convert_cartesian_orientation_to_curvilinear_segment(theta_rad=0)
 
     print(converted_point, converted_orientation)
 
