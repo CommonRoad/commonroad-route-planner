@@ -2,7 +2,7 @@ __author__ = "Tobias Mascetta, Daniel Tar, Peter Kocsis, Edmond Irani Liu, Luis 
 __copyright__ = ""
 __credits__ = [""]
 __version__ = "2024.3"
-__maintainer__ = "Tobias Mascetta, Gerald Wuersching"
+__maintainer__ = "Tobias Mascetta"
 __email__ = "tobias.mascetta@tum.de"
 __status__ = "Release"
 
@@ -142,6 +142,7 @@ class RoutePlanner:
         self._prohibited_lanelet_ids: List[int] = prohibited_lanelet_ids if(prohibited_lanelet_ids is not None) else list()
 
         self._init_lanelet_ids_for_start_and_overtake()
+        self._init_goal_lanelet_ids()
         self._init_planner()
 
         return self.plan_routes()

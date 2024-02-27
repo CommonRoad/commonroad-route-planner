@@ -94,7 +94,7 @@ def visualize_route(route: Union[Route, "RouteSlice"],
 
     # draw reference path with dots
     if draw_reference_path:
-        for position in route._reference_path:
+        for position in route.reference_path:
             occ_pos = Circle(radius=0.3, center=position)
             renderer.draw_params.shape.facecolor = "#ff477e"
             occ_pos.draw(renderer)
