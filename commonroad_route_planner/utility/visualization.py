@@ -112,6 +112,49 @@ def visualize_route(route: Union[Route, "RouteSlice"],
         plt.show()
 
 
+
+
+def debug_visualize(route_list: List[Route],
+                    lanelet_network: LaneletNetwork,
+                    size_x: float = 10.0,
+                    ) -> None:
+    """
+    Visualizes the given route.
+    """
+
+    # obtain plot limits for a better visualization.
+    plot_limits = obtain_plot_limits_from_reference_path(route_list[0])
+
+    # set the figure size and ratio
+    ratio_x_y = (plot_limits[1] - plot_limits[0]) / (plot_limits[3] - plot_limits[2])
+
+    # instantiate a renderer for plotting
+    renderer = MPRenderer(plot_limits=plot_limits, figsize=(size_x, size_x / ratio_x_y))
+
+    lanelet_network.draw(renderer)
+
+    # draw reference path with dots
+    for route in route_list:
+        for position in route.reference_path:
+            occ_pos = Circle(radius=0.3, center=position)
+            renderer.draw_params.shape.facecolor = "#ff477e"
+            occ_pos.draw(renderer)
+
+    # render and show plot
+    renderer.render()
+
+    plt.margins(0, 0)
+
+
+    plt.show()
+
+
+
+
+
+
+
+
 def draw_state(renderer: MPRenderer,
                state: InitialState,
                color="#ee6c4d"

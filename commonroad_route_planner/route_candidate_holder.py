@@ -11,9 +11,9 @@ from commonroad.planning.goal import GoalRegion
 from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.state import InitialState
 
-
 # own code base
 from commonroad_route_planner.route import Route
+from commonroad_route_planner.utility.visualization import debug_visualize
 
 # typing
 from typing import List, Set, Tuple, Union
@@ -53,15 +53,23 @@ class RouteCandidateHolder:
         self._goal_region: GoalRegion = goal_region
 
         # create a list of Route objects for all routes found by the route planner which is not empty
-        self._route_candidates: List[Route] = [
-            Route(
-                lanelet_network=lanelet_network,
-                lanelet_ids=route,
-                prohibited_lanelet_ids=prohibited_lanelet_ids,
-                logger=self._logger
-            )
-            for route in route_candidates if route
-        ]
+        self._route_candidates: List[Route] = list()
+
+        for route in route_candidates:
+            if(route):
+                try:
+                    route = Route(
+                        lanelet_network=lanelet_network,
+                        lanelet_ids=route,
+                        prohibited_lanelet_ids=prohibited_lanelet_ids,
+                        goal_region=self._goal_region,
+                        logger=self._logger
+                    )
+                    self._route_candidates.append(route)
+                except:
+                    self._logger.warning(f'Failed to create route with exception')
+                    pass
+
         self._num_route_candidates: int = len(self._route_candidates)
 
 
@@ -121,6 +129,7 @@ class RouteCandidateHolder:
                         selected_route = route
                         break
             else:
+                debug_visualize(self._route_candidates, self._lanelet_network)
                 self._logger.error(f'[CR Route Planner] could not find a well oriented route. Perhaps increase distance threshold')
                 raise ValueError(f'[CR Route Planner] could not find a well oriented route. Perhaps increase distance threshold')
 

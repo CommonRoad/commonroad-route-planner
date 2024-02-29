@@ -13,10 +13,10 @@ from commonroad_route_planner.route_planner import RoutePlanner
 from commonroad_route_planner.utility.visualization import visualize_route
 from commonroad_route_planner.utility.route_extension.route_extendor import RouteExtendor
 
-
 # typing
 from typing import List
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from commonroad_route_planner.route_selector import RouteSelector
     from commonroad_route_planner.route import Route
@@ -24,23 +24,21 @@ if TYPE_CHECKING:
 
 def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
     # ========== initialization =========== #
-    if(use_cr2023_challenge):
+    if (use_cr2023_challenge):
         path_scenarios = Path(__file__).parents[1] / "tutorial/commonroad_challenge_2023"
     else:
         path_scenarios = Path(__file__).parents[1] / "scenarios"
 
-    ignored_scenarios: List = [
-        "USA_Lanker-2_6_T-1",
-        "USA_Peach-4_1_T-1",
-        "DEU_Stu-1_49_I-1",
+    use_list: List = [
+        #"DEU_Aachen-9_50_I-1",
+        "ZAM_Turorial-1_2_T-1_modified",
 
     ]
 
-
-
     for idx, filename in enumerate(sorted(os.listdir(path_scenarios))):
         id_scenario = filename.split(".")[0]
-        if id_scenario in ignored_scenarios:
+        if id_scenario not in use_list:
+            print(f"scenario id {id_scenario}")
             continue
         print(f"Testing scenario {filename}")
         # read in scenario and planning problem set
@@ -73,7 +71,6 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         # This is unnecessary but shows that the route_extendor modified the route object
         route: Route = route_extendor.get_route()
 
-
         # option 2: retrieve all routes
         list_routes, num_routes_retrieved = route_selector.retrieve_all_routes()
         print(f"Number of routes retrieved: {num_routes_retrieved}")
@@ -83,17 +80,14 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
             route=route,
             scenario=scenario,
             planning_problem=planning_problem,
-            save_img=save_imgs,
+            save_img=False,
             draw_route_lanelets=True,
             draw_reference_path=True,
         )
 
-        print(f"checked {(idx*100/len(os.listdir(path_scenarios))):.2f}% of scenarios")
+        print(f"checked {(idx * 100 / len(os.listdir(path_scenarios))):.2f}% of scenarios")
 
         print(f" \n \n")
-
-
-
 
 
 if __name__ == "__main__":

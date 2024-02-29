@@ -52,9 +52,7 @@ class LaneChangePositionHandler:
         
         self._instruction_markers: List[LaneChangeMarker] = None
         self._compute_lane_change_instructions()
-        
-        self._lanelet_portions: List[Tuple[float, float]] = None
-        self._compute_lanelet_portion()
+
         
         self.dict_lanelet_to_instructions: Dict["Lanelet", LaneChangeInstruction] = defaultdict() 
         self._generate_instruction_dict()
@@ -67,7 +65,7 @@ class LaneChangePositionHandler:
         
         for idx, instr in enumerate(self._instruction_markers):
             lanelet: "Lanelet" = self._lanelet_network.find_lanelet_by_id(self._lanelet_id_sequence[idx])
-            instruction: LaneChangeInstruction = LaneChangeInstruction(lanelet, self._instruction_markers[idx], self._lanelet_portions[idx])
+            instruction: LaneChangeInstruction = LaneChangeInstruction(lanelet, self._instruction_markers[idx])
             self.dict_lanelet_to_instructions[lanelet] = instruction
             
         
@@ -92,7 +90,7 @@ class LaneChangePositionHandler:
 
 
 
-    
+
 
 
 
