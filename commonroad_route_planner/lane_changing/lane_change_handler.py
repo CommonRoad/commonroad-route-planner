@@ -33,6 +33,7 @@ class LaneChangeHandler:
                  lanelet_end: Lanelet,
                  lanelet_section: LaneletSection,
                  lanelet_network: LaneletNetwork,
+                 route_lanelet_ids: List[int],
                  logger: Logger = None
                  ) -> None:
 
@@ -44,6 +45,7 @@ class LaneChangeHandler:
 
         self.lanelet_section: LaneletSection = lanelet_section
         self.lanelet_network: LaneletNetwork = lanelet_network
+        self.route_lanelet_ids: List[int] = route_lanelet_ids
 
 
         self.clcs: CurvilinearCoordinateSystem = CurvilinearCoordinateSystem(self.lanelet_start.center_vertices)
@@ -70,27 +72,15 @@ class LaneChangeHandler:
             self.lanelet_start.center_vertices[0, 1]
         )
 
-        # TODO: Implement through goal lane change
-        """
-        end_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
-            self.lanelet_end.center_vertices[-1, 0],
-            self.lanelet_end.center_vertices[-1, 1]
-        )
-
-        
-        if(set(goal_region.lanelets_of_goal_position[0]) & set(self.lanelet_section.adjacent_lanelet_ids)):
-            # Check if goal is within lane change
-            goal_position: np.ndarray = goal_region.state_list[0].position
-            end_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
-                goal_position[-1, 0],
-                goal_position[-1, 1]
-            )
-        """
+        # TODO: Implement better cases
 
         if(goal_region is not None):
+            if (hasattr(goal_region.state_list[0].position, "center")):
+                goal_mid_position: np.ndarray = goal_region.state_list[0].position.center
+            else:
+                # For uncertain position route planner takes first polygon
+                goal_mid_position: np.ndarray = goal_region.state_list[0].position.shapes[0].center
 
-            # check if goal region is in current lange change
-            goal_mid_position: np.ndarray = goal_region.state_list[0].position.center
             goal_lanelet_ids: List[int] = self.lanelet_network.find_lanelet_by_position([goal_mid_position])[0]
 
             if(set(goal_lanelet_ids) & set(self.lanelet_section.adjacent_lanelet_ids)):
@@ -127,12 +117,60 @@ class LaneChangeHandler:
 
 
 
+    def _end_goal_in_change(self,
+                            goal_region: GoalRegion
+                            ) -> np.ndarray:
+
+        start_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
+            self.lanelet_start.center_vertices[0, 0],
+            self.lanelet_start.center_vertices[0, 1]
+        )
+
+        if (hasattr(goal_region.state_list[0].position, "center")):
+            goal_mid_position: np.ndarray = goal_region.state_list[0].position.center
+        else:
+            # For uncertain position route planner takes first polygon
+            goal_mid_position: np.ndarray = goal_region.state_list[0].position.shapes[0].center
+
+        end_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
+            goal_mid_position[0],
+            goal_mid_position[1]
+        )
+
+        ref_path_curv: np.ndarray = generate_cubic_spline_ref_path(
+            start_point=start_point,
+            end_point=end_point
+        )
 
 
+        ref_path_cart = self.clcs.convert_list_of_points_to_cartesian_coords(
+            ref_path_curv,
+            4
+        )
+
+        # Add lines after the goal is reached
+        goal_lanelet_ids: List[int] = self.lanelet_network.find_lanelet_by_position([goal_mid_position])[0]
+        goal_lanelet_id: int = list(set(goal_lanelet_ids).intersection(set(self.route_lanelet_ids)))[0]
+        goal_lanelet_centerline: np.ndarray = self.lanelet_network.find_lanelet_by_id(goal_lanelet_id).center_vertices
+
+        goal_centerline_curv: np.ndarray = self.clcs.convert_list_of_points_to_curvilinear_coords(
+            goal_lanelet_centerline,
+            4
+        )
+
+        goal_centerline_cut: np.ndarray = goal_centerline_curv[(goal_lanelet_centerline[:,0] > end_point[0])]
+
+        goal_centerline_cart: np.ndarray = self.clcs.convert_list_of_points_to_cartesian_coords(
+            goal_centerline_cut,
+            4
+        )
+
+        reference_path: np.ndarray = np.concatenate(
+            (ref_path_cart, goal_centerline_cart), axis=0
+        )
 
 
-
-
+        return reference_path
 
 
 

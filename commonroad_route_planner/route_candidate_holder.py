@@ -56,15 +56,19 @@ class RouteCandidateHolder:
         self._route_candidates: List[Route] = list()
 
         for route in route_candidates:
-            if(route):
-                route = Route(
-                    lanelet_network=lanelet_network,
-                    lanelet_ids=route,
-                    prohibited_lanelet_ids=prohibited_lanelet_ids,
-                    goal_region=self._goal_region,
-                    logger=self._logger
-                )
-            self._route_candidates.append(route)
+            try:
+                if(route):
+                    route = Route(
+                        lanelet_network=lanelet_network,
+                        lanelet_ids=route,
+                        prohibited_lanelet_ids=prohibited_lanelet_ids,
+                        goal_region=self._goal_region,
+                        logger=self._logger
+                    )
+                self._route_candidates.append(route)
+            except:
+                print(f'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+
 
 
         self._num_route_candidates: int = len(self._route_candidates)

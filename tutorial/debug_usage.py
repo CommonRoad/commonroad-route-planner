@@ -63,13 +63,6 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         route: "Route" = route_selector.retrieve_shortest_route(retrieve_shortest=True)
         print(f"[Time] Retrieving first route took {perf_counter() - t_start}")
 
-        # Init route extendor
-        route_extendor: RouteExtendor = RouteExtendor(route)
-        # Extend reference path at start and end
-        route_extendor.extend_reference_path_at_start_and_end()
-
-        # This is unnecessary but shows that the route_extendor modified the route object
-        route: Route = route_extendor.get_route()
 
         # option 2: retrieve all routes
         list_routes, num_routes_retrieved = route_selector.retrieve_all_routes()

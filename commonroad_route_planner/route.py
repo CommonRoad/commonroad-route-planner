@@ -324,7 +324,8 @@ class Route:
                     lanelet_start=lanelet,
                     lanelet_end=lanelet_end,
                     lanelet_section=lanelet_section,
-                    lanelet_network=self.lanelet_network
+                    lanelet_network=self.lanelet_network,
+                    route_lanelet_ids=self.lanelet_ids
                 )
 
                 skip_ids.extend(lanelet_section.adjacent_lanelet_ids)
