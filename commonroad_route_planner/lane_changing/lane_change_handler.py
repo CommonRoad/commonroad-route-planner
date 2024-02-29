@@ -117,6 +117,14 @@ class LaneChangeHandler:
 
 
 
+    def _start_goal_in_change(self):
+        pass
+
+
+    def _start_and_end_goal_in_change(self):
+        pass
+
+
     def _end_goal_in_change(self,
                             goal_region: GoalRegion
                             ) -> np.ndarray:
@@ -158,7 +166,7 @@ class LaneChangeHandler:
             4
         )
 
-        goal_centerline_cut: np.ndarray = goal_centerline_curv[(goal_lanelet_centerline[:,0] > end_point[0])]
+        goal_centerline_cut: np.ndarray = goal_centerline_curv[(goal_lanelet_centerline[:, 0] > end_point[0])]
 
         goal_centerline_cart: np.ndarray = self.clcs.convert_list_of_points_to_cartesian_coords(
             goal_centerline_cut,
