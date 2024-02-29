@@ -72,7 +72,7 @@ class RoutePlanner:
             level=logging_level
         )
 
-        self._scenario:Scenario = scenario
+        self._scenario: Scenario = scenario
         self._lanelet_network: LaneletNetwork = scenario.lanelet_network
         self._planning_problem: PlanningProblem = planning_problem
 

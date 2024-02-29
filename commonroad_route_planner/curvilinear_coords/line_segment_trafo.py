@@ -32,6 +32,10 @@ class LineSegmentTrafo:
         )
         self._angle: float = self._vector2d.angle_to_x
 
+        # Create orthogonal via halfspace representation or rotation
+        self.orthogonal_to_startpoint = None
+        self.orthogonal_to_endpoint = None
+
 
         self._transformation_matrix: np.matrix = None
         self._invers_trafo_matrix: np.matrix = None
@@ -68,6 +72,11 @@ class LineSegmentTrafo:
 
 
 
+    def check_point_in_segment(self):
+        pass
+
+
+
     def convert_point_cartesian_curvilinear_segment(self,
                                                     x: float,
                                                     y: float,
@@ -88,9 +97,13 @@ class LineSegmentTrafo:
 
     def convert_cartesian_orientation_to_curvilinear_segment(self,
                                                              theta_rad: float,
-                                                             precision: int = 5) -> float:
+                                                             precision: int = 5
+                                                             ) -> float:
         """
-        Convert orientation to
+        Convert orientation to to curvilinear
+
+        :param theta_rad: orientation in cartesian in rad
+        :param precision: precision of returned value
         """
         # theta
         theta_rad_segment: float = round(theta_rad - self._vector2d.angle_to_x, precision)
@@ -123,7 +136,7 @@ class LineSegmentTrafo:
 
 
 if __name__ == "__main__":
-    # 
+    #
     start_point = np.asarray([0, 0])
     end_point = np.asarray([2, 2])
     line_segment = LineSegmentTrafo(start_point, end_point)

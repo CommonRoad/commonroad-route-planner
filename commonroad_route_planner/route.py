@@ -84,7 +84,6 @@ class Route:
         return self._lanelet_ids
 
 
-
     @property
     def lanelet_ids(self) -> List[int]:
         """
@@ -100,11 +99,10 @@ class Route:
         return self._lanelet_network
 
 
-
     @property
     def reference_path(self) -> np.ndarray:
         """
-        :return (n,2) np ndarray of points of ref path
+        :return: (n,2) np ndarray of points of ref path
         """
         return self._reference_path
 
@@ -143,7 +141,6 @@ class Route:
         :return: (n,1) per point orientation values in rad
         """
         return self._path_orientation
-
 
     @property
     def path_curvature(self) -> np.ndarray:
