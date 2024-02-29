@@ -87,11 +87,28 @@ class LaneChangeHandler:
             )
         """
 
+        if(goal_region is not None):
 
-        end_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
-            self.lanelet_end.center_vertices[-1, 0],
-            self.lanelet_end.center_vertices[-1, 1]
-        )
+            # check if goal region is in current lange change
+            goal_mid_position: np.ndarray = goal_region.state_list[0].position.center
+            goal_lanelet_ids: List[int] = self.lanelet_network.find_lanelet_by_position([goal_mid_position])[0]
+
+            if(set(goal_lanelet_ids) & set(self.lanelet_section.adjacent_lanelet_ids)):
+                end_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
+                    goal_mid_position[0],
+                    goal_mid_position[1]
+                )
+            else:
+                end_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
+                    self.lanelet_end.center_vertices[-1, 0],
+                    self.lanelet_end.center_vertices[-1, 1]
+                )
+
+        else:
+            end_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
+                self.lanelet_end.center_vertices[-1, 0],
+                self.lanelet_end.center_vertices[-1, 1]
+            )
 
         ref_path_curv: np.ndarray = generate_cubic_spline_ref_path(
             start_point=start_point,
@@ -102,6 +119,7 @@ class LaneChangeHandler:
             ref_path_curv,
             4
         )
+
 
         ref_path = pops.resample_polyline(ref_path_cart, step=sample_step_size)
 

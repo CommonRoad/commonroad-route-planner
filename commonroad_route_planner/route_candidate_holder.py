@@ -57,18 +57,15 @@ class RouteCandidateHolder:
 
         for route in route_candidates:
             if(route):
-                try:
-                    route = Route(
-                        lanelet_network=lanelet_network,
-                        lanelet_ids=route,
-                        prohibited_lanelet_ids=prohibited_lanelet_ids,
-                        goal_region=self._goal_region,
-                        logger=self._logger
-                    )
-                    self._route_candidates.append(route)
-                except:
-                    self._logger.warning(f'Failed to create route with exception')
-                    pass
+                route = Route(
+                    lanelet_network=lanelet_network,
+                    lanelet_ids=route,
+                    prohibited_lanelet_ids=prohibited_lanelet_ids,
+                    goal_region=self._goal_region,
+                    logger=self._logger
+                )
+            self._route_candidates.append(route)
+
 
         self._num_route_candidates: int = len(self._route_candidates)
 
