@@ -15,12 +15,12 @@
 
 from collections import defaultdict
 
-
 # typing
-from typing import List, Tuple
+
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from commonroad.scenario.scenario import Lanelet
+    from commonroad_route_planner.lane_changing.change_position import LaneChangeMarker
     
 
 class LaneChangeInstruction:
@@ -44,8 +44,7 @@ class LaneChangeInstruction:
     
     def __init__(self,
                  lanelet: "Lanelet",
-                 instruction_markes: List[int],
-                 lanelet_portions: Tuple[float, float]
+                 lane_change_marker: "LaneChangeMarker"
                  ) -> None:
                
         
@@ -53,8 +52,7 @@ class LaneChangeInstruction:
         self.lanelet_id: int = lanelet.lanelet_id
         
         # Lane portiions
-        self.instruction_markers: List[int] = instruction_markes
-        self.lanelet_portions: Tuple[float, float] = lanelet_portions
+        self.instruction_markers: "LaneChangeMarker" = lane_change_marker
         
         # Save in class method
         self.id = LaneChangeInstruction.cnt

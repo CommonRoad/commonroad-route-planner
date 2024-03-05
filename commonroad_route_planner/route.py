@@ -10,6 +10,7 @@ from scipy.spatial.kdtree import KDTree
 from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.scenario import Scenario
+from commonroad.planning.goal import GoalRegion
 
 # own code base
 from commonroad_route_planner.utility.route_util import (chaikins_corner_cutting)
@@ -17,6 +18,8 @@ from commonroad_route_planner.route_sections.lanelet_section import LaneletSecti
 from commonroad_route_planner.lane_changing.change_position import LaneChangePositionHandler, LaneChangeInstruction
 import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
 from commonroad_route_planner.utility.route_slice.route_slice import RouteSlice
+from commonroad_route_planner.lane_changing.lane_change_handler import LaneChangeHandler
+from commonroad_route_planner.lane_changing.change_position import LaneChangeMarker
 
 
 
@@ -42,12 +45,14 @@ class Route:
                  lanelet_network: LaneletNetwork,
                  lanelet_ids: List[int],
                  logger: logging.Logger,
+                 goal_region: GoalRegion,
                  prohibited_lanelet_ids: List[int] = None
                  )->None:
 
         self._logger = logger
 
         self._lanelet_network: LaneletNetwork = lanelet_network
+        self._goal_region: GoalRegion = goal_region
 
         # a route is created given the list of lanelet ids from start to goal
         self._lanelet_ids: List[int] = lanelet_ids
@@ -84,7 +89,6 @@ class Route:
         return self._lanelet_ids
 
 
-
     @property
     def lanelet_ids(self) -> List[int]:
         """
@@ -99,12 +103,18 @@ class Route:
         """
         return self._lanelet_network
 
+    @property
+    def goal_region(self) -> GoalRegion:
+        """
+        :return: commonroad goal region
+        """
+        return self._goal_region
 
 
     @property
     def reference_path(self) -> np.ndarray:
         """
-        :return (n,2) np ndarray of points of ref path
+        :return: (n,2) np ndarray of points of ref path
         """
         return self._reference_path
 
@@ -143,7 +153,6 @@ class Route:
         :return: (n,1) per point orientation values in rad
         """
         return self._path_orientation
-
 
     @property
     def path_curvature(self) -> np.ndarray:
@@ -255,20 +264,19 @@ class Route:
         :return: reference path in 2d numpy array ([[x0, y0], [x1, y1], ...])
         """
         self._lane_change_position_handler: LaneChangePositionHandler = LaneChangePositionHandler(self._lanelet_ids,
+
                                                                                                   self._lanelet_network)
-        
-        reference_path_stair: np.ndarray = self._compute_reference_path_as_stair_function()
+        reference_path_stair: np.ndarray = self._compute_reference_path_with_lane_changes()
         reference_path_star_without_duplicated: np.ndarray = pops.remove_duplicate_points(reference_path_stair)
         reference_path_smoothed: np.ndarray = chaikins_corner_cutting(reference_path_star_without_duplicated)
+
         
         self._reference_path: np.ndarray = reference_path_smoothed
 
         
 
-    def _compute_reference_path_as_stair_function(
+    def _compute_reference_path_with_lane_changes(
         self,
-        num_vertices_lane_change_max: int=6,
-        percentage_vertices_lane_change_max: float=0.1,
         step_resample: float=1.0,
     ):
         """Computes reference path stair function given the list of portions of each lanelet
@@ -282,13 +290,101 @@ class Route:
         """
         
         # TODO Refactor, since this does not consider that the reference path is actually intersecting with the goal region, if existing.
-        
+
         reference_path: np.ndarray = None
-        num_lanelets_in_route = len(self._lanelet_ids)
-        
+        skip_ids: List[int] = list()
+
+        for idx, lanelet_id in enumerate(self._lanelet_ids):
+            # necessary since lane change takes care of multiple ids
+            if (lanelet_id in skip_ids):
+                continue
+
+            # Sample the center vertices of the lanelet as foundation for the reference path
+            lanelet: "Lanelet" = self._lanelet_network.find_lanelet_by_id(lanelet_id)
+            centerline_vertices: np.ndarray = pops.sample_polyline(lanelet.center_vertices, step_resample)
+            lanelet_section: LaneletSection = LaneletSection.get_section_by_lanelet_id(lanelet_id)
+
+            # get driving instruction object for lanelet
+            instruction: LaneChangeInstruction = self._lane_change_position_handler.get_driving_instruction_for_lanelet(
+                lanelet)
+
+            if(instruction.instruction_markers == LaneChangeMarker.NO_CHANGE):
+                # No lane change required
+                reference_path: np.ndarray = np.concatenate(
+                    (reference_path, centerline_vertices), axis=0
+                ) if(reference_path is not None) else centerline_vertices
+
+            else:
+                # lane change required
+                lanelet_end: Lanelet = self._find_last_lanelet_of_lane_change(
+                    lanelet_start=lanelet,
+                    lanelet_section=lanelet_section
+                )
+                lane_change_handler: LaneChangeHandler = LaneChangeHandler(
+                    lanelet_start=lanelet,
+                    lanelet_end=lanelet_end,
+                    lanelet_section=lanelet_section,
+                    lanelet_network=self.lanelet_network,
+                    route_lanelet_ids=self.lanelet_ids
+                )
+
+                skip_ids.extend(lanelet_section.adjacent_lanelet_ids)
+
+                lane_change_path: np.ndarray = lane_change_handler.compute_lane_change(
+                    goal_region=self._goal_region
+                )
+
+                # No lane change required
+                reference_path: np.ndarray = np.concatenate(
+                    (reference_path, lane_change_path), axis=0
+                ) if(reference_path is not None) else lane_change_path
+
+
+        # Resample polyline for better distance
+        reference_path: np.ndarray = pops.sample_polyline(reference_path, step=2)
+
+        return reference_path
+
+
+    def _find_last_lanelet_of_lane_change(self,
+                                          lanelet_start: "Lanelet",
+                                          lanelet_section: LaneletSection
+                                          ) -> "Lanelet":
+        """
+        Finds last lanelet of lane change
+        """
+
+        idx_start: int = self._lanelet_ids.index(lanelet_start.lanelet_id)
+        lanelet_return: Lanelet = None
+
+
+        # NOTE: This check assumes that self._lanelet_ids has the correct order from start to finish
+        for i in range(idx_start, (len(self._lanelet_ids))):
+            if(self._lanelet_ids[i] not in lanelet_section.adjacent_lanelet_ids):
+                lanelet_return: Lanelet = self._lanelet_network.find_lanelet_by_id(self._lanelet_ids[i - 1])
+                break
+
+
+        # if route ends in lane section of lane change
+        if (lanelet_return is None):
+            self._logger.info(f'Encountered goal in lane change')
+            lanelet_return: Lanelet = self._lanelet_network.find_lanelet_by_id(self._lanelet_ids[-1])
+
+        return lanelet_return
+
+
+
+
+
+    """
+    def asdf(self):
+
+        reference_path: np.ndarray = None
+        skip_ids: List[int] = list()
         
         for idx, id_lanelet in enumerate(self._lanelet_ids):
-            
+
+
             # Sample the center vertices of the lanelet as foundation for the reference path
             lanelet: "Lanelet" = self._lanelet_network.find_lanelet_by_id(id_lanelet)
             centerline_vertices: np.ndarray = pops.sample_polyline(lanelet.center_vertices, step_resample)
@@ -296,6 +392,8 @@ class Route:
             
             # get driving instruction object for lanelet
             instruction: LaneChangeInstruction = self._lane_change_position_handler.get_driving_instruction_for_lanelet(lanelet)
+
+
             
             
             # FIXME: Does not sound very practical
@@ -346,7 +444,7 @@ class Route:
         reference_path: np.ndarray = pops.sample_polyline(reference_path, 2)
         
         return reference_path
-
+    """
 
 
 

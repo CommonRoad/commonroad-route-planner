@@ -11,9 +11,9 @@ from commonroad.planning.goal import GoalRegion
 from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.state import InitialState
 
-
 # own code base
 from commonroad_route_planner.route import Route
+from commonroad_route_planner.utility.visualization import debug_visualize
 
 # typing
 from typing import List, Set, Tuple, Union
@@ -58,11 +58,16 @@ class RouteCandidateHolder:
                 lanelet_network=lanelet_network,
                 lanelet_ids=route,
                 prohibited_lanelet_ids=prohibited_lanelet_ids,
+                goal_region=self._goal_region,
                 logger=self._logger
-            )
-            for route in route_candidates if route
+            ) for route in route_candidates if route
         ]
+
         self._num_route_candidates: int = len(self._route_candidates)
+
+        if(self._num_route_candidates == 0):
+            self._logger.error(f'could not compute a single route due to clcs')
+            raise ValueError('could not compute a single route due to clcs')
 
 
 
@@ -121,8 +126,11 @@ class RouteCandidateHolder:
                         selected_route = route
                         break
             else:
-                self._logger.error(f'[CR Route Planner] could not find a well oriented route. Perhaps increase distance threshold')
-                raise ValueError(f'[CR Route Planner] could not find a well oriented route. Perhaps increase distance threshold')
+                debug_visualize(self._route_candidates, self._lanelet_network)
+                self._logger.error(f'[CR Route Planner] could not find a well oriented route. Perhaps increase distance threshold, '
+                                   f'returning first route')
+                selected_route = sorted_routes[0]
+
 
 
         return selected_route

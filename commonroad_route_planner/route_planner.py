@@ -2,7 +2,7 @@ __author__ = "Tobias Mascetta, Daniel Tar, Peter Kocsis, Edmond Irani Liu, Luis 
 __copyright__ = ""
 __credits__ = [""]
 __version__ = "2024.3"
-__maintainer__ = "Tobias Mascetta, Gerald Wuersching"
+__maintainer__ = "Tobias Mascetta"
 __email__ = "tobias.mascetta@tum.de"
 __status__ = "Release"
 
@@ -73,7 +73,7 @@ class RoutePlanner:
             level=logging_level
         )
 
-        self._scenario:Scenario = scenario
+        self._scenario: Scenario = scenario
         self._lanelet_network: LaneletNetwork = scenario.lanelet_network
         self._planning_problem: PlanningProblem = planning_problem
 
@@ -89,6 +89,7 @@ class RoutePlanner:
 
         self._planner: Union[NetworkxRoutePlanner, NoGoalFoundRoutePlanner] = None
         self._init_planner()
+
 
 
     @property
@@ -143,6 +144,7 @@ class RoutePlanner:
         self._prohibited_lanelet_ids: List[int] = prohibited_lanelet_ids if(prohibited_lanelet_ids is not None) else list()
 
         self._init_lanelet_ids_for_start_and_overtake()
+        self._init_goal_lanelet_ids()
         self._init_planner()
 
         return self.plan_routes()
@@ -166,7 +168,8 @@ class RoutePlanner:
             # if normal _planner iterate through goal lanelet ids
                 for id_lanelet_goal in self._ids_lanelets_goal:
                     ids_lanelets = self._planner.find_routes(
-                        id_lanelet_start, id_lanelet_goal
+                        id_lanelet_start=id_lanelet_start,
+                        id_lanelet_goal=id_lanelet_goal
                     )
                     routes.extend(ids_lanelets)
 
