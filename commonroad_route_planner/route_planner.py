@@ -90,6 +90,7 @@ class RoutePlanner:
         self._init_planner()
 
 
+
     @property
     def scenario(self) -> Scenario:
         """
@@ -166,7 +167,8 @@ class RoutePlanner:
             # if normal _planner iterate through goal lanelet ids
                 for id_lanelet_goal in self._ids_lanelets_goal:
                     ids_lanelets = self._planner.find_routes(
-                        id_lanelet_start, id_lanelet_goal
+                        id_lanelet_start=id_lanelet_start,
+                        id_lanelet_goal=id_lanelet_goal
                     )
                     routes.extend(ids_lanelets)
 

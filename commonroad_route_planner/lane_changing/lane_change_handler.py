@@ -104,12 +104,7 @@ class LaneChangeHandler:
             1000,
             0.1
         )
-        plot_clcs_line_with_projection_domain(clcs_line, self.clcs)
-
-        x = 3
-
-
-
+        #plot_clcs_line_with_projection_domain(clcs_line, self.clcs)
 
 
 

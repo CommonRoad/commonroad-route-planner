@@ -53,22 +53,15 @@ class RouteCandidateHolder:
         self._goal_region: GoalRegion = goal_region
 
         # create a list of Route objects for all routes found by the route planner which is not empty
-        self._route_candidates: List[Route] = list()
-
-        for route in route_candidates:
-            if(route):
-                route = Route(
-                    lanelet_network=lanelet_network,
-                    lanelet_ids=route,
-                    prohibited_lanelet_ids=prohibited_lanelet_ids,
-                    goal_region=self._goal_region,
-                    logger=self._logger
-                )
-            self._route_candidates.append(route)
-
-
-
-
+        self._route_candidates: List[Route] = [
+            Route(
+                lanelet_network=lanelet_network,
+                lanelet_ids=route,
+                prohibited_lanelet_ids=prohibited_lanelet_ids,
+                goal_region=self._goal_region,
+                logger=self._logger
+            ) for route in route_candidates if route
+        ]
 
         self._num_route_candidates: int = len(self._route_candidates)
 
@@ -134,8 +127,10 @@ class RouteCandidateHolder:
                         break
             else:
                 debug_visualize(self._route_candidates, self._lanelet_network)
-                self._logger.error(f'[CR Route Planner] could not find a well oriented route. Perhaps increase distance threshold')
-                raise ValueError(f'[CR Route Planner] could not find a well oriented route. Perhaps increase distance threshold')
+                self._logger.error(f'[CR Route Planner] could not find a well oriented route. Perhaps increase distance threshold, '
+                                   f'returning first route')
+                selected_route = sorted_routes[0]
+
 
 
         return selected_route

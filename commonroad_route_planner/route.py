@@ -346,7 +346,10 @@ class Route:
         return reference_path
 
 
-    def _find_last_lanelet_of_lane_change(self, lanelet_start: "Lanelet", lanelet_section: LaneletSection) -> "Lanelet":
+    def _find_last_lanelet_of_lane_change(self,
+                                          lanelet_start: "Lanelet",
+                                          lanelet_section: LaneletSection
+                                          ) -> "Lanelet":
         """
         Finds last lanelet of lane change
         """
@@ -354,12 +357,17 @@ class Route:
         idx_start: int = self._lanelet_ids.index(lanelet_start.lanelet_id)
         lanelet_return: Lanelet = None
 
+
+        # NOTE: This check assumes that self._lanelet_ids has the correct order from start to finish
         for i in range(idx_start, (len(self._lanelet_ids))):
             if(self._lanelet_ids[i] not in lanelet_section.adjacent_lanelet_ids):
                 lanelet_return: Lanelet = self._lanelet_network.find_lanelet_by_id(self._lanelet_ids[i - 1])
+                break
+
 
         # if route ends in lane section of lane change
         if (lanelet_return is None):
+            self._logger.info(f'Encountered goal in lane change')
             lanelet_return: Lanelet = self._lanelet_network.find_lanelet_by_id(self._lanelet_ids[-1])
 
         return lanelet_return
