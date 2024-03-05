@@ -30,13 +30,8 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         path_scenarios = Path(__file__).parents[1] / "scenarios"
 
     ignored_scenarios: List = [
-        "USA_Lanker-2_6_T-1",
-        "USA_Peach-4_1_T-1",
         "DEU_Stu-1_49_I-1",
-        "DEU_Frankfurt-3_25_I-1",
-        "USA_Peach-2_1_T-1",
-        "USA_US101-22_1_T-1"
-
+        "DEU_Aachen-9_67_I-1"
     ]
 
 

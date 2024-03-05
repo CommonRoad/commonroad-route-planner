@@ -30,8 +30,10 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         path_scenarios = Path(__file__).parents[1] / "scenarios"
 
     use_list: List = [
-        #"DEU_Aachen-9_50_I-1",
-        "ZAM_Turorial-1_2_T-1_modified",
+        "USA_Peach-2_1_T-1",
+        "USA_US101-22_1_T-1",
+        "DEU_Aachen-9_67_I-1",
+        "DEU_Stu-1_49_I-1",
 
     ]
 

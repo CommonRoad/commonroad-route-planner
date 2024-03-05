@@ -1,7 +1,7 @@
 import os
 
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 # commonrodad
 from commonroad.scenario.scenario import Scenario
@@ -10,18 +10,18 @@ from commonroad.geometry.shape import Circle, Rectangle
 from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.state import InitialState
 from commonroad.visualization.mp_renderer import MPRenderer
+from commonroad.visualization.draw_params import MPDrawParams
 
-# own code base
-from commonroad_route_planner.route import Route, RouteSlice
+
 
 # typing
 from typing import Union, List
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from commonroad_route_planner.utility.route_slice.route_slice import RouteSlice
+    from commonroad_route_planner.route import Route, RouteSlice
 
 
-def visualize_route(route: Union[Route, "RouteSlice"],
+def visualize_route(route: Union["Route", "RouteSlice"],
                     scenario:Scenario,
                     planning_problem: PlanningProblem,
                     save_img: bool = True,
@@ -114,7 +114,7 @@ def visualize_route(route: Union[Route, "RouteSlice"],
 
 
 
-def debug_visualize(route_list: List[Route],
+def debug_visualize(route_list: List["Route"],
                     lanelet_network: LaneletNetwork,
                     size_x: float = 10.0,
                     ) -> None:
@@ -149,6 +149,27 @@ def debug_visualize(route_list: List[Route],
     plt.show()
 
 
+def plot_clcs_line_with_projection_domain(clcs_line: np.ndarray,
+
+                                          clcs):
+    """
+    Plots scenario including projection domain of the curvilinear coordinate system used by reach_interface
+    :param config: Configuration object of the ReachInterface
+    """
+    rnd = MPRenderer(figsize=(20, 10))
+    draw_param = MPDrawParams()
+    draw_param.time_begin = 0
+
+
+    rnd.render()
+
+    for idx in range(clcs_line.shape[0]):
+        occ_pos = Circle(radius=0.3, center=clcs_line[idx, :])
+        occ_pos.draw(rnd, draw_param)
+
+    proj_domain_border = np.asarray(clcs.projection_domain())
+    rnd.ax.plot(proj_domain_border[:, 0], proj_domain_border[:, 1], zorder=100, color='orange')
+    plt.show()
 
 
 
@@ -171,7 +192,7 @@ def draw_state(renderer: MPRenderer,
     occ_state.draw(renderer)
 
 
-def obtain_plot_limits_from_routes(route: Union[Route, RouteSlice],
+def obtain_plot_limits_from_routes(route: Union["Route", "RouteSlice"],
                                    border: float = 15
                                    )->List[int]:
     """
@@ -201,7 +222,7 @@ def obtain_plot_limits_from_routes(route: Union[Route, RouteSlice],
     return plot_limits
 
 
-def obtain_plot_limits_from_reference_path(route: Union[Route, RouteSlice],
+def obtain_plot_limits_from_reference_path(route: Union["Route", "RouteSlice"],
                                            border: float = 10.0
                                            ) -> List[int]:
     """

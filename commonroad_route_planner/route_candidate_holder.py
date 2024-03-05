@@ -56,22 +56,25 @@ class RouteCandidateHolder:
         self._route_candidates: List[Route] = list()
 
         for route in route_candidates:
-            try:
-                if(route):
-                    route = Route(
-                        lanelet_network=lanelet_network,
-                        lanelet_ids=route,
-                        prohibited_lanelet_ids=prohibited_lanelet_ids,
-                        goal_region=self._goal_region,
-                        logger=self._logger
-                    )
-                self._route_candidates.append(route)
-            except:
-                print(f'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
+            if(route):
+                route = Route(
+                    lanelet_network=lanelet_network,
+                    lanelet_ids=route,
+                    prohibited_lanelet_ids=prohibited_lanelet_ids,
+                    goal_region=self._goal_region,
+                    logger=self._logger
+                )
+            self._route_candidates.append(route)
+
+
 
 
 
         self._num_route_candidates: int = len(self._route_candidates)
+
+        if(self._num_route_candidates == 0):
+            self._logger.error(f'could not compute a single route due to clcs')
+            raise ValueError('could not compute a single route due to clcs')
 
 
 

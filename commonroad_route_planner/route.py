@@ -362,8 +362,6 @@ class Route:
         if (lanelet_return is None):
             lanelet_return: Lanelet = self._lanelet_network.find_lanelet_by_id(self._lanelet_ids[-1])
 
-            print('asdf')
-
         return lanelet_return
 
 
