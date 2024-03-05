@@ -1,9 +1,6 @@
 import os
 from pathlib import Path
 from time import perf_counter
-import sys
-
-import numpy as np
 
 # commonrad
 from commonroad.common.file_reader import CommonRoadFileReader

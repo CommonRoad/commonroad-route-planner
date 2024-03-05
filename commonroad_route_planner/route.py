@@ -21,6 +21,7 @@ import commonroad_route_planner.utility.polyline_operations.polyline_operations 
 from commonroad_route_planner.utility.route_slice.route_slice import RouteSlice
 from commonroad_route_planner.lane_changing.lane_change_handler import LaneChangeHandler
 from commonroad_route_planner.lane_changing.change_position import LaneChangeMarker
+from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
 
 
 
@@ -48,7 +49,8 @@ class Route:
                  logger: logging.Logger,
                  initial_state: InitialState,
                  goal_region: GoalRegion,
-                 prohibited_lanelet_ids: List[int] = None
+                 prohibited_lanelet_ids: List[int] = None,
+                 lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE
                  )->None:
 
         self._logger = logger
@@ -65,6 +67,8 @@ class Route:
         self._calc_route_sections()
 
         self._prohibited_lanelet_ids: List[int]  = prohibited_lanelet_ids if(lanelet_ids is not None) else list()
+
+        self._lane_change_method: LaneChangeMethod = lane_change_method
 
         # generate reference path from the list of lanelet ids leading to goal
         self._reference_path: np.ndarray = None
@@ -112,6 +116,13 @@ class Route:
         :return: commonroad goal region
         """
         return self._goal_region
+
+    @property
+    def lane_change_method(self) -> LaneChangeMethod:
+        """
+        :return: lane change method
+        """
+        return self._lane_change_method
 
 
     @property
@@ -331,7 +342,8 @@ class Route:
 
                 lane_change_path: np.ndarray = lane_change_handler.compute_lane_change(
                     initial_state=self._initial_state,
-                    goal_region=self._goal_region
+                    goal_region=self._goal_region,
+                    method=self._lane_change_method
                 )
 
                 # No lane change required

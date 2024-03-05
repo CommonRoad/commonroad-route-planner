@@ -21,6 +21,7 @@ from commonroad.scenario.state import InitialState
 # own code base
 from commonroad_route_planner.route import Route
 from commonroad_route_planner.route_candidate_holder import RouteCandidateHolder
+from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
 
 
 
@@ -40,7 +41,8 @@ class RouteSelector(RouteCandidateHolder):
                  goal_region: GoalRegion,
                  route_candidates: List[List[int]],
                  prohibited_lanelet_ids: List[int],
-                 logger: logging.Logger
+                 logger: logging.Logger,
+                 lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE
                  ) -> None:
         
         super().__init__(
@@ -49,7 +51,8 @@ class RouteSelector(RouteCandidateHolder):
             goal_region=goal_region,
             route_candidates=route_candidates,
             prohibited_lanelet_ids=prohibited_lanelet_ids,
-            logger=logger
+            logger=logger,
+            lane_change_method=lane_change_method
             )
         
         
