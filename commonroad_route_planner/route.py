@@ -11,6 +11,7 @@ from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.scenario import Scenario
 from commonroad.planning.goal import GoalRegion
+from commonroad.planning.planning_problem import InitialState
 
 # own code base
 from commonroad_route_planner.utility.route_util import (chaikins_corner_cutting)
@@ -45,6 +46,7 @@ class Route:
                  lanelet_network: LaneletNetwork,
                  lanelet_ids: List[int],
                  logger: logging.Logger,
+                 initial_state: InitialState,
                  goal_region: GoalRegion,
                  prohibited_lanelet_ids: List[int] = None
                  )->None:
@@ -52,6 +54,7 @@ class Route:
         self._logger = logger
 
         self._lanelet_network: LaneletNetwork = lanelet_network
+        self._initial_state: InitialState = initial_state
         self._goal_region: GoalRegion = goal_region
 
         # a route is created given the list of lanelet ids from start to goal
@@ -331,6 +334,7 @@ class Route:
                 skip_ids.extend(lanelet_section.adjacent_lanelet_ids)
 
                 lane_change_path: np.ndarray = lane_change_handler.compute_lane_change(
+                    initial_state=self._initial_state,
                     goal_region=self._goal_region
                 )
 

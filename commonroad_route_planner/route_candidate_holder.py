@@ -58,6 +58,7 @@ class RouteCandidateHolder:
                 lanelet_network=lanelet_network,
                 lanelet_ids=route,
                 prohibited_lanelet_ids=prohibited_lanelet_ids,
+                initial_state = self._initial_state,
                 goal_region=self._goal_region,
                 logger=self._logger
             ) for route in route_candidates if route

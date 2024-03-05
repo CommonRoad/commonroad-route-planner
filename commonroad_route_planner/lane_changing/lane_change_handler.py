@@ -12,6 +12,7 @@ from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.scenario import Scenario
 from commonroad.planning.goal import GoalRegion
+from commonroad.planning.planning_problem import InitialState
 from commonroad_dc.pycrccosy import CurvilinearCoordinateSystem
 
 # own code base
@@ -19,7 +20,7 @@ from commonroad_route_planner.utility.route_util import chaikins_corner_cutting
 from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
 from commonroad_route_planner.lane_changing.change_position import LaneChangePositionHandler, LaneChangeInstruction
 import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
-from commonroad_route_planner.lane_changing.lane_change_methods.quintic_polynom import generate_cubic_spline_ref_path
+from commonroad_route_planner.lane_changing.lane_change_methods.polynomial_change import generate_cubic_spline_ref_path
 from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
 from commonroad.scenario.scenario import Lanelet
 from commonroad_route_planner.utility.visualization import plot_clcs_line_with_projection_domain
@@ -104,12 +105,13 @@ class LaneChangeHandler:
             1000,
             0.1
         )
-        #plot_clcs_line_with_projection_domain(clcs_line, self.clcs)
+        plot_clcs_line_with_projection_domain(clcs_line, self.clcs)
 
 
 
     def compute_lane_change(self,
                             sample_step_size: float = 1.0,
+                            initial_state: InitialState = None,
                             goal_region: GoalRegion = None
                             ) -> np.ndarray:
         """
@@ -120,13 +122,28 @@ class LaneChangeHandler:
         # 1. Take first point of base and last point of last_change and convert to clcs
         # 2. Connect via quintic
 
-        start_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
-            self.lanelet_start.center_vertices[0, 0],
-            self.lanelet_start.center_vertices[0, 1],
-
-        )
 
         # TODO: Implement better cases
+
+        if(initial_state is not None):
+            initia_state_ids: List[int] = self.lanelet_network.find_lanelet_by_position([initial_state.position])[0]
+            if (set(initia_state_ids) & set(self.lanelet_section.adjacent_lanelet_ids)):
+                start_point = self.clcs.convert_to_curvilinear_coords(
+                    initial_state.position[0],
+                    initial_state.position[1],
+                )
+            else:
+                start_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
+                    self.lanelet_start.center_vertices[0, 0],
+                    self.lanelet_start.center_vertices[0, 1],
+                )
+
+        else:
+            start_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
+                self.lanelet_start.center_vertices[0, 0],
+                self.lanelet_start.center_vertices[0, 1],
+            )
+
 
         if(goal_region is not None):
             if (hasattr(goal_region.state_list[0].position, "center")):
@@ -164,6 +181,30 @@ class LaneChangeHandler:
             ref_path_curv,
             4
         )
+
+
+
+        # start lanelet
+        start_lanelet_curv: np.ndarray = np.asarray(
+            self.clcs.convert_list_of_points_to_curvilinear_coords(
+                self.lanelet_start.center_vertices,
+                4
+            )
+        )
+
+        start_lanelet_curv: np.ndarray = start_lanelet_curv[start_lanelet_curv[:, 0] < start_point[0], :]
+
+        if (start_lanelet_curv.shape[0] > 0):
+            start_lanelet_cart: np.ndarray = np.asarray(
+                self.clcs.convert_list_of_points_to_cartesian_coords(
+                    start_lanelet_curv,
+                    4
+                )
+            )
+
+            reference_path: np.ndarray = np.concatenate(
+                (start_lanelet_cart, reference_path), axis=0
+            )
 
 
 
