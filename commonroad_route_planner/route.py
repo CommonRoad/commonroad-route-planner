@@ -280,19 +280,15 @@ class Route:
 
     def _compute_reference_path_with_lane_changes(
         self,
-        step_resample: float=1.0,
-    ):
-        """Computes reference path stair function given the list of portions of each lanelet
-
-        :param list_portions
-        
-        # TODO: sounds not very practical??
-        :param num_vertices_lane_change_max: number of vertices to perform lane change.
-                                             if set to 0, it will produce a zigzagged polyline.
-        :param percentage_vertices_lane_change_max: maximum percentage of vertices that should be used for lane change.
+        step_resample: float = 1.0,
+    ) -> np.ndarray:
         """
-        
-        # TODO Refactor, since this does not consider that the reference path is actually intersecting with the goal region, if existing.
+        Computes reference path stair function given the list of portions of each lanelet
+
+        :param step_resample: sample step size for resampling
+
+        :return: (n,2) reference path
+        """
 
         reference_path: np.ndarray = None
         skip_ids: List[int] = list()

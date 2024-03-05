@@ -1,31 +1,45 @@
-
-
-
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.interpolate import CubicSpline
+from scipy.interpolate import CubicSpline, make_interp_spline
 
-# commonroad
-from commonroad.geometry.shape import Rectangle, Shape
-from commonroad.planning.goal import GoalRegion
-from commonroad.scenario.lanelet import Lanelet, LaneletNetwork
-from commonroad_dc.pycrccosy import CurvilinearCoordinateSystem
-import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
 
 # Typing
-from typing import List, Tuple, Dict
+from typing import List
 
 
 
+def generate_quintic_spline_ref_path(start_point: np.ndarray,
+                                     end_point: np.ndarray,
+                                     step_size: float = 0.1
+                                     ) -> np.ndarray:
+    """
+    quintic spline with derivatives 0
+    """
 
+    abscissa_values: np.ndarray = np.arange(start_point[0], end_point[0], step_size)
+
+    quintic_spline = make_interp_spline(
+        x=np.asarray([start_point[0], end_point[0]]),
+        y=np.asarray([start_point[1], end_point[1]]),
+        k=5,
+        bc_type=([(1, 0.0), (2, 0.0)], [(1, 0.0), (2, 0.0)])
+    )
+
+    ordinate_values: np.ndarray = quintic_spline(abscissa_values)
+
+    interpolated_values: np.ndarray = np.asarray(
+        [[abscissa_values[i], ordinate_values[i]] for i in range(abscissa_values.shape[0])]
+    )
+
+    return interpolated_values
 
 
 def generate_cubic_spline_ref_path(start_point: np.ndarray,
                                     end_point: np.ndarray,
                                     step_size: float = 0.1
-                                    )-> np.ndarray:
+                                    ) -> np.ndarray:
     """
-    quintic spline with derivatives 0
+    cubic spline with derivatives 0
     """
 
     abscissa_values: np.ndarray = np.arange(start_point[0], end_point[0], step_size)
@@ -36,15 +50,11 @@ def generate_cubic_spline_ref_path(start_point: np.ndarray,
         bc_type='clamped'
     )
 
-
     ordinate_values: np.ndarray = cubic_spline(abscissa_values)
 
-    asdf: List[List[float]] = list()
-    for i in range(abscissa_values.shape[0]):
-        asdf.append([abscissa_values[i], ordinate_values[i]])
-
-    interpolated_values: np.ndarray = np.asarray(asdf)
-
+    interpolated_values: np.ndarray = np.asarray(
+        [[abscissa_values[i], ordinate_values[i]] for i in range(abscissa_values.shape[0])]
+    )
 
     return interpolated_values
 

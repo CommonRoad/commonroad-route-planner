@@ -1,31 +1,30 @@
 import copy
 from logging import Logger
 import math
+from enum import Enum
 
 import numpy as np
 
-# third party
-from scipy.spatial import KDTree
 
 # commonroad
-from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import LaneletNetwork
-from commonroad.scenario.scenario import Scenario
 from commonroad.planning.goal import GoalRegion
 from commonroad.planning.planning_problem import InitialState
 from commonroad_dc.pycrccosy import CurvilinearCoordinateSystem
 
 # own code base
 from commonroad_route_planner.utility.route_util import chaikins_corner_cutting
-from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
-from commonroad_route_planner.lane_changing.change_position import LaneChangePositionHandler, LaneChangeInstruction
 import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
-from commonroad_route_planner.lane_changing.lane_change_methods.polynomial_change import generate_cubic_spline_ref_path
+from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import MethodInterface, LaneChangeMethod
 from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
 from commonroad.scenario.scenario import Lanelet
 from commonroad_route_planner.utility.visualization import plot_clcs_line_with_projection_domain
 
 from typing import List, Set, Union
+
+
+
+
 
 
 class LaneChangeHandler:
@@ -56,6 +55,10 @@ class LaneChangeHandler:
 
         self.clcs: CurvilinearCoordinateSystem = None
         self._init_clcs()
+
+        self.method_interface: MethodInterface = MethodInterface(
+            logger=self.logger
+        )
 
 
 
@@ -112,7 +115,8 @@ class LaneChangeHandler:
     def compute_lane_change(self,
                             sample_step_size: float = 1.0,
                             initial_state: InitialState = None,
-                            goal_region: GoalRegion = None
+                            goal_region: GoalRegion = None,
+                            method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE
                             ) -> np.ndarray:
         """
         Computes simple lane change
@@ -120,6 +124,7 @@ class LaneChangeHandler:
         :param sample_step_size: step size for resampling
         :param initial_state: cr initials state. If given, checks whether lane change has to go through it
         :param goal_region: cr goal region. If given, checks whether lane change has to go through it
+        :param method: lane change method
 
         :return: lane change portion of reference path
         """
@@ -138,9 +143,10 @@ class LaneChangeHandler:
             goal_region=goal_region
         )
 
-        ref_path_curv: np.ndarray = generate_cubic_spline_ref_path(
+        ref_path_curv: np.ndarray = self.method_interface.compute_lane_change_ref_path(
             start_point=start_point,
-            end_point=end_point
+            end_point=end_point,
+            method=method
         )
 
         reference_path: np.ndarray = self.clcs.convert_list_of_points_to_cartesian_coords(
@@ -246,7 +252,7 @@ class LaneChangeHandler:
         """
         Adds start portion to lanelet, if reference path start after lanelet
 
-        :param reference_path: current reference path as (n,2) np array
+        :param reference_path: current reference path as (n,2) np array in curvilinear frame
         :param start point: start point of lane change
 
         :return: modified reference path as (n,2) np array
@@ -285,7 +291,7 @@ class LaneChangeHandler:
         """
         Adds end portion to lanelet, if reference path ends before lanelet
 
-        :param reference_path: current reference path as (n,2) np array
+        :param reference_path: current reference path as (n,2) np array in curvilinear frame
         :param end_point: end point of lane change
 
         :return: modified reference path as (n,2) np array
