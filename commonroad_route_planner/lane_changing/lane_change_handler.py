@@ -1,30 +1,30 @@
 import copy
 from logging import Logger
 import math
+from enum import Enum
 
 import numpy as np
 
-# third party
-from scipy.spatial import KDTree
 
 # commonroad
-from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import LaneletNetwork
-from commonroad.scenario.scenario import Scenario
 from commonroad.planning.goal import GoalRegion
+from commonroad.planning.planning_problem import InitialState
 from commonroad_dc.pycrccosy import CurvilinearCoordinateSystem
 
 # own code base
 from commonroad_route_planner.utility.route_util import chaikins_corner_cutting
-from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
-from commonroad_route_planner.lane_changing.change_position import LaneChangePositionHandler, LaneChangeInstruction
 import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
-from commonroad_route_planner.lane_changing.lane_change_methods.quintic_polynom import generate_cubic_spline_ref_path
+from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import MethodInterface, LaneChangeMethod
 from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
 from commonroad.scenario.scenario import Lanelet
 from commonroad_route_planner.utility.visualization import plot_clcs_line_with_projection_domain
 
 from typing import List, Set, Union
+
+
+
+
 
 
 class LaneChangeHandler:
@@ -56,16 +56,20 @@ class LaneChangeHandler:
         self.clcs: CurvilinearCoordinateSystem = None
         self._init_clcs()
 
+        self.method_interface: MethodInterface = MethodInterface(
+            logger=self.logger
+        )
+
 
 
     def _init_clcs(self,
                    additional_lenght_in_meters: float = 50.0,
                    ) -> None:
 
-        # add before
+        # construct clcs abscissa around center of first lanelet of lane change
         clcs_line: np.ndarray = copy.copy(self.lanelet_start.center_vertices)
 
-        # get distance between first two points to know what the pseudo-uniform sampling would be
+        # get distance between first two points and extrapolate start
         point_0: np.ndarray = clcs_line[0, :]
         point_1: np.ndarray = clcs_line[1, :]
         distance: float = np.linalg.norm(point_1 - point_0)
@@ -79,7 +83,7 @@ class LaneChangeHandler:
             clcs_line: np.ndarray = np.vstack((new_point, clcs_line))
 
 
-        # get distance between first two points to know what the pseudo-uniform sampling would be
+        # get distance between last two points and extrapolate end
         point_0: np.ndarray = clcs_line[-2, :]
         point_1: np.ndarray = clcs_line[-1, :]
         distance: float = np.linalg.norm(point_1 - point_0)
@@ -93,7 +97,7 @@ class LaneChangeHandler:
             clcs_line: np.ndarray = np.vstack((clcs_line, new_point))
 
 
-
+        # smooth and resample
         clcs_line = pops.remove_duplicate_points(clcs_line)
         clcs_line = chaikins_corner_cutting(clcs_line, num_refinements=8)
         clcs_line = pops.resample_polyline(clcs_line, step=1)
@@ -110,23 +114,72 @@ class LaneChangeHandler:
 
     def compute_lane_change(self,
                             sample_step_size: float = 1.0,
-                            goal_region: GoalRegion = None
+                            initial_state: InitialState = None,
+                            goal_region: GoalRegion = None,
+                            method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE
                             ) -> np.ndarray:
         """
         Computes simple lane change
+
+        :param sample_step_size: step size for resampling
+        :param initial_state: cr initials state. If given, checks whether lane change has to go through it
+        :param goal_region: cr goal region. If given, checks whether lane change has to go through it
+        :param method: lane change method
+
+        :return: lane change portion of reference path
         """
 
         # Algorithm
-        # 1. Take first point of base and last point of last_change and convert to clcs
-        # 2. Connect via quintic
+        # Constructs curvilinear frame around center line of first lanelet of lane change.
+        # uses selected lane change method to construct lane change path
+        # if goal and/or start are within lane change, use parts of end/start lane outside them
 
-        start_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
-            self.lanelet_start.center_vertices[0, 0],
-            self.lanelet_start.center_vertices[0, 1],
 
+        start_point: np.ndarray = self._define_start_point_of_lane_change_in_cvl(
+            initial_state=initial_state
         )
 
-        # TODO: Implement better cases
+        end_point: np.ndarray = self._define_end_point_of_lance_change_in_cvl(
+            goal_region=goal_region
+        )
+
+        ref_path_curv: np.ndarray = self.method_interface.compute_lane_change_ref_path(
+            start_point=start_point,
+            end_point=end_point,
+            method=method
+        )
+
+        reference_path: np.ndarray = self.clcs.convert_list_of_points_to_cartesian_coords(
+            ref_path_curv,
+            4
+        )
+
+        reference_path: np.ndarray = self._add_start_portion_of_lanelet(
+            reference_path=reference_path,
+            start_point=start_point
+        )
+
+        reference_path: np.ndarray = self._add_end_portion_of_lanelet(
+            reference_path=reference_path,
+            end_point=end_point
+        )
+
+        reference_path = pops.resample_polyline(reference_path, step=sample_step_size)
+
+        return reference_path
+
+
+
+    def _define_end_point_of_lance_change_in_cvl(self,
+                                                 goal_region: GoalRegion
+                                                 ) -> np.ndarray:
+        """
+        Defines start point of lane change given the initial state.
+
+        :param goal_region: cr goal region
+
+        :return: (2,) np array as end point of lane change in curvilinear coords
+        """
 
         if(goal_region is not None):
             if (hasattr(goal_region.state_list[0].position, "center")):
@@ -154,46 +207,118 @@ class LaneChangeHandler:
                 self.lanelet_end.center_vertices[-1, 1]
             )
 
-        ref_path_curv: np.ndarray = generate_cubic_spline_ref_path(
-            start_point=start_point,
-            end_point=end_point
-        )
+        return end_point
 
 
-        reference_path: np.ndarray = self.clcs.convert_list_of_points_to_cartesian_coords(
-            ref_path_curv,
-            4
-        )
+    def _define_start_point_of_lane_change_in_cvl(self,
+                                                  initial_state: InitialState
+                                                  ) -> np.ndarray:
+        """
+        Defines start point of lane change given the initial state.
+
+        :param initial_state: cr initial state
+
+        :return: (2,) np array as start point of lane change in curvilinear coords
+        """
 
 
-
-        # convert all points of goal lanelet and use the once after the last lane change entry
-        end_lanelet_curv: np.ndarray = np.asarray(
-                self.clcs.convert_list_of_points_to_curvilinear_coords(
-                self.lanelet_end.center_vertices,
-                4
+        if(initial_state is not None):
+            initial_state_ids: List[int] = self.lanelet_network.find_lanelet_by_position([initial_state.position])[0]
+            if (set(initial_state_ids) & set(self.lanelet_section.adjacent_lanelet_ids)):
+                start_point = self.clcs.convert_to_curvilinear_coords(
+                    initial_state.position[0],
+                    initial_state.position[1],
                 )
-        )
-
-
-        use_end_lanelet_curv: np.ndarray = end_lanelet_curv[end_lanelet_curv[:, 0] > end_point[0], :]
-
-        if (use_end_lanelet_curv.shape[0] > 0):
-            use_end_lanelet_cart: np.ndarray = np.asarray(
-                self.clcs.convert_list_of_points_to_cartesian_coords(
-                use_end_lanelet_curv,
-                4
+            else:
+                start_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
+                    self.lanelet_start.center_vertices[0, 0],
+                    self.lanelet_start.center_vertices[0, 1],
                 )
+
+        else:
+            start_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
+                self.lanelet_start.center_vertices[0, 0],
+                self.lanelet_start.center_vertices[0, 1],
             )
 
+        return start_point
+
+
+
+    def _add_start_portion_of_lanelet(self,
+                                    reference_path: np.ndarray,
+                                    start_point: np.ndarray
+                                    ) -> np.ndarray:
+        """
+        Adds start portion to lanelet, if reference path start after lanelet
+
+        :param reference_path: current reference path as (n,2) np array in curvilinear frame
+        :param start point: start point of lane change
+
+        :return: modified reference path as (n,2) np array
+        """
+
+        # start lanelet
+        start_lanelet_curv: np.ndarray = np.asarray(
+            self.clcs.convert_list_of_points_to_curvilinear_coords(
+                self.lanelet_start.center_vertices,
+                4
+            )
+        )
+
+        start_lanelet_curv: np.ndarray = start_lanelet_curv[start_lanelet_curv[:, 0] < start_point[0], :]
+
+        if (start_lanelet_curv.shape[0] > 0):
+            start_lanelet_cart: np.ndarray = np.asarray(
+                self.clcs.convert_list_of_points_to_cartesian_coords(
+                    start_lanelet_curv,
+                    4
+                )
+            )
 
             reference_path: np.ndarray = np.concatenate(
-                (reference_path, use_end_lanelet_cart), axis=0
+                (start_lanelet_cart, reference_path), axis=0
             )
 
-        reference_path = pops.resample_polyline(reference_path, step=sample_step_size)
+        return reference_path
+
+
+
+    def _add_end_portion_of_lanelet(self,
+                                    reference_path: np.ndarray,
+                                    end_point: np.ndarray
+                                    ) -> np.ndarray:
+        """
+        Adds end portion to lanelet, if reference path ends before lanelet
+
+        :param reference_path: current reference path as (n,2) np array in curvilinear frame
+        :param end_point: end point of lane change
+
+        :return: modified reference path as (n,2) np array
+        """
+
+        end_lanelet_curv: np.ndarray = np.asarray(
+            self.clcs.convert_list_of_points_to_curvilinear_coords(
+                self.lanelet_end.center_vertices,
+                4
+            )
+        )
+
+        end_lanelet_curv: np.ndarray = end_lanelet_curv[end_lanelet_curv[:, 0] > end_point[0], :]
+
+        if (end_lanelet_curv.shape[0] > 0):
+            end_lanelet_cart: np.ndarray = np.asarray(
+                self.clcs.convert_list_of_points_to_cartesian_coords(
+                    end_lanelet_curv,
+                    4
+                )
+            )
+            reference_path: np.ndarray = np.concatenate(
+                (reference_path, end_lanelet_cart), axis=0
+            )
 
         return reference_path
+
 
 
 

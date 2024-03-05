@@ -30,7 +30,7 @@ from commonroad_route_planner.planners.survival import NoGoalFoundRoutePlanner
 from commonroad_route_planner.route_selector import RouteSelector
 from commonroad_route_planner.utility.route_util import (lanelet_orientation_at_position, relative_orientation)
 from commonroad_route_planner.utility.overtake_init_state import OvertakeInitState
-
+from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
 # typing
 from typing import List, Union
 
@@ -151,7 +151,9 @@ class RoutePlanner:
 
 
 
-    def plan_routes(self) -> RouteSelector:
+    def plan_routes(self,
+                    lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE
+                    ) -> RouteSelector:
         """
         Plans routes for every pair of start/goal lanelets. If no goal lanelet ID is given then return a survival route.
 
@@ -183,7 +185,8 @@ class RoutePlanner:
             goal_region=self._planning_problem.goal,
             route_candidates=routes,
             prohibited_lanelet_ids=self._prohibited_lanelet_ids,
-            logger=self._logger
+            logger=self._logger,
+            lane_change_method=lane_change_method
         )
 
 

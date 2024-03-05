@@ -14,6 +14,7 @@ from commonroad.scenario.state import InitialState
 # own code base
 from commonroad_route_planner.route import Route
 from commonroad_route_planner.utility.visualization import debug_visualize
+from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
 
 # typing
 from typing import List, Set, Tuple, Union
@@ -33,8 +34,9 @@ class RouteCandidateHolder:
                  goal_region: GoalRegion,
                  route_candidates: List[List[int]],
                  logger: logging.Logger,
-                 prohibited_lanelet_ids: List[int]=None
-                 ):
+                 prohibited_lanelet_ids: List[int]=None,
+                 lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE
+                 ) -> None:
         """
         :param lanelet_network: cr lanelet network,
         :param initial_state: cr initial state
@@ -52,14 +54,18 @@ class RouteCandidateHolder:
         self._initial_state: InitialState = initial_state
         self._goal_region: GoalRegion = goal_region
 
+        self._lane_change_method: LaneChangeMethod = lane_change_method
+
         # create a list of Route objects for all routes found by the route planner which is not empty
         self._route_candidates: List[Route] = [
             Route(
                 lanelet_network=lanelet_network,
                 lanelet_ids=route,
                 prohibited_lanelet_ids=prohibited_lanelet_ids,
+                initial_state = self._initial_state,
                 goal_region=self._goal_region,
-                logger=self._logger
+                logger=self._logger,
+                lane_change_method=self._lane_change_method
             ) for route in route_candidates if route
         ]
 
@@ -85,6 +91,14 @@ class RouteCandidateHolder:
         :return: number of routes found
         """
         return self._num_route_candidates
+
+
+    @property
+    def lane_change_method(self) -> LaneChangeMethod:
+        """
+        :return: lane change method
+        """
+        return self._lane_change_method
 
 
 

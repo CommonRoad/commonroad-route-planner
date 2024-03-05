@@ -11,6 +11,7 @@ from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.scenario import Scenario
 from commonroad.planning.goal import GoalRegion
+from commonroad.planning.planning_problem import InitialState
 
 # own code base
 from commonroad_route_planner.utility.route_util import (chaikins_corner_cutting)
@@ -20,6 +21,7 @@ import commonroad_route_planner.utility.polyline_operations.polyline_operations 
 from commonroad_route_planner.utility.route_slice.route_slice import RouteSlice
 from commonroad_route_planner.lane_changing.lane_change_handler import LaneChangeHandler
 from commonroad_route_planner.lane_changing.change_position import LaneChangeMarker
+from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
 
 
 
@@ -45,13 +47,16 @@ class Route:
                  lanelet_network: LaneletNetwork,
                  lanelet_ids: List[int],
                  logger: logging.Logger,
+                 initial_state: InitialState,
                  goal_region: GoalRegion,
-                 prohibited_lanelet_ids: List[int] = None
+                 prohibited_lanelet_ids: List[int] = None,
+                 lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE
                  )->None:
 
         self._logger = logger
 
         self._lanelet_network: LaneletNetwork = lanelet_network
+        self._initial_state: InitialState = initial_state
         self._goal_region: GoalRegion = goal_region
 
         # a route is created given the list of lanelet ids from start to goal
@@ -62,6 +67,8 @@ class Route:
         self._calc_route_sections()
 
         self._prohibited_lanelet_ids: List[int]  = prohibited_lanelet_ids if(lanelet_ids is not None) else list()
+
+        self._lane_change_method: LaneChangeMethod = lane_change_method
 
         # generate reference path from the list of lanelet ids leading to goal
         self._reference_path: np.ndarray = None
@@ -109,6 +116,13 @@ class Route:
         :return: commonroad goal region
         """
         return self._goal_region
+
+    @property
+    def lane_change_method(self) -> LaneChangeMethod:
+        """
+        :return: lane change method
+        """
+        return self._lane_change_method
 
 
     @property
@@ -277,19 +291,15 @@ class Route:
 
     def _compute_reference_path_with_lane_changes(
         self,
-        step_resample: float=1.0,
-    ):
-        """Computes reference path stair function given the list of portions of each lanelet
-
-        :param list_portions
-        
-        # TODO: sounds not very practical??
-        :param num_vertices_lane_change_max: number of vertices to perform lane change.
-                                             if set to 0, it will produce a zigzagged polyline.
-        :param percentage_vertices_lane_change_max: maximum percentage of vertices that should be used for lane change.
+        step_resample: float = 1.0,
+    ) -> np.ndarray:
         """
-        
-        # TODO Refactor, since this does not consider that the reference path is actually intersecting with the goal region, if existing.
+        Computes reference path stair function given the list of portions of each lanelet
+
+        :param step_resample: sample step size for resampling
+
+        :return: (n,2) reference path
+        """
 
         reference_path: np.ndarray = None
         skip_ids: List[int] = list()
@@ -331,7 +341,9 @@ class Route:
                 skip_ids.extend(lanelet_section.adjacent_lanelet_ids)
 
                 lane_change_path: np.ndarray = lane_change_handler.compute_lane_change(
-                    goal_region=self._goal_region
+                    initial_state=self._initial_state,
+                    goal_region=self._goal_region,
+                    method=self._lane_change_method
                 )
 
                 # No lane change required
