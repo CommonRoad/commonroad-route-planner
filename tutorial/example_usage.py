@@ -63,7 +63,10 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
         # ========== retrieving routes =========== #
         # here we retrieve the shortest route that has the least amount of disjoint lane changes
-        route: "Route" = route_selector.retrieve_shortest_route()
+        route: "Route" = route_selector.retrieve_shortest_route(
+            retrieve_shortest=True,
+            consider_least_lance_changes=True
+        )
         print(f"[Time] Retrieving first route took {perf_counter() - t_start}")
 
         # Init route extendor
@@ -98,4 +101,4 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
 
 if __name__ == "__main__":
-    main(save_imgs=True, use_cr2023_challenge=True)
+    main(save_imgs=True, use_cr2023_challenge=False)
