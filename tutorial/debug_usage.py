@@ -32,6 +32,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
     use_list: List = [
         #"DEU_Stu-1_49_I-1",
         "DEU_Stu-1_49_I-1",
+        #"USA_US101-22_1_T-1"
 
     ]
 
@@ -54,7 +55,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         route_planner = RoutePlanner(
             scenario=scenario,
             planning_problem=planning_problem,
-            extended_search=True
+            extended_search=False
         )
         # plan routes, and save the routes in a route candidate holder
         route_selector: "RouteSelector" = route_planner.plan_routes()
@@ -85,4 +86,4 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
 
 if __name__ == "__main__":
-    main(save_imgs=False, use_cr2023_challenge=True)
+    main(save_imgs=False, use_cr2023_challenge=False)
