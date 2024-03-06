@@ -1,10 +1,12 @@
+import copy
+
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.interpolate import CubicSpline, make_interp_spline
 
 
 # Typing
-from typing import List
+from typing import List, Tuple
 
 
 
@@ -16,11 +18,16 @@ def generate_quintic_spline_ref_path(start_point: np.ndarray,
     quintic spline with derivatives 0
     """
 
-    abscissa_values: np.ndarray = np.arange(start_point[0], end_point[0], step_size)
+    start, end = determine_ascending_start_and_end(
+        start=start_point,
+        end=end_point
+    )
+
+    abscissa_values: np.ndarray = np.arange(start[0], end[0], step_size)
 
     quintic_spline = make_interp_spline(
-        x=np.asarray([start_point[0], end_point[0]]),
-        y=np.asarray([start_point[1], end_point[1]]),
+        x=np.asarray([start[0], end[0]]),
+        y=np.asarray([start[1], end[1]]),
         k=5,
         bc_type=([(1, 0.0), (2, 0.0)], [(1, 0.0), (2, 0.0)])
     )
@@ -42,11 +49,16 @@ def generate_cubic_spline_ref_path(start_point: np.ndarray,
     cubic spline with derivatives 0
     """
 
-    abscissa_values: np.ndarray = np.arange(start_point[0], end_point[0], step_size)
+    start, end = determine_ascending_start_and_end(
+        start=start_point,
+        end=end_point
+    )
+
+    abscissa_values: np.ndarray = np.arange(start[0], end[0], step_size)
 
     cubic_spline: CubicSpline = CubicSpline(
-        x=np.asarray([start_point[0], end_point[0]]),
-        y=np.asarray([start_point[1], end_point[1]]),
+        x=np.asarray([start[0], end[0]]),
+        y=np.asarray([start[1], end[1]]),
         bc_type='clamped'
     )
 
@@ -58,6 +70,24 @@ def generate_cubic_spline_ref_path(start_point: np.ndarray,
 
     return interpolated_values
 
+
+
+
+def determine_ascending_start_and_end(start: np.ndarray,
+                                      end: np.ndarray
+                                      ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    :param start: (2,) start point
+    :param end: (2,) end point
+
+    :return: (start, end) in ascending order
+    """
+    if (start[0] > end[0]):
+        temp = copy.copy(start)
+        start = copy.copy(end)
+        end = temp
+
+    return (start, end)
 
 
 if __name__ == "__main__":

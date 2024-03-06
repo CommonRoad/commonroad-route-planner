@@ -31,8 +31,9 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
     use_list: List = [
         #"DEU_Stu-1_49_I-1",
-        "DEU_Stu-1_49_I-1",
-        #"USA_US101-22_1_T-1"
+        #"DEU_Stu-1_49_I-1",
+        #"USA_US101-22_1_T-1",
+        "DEU_Frankfurt-3_19_I-1",
 
     ]
 
@@ -62,7 +63,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
         # ========== retrieving routes =========== #
         # here we retrieve the first route in the list, this is equivalent to: route = list_routes[0]
-        route: "Route" = route_selector.retrieve_shortetest_route_with_least_lane_changes()
+        route: "Route" = route_selector.retrieve_shortest_route()
         print(f"[Time] Retrieving first route took {perf_counter() - t_start}")
 
 
