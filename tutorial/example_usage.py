@@ -57,8 +57,9 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         # ========== route planning =========== #
         # instantiate a route planner with the scenario and the planning problem
         route_planner = RoutePlanner(
-            scenario,
-            planning_problem
+            scenario=scenario,
+            planning_problem=planning_problem,
+            extended_search=True
         )
         # plan routes, and save the routes in a route candidate holder
         route_selector: "RouteSelector" = route_planner.plan_routes()
