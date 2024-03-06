@@ -22,6 +22,7 @@ from commonroad.scenario.state import InitialState
 from commonroad_route_planner.route import Route
 from commonroad_route_planner.route_candidate_holder import RouteCandidateHolder
 from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
+from commonroad_route_planner.utility.visualization import debug_visualize
 
 
 
@@ -73,3 +74,5 @@ class RouteSelector(RouteCandidateHolder):
         return self.retrieve_first_route(retrieve_shortest=retrieve_shortest,
                                          included_lanelet_ids=included_lanelet_ids
                                          )
+
+

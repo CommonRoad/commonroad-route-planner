@@ -150,6 +150,67 @@ class RouteCandidateHolder:
         return selected_route
 
 
+
+
+    def retrieve_shortetest_route_with_least_lane_changes(self,
+                                                          included_lanelet_ids: List[int] = None
+                                                          ) -> Route:
+
+        """
+        Retrieves route with least lane changes. Tie break is length of reference path
+
+        :param included_lanelet_ids: forces planner to go throug lanelets, if possible. Will ignore retrieve_shortest
+
+        :return: route instance
+        """
+
+        # No routes
+        if(len(self._route_candidates) == 0):
+            self._logger.error(f'[CR Route Planner] Not a single route candidate was found')
+            raise ValueError(f'[CR Route Planner] Not a single route candidate was found')
+
+        # one route
+        elif(len(self._route_candidates) == 1):
+            selected_route = self._route_candidates[0]
+
+        # multpiple routes
+        else:
+            sorted_routes: List[Route] = sorted(
+                self._route_candidates, key=lambda x: x.num_lane_change_action, reverse=False
+            )
+
+            minimal_lane_change_routes: List[Route] = [
+                route for route in sorted_routes
+                if route.num_lane_change_action == sorted_routes[0].num_lane_change_action
+            ]
+
+            minimal_lane_change_routes_by_length = sorted(
+                minimal_lane_change_routes, key=lambda x: x.length_reference_path, reverse=False
+            )
+
+            for route in minimal_lane_change_routes_by_length:
+                # check init state orientation
+                if(self._heuristic_check_matching_orientation_of_initial_state(route.reference_path)):
+                    if(included_lanelet_ids is None):
+                        selected_route = route
+                        break
+                    elif(self._check_routes_includes_lanelets(route, included_lanelet_ids)):
+                        # additionally check if lanelets are included
+                        selected_route = route
+                        break
+            else:
+                debug_visualize(self._route_candidates, self._lanelet_network)
+                self._logger.error(f'[CR Route Planner] could not find a well oriented route. Perhaps increase distance threshold, '
+                                   f'returning first route')
+                selected_route = minimal_lane_change_routes_by_length[0]
+
+
+
+        return selected_route
+
+
+
+
     def retrieve_all_routes(self) -> Tuple[List[Route], int]:
         """
         Returns the list of Route objects and the total number of routes

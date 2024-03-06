@@ -29,6 +29,10 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
     ignored_scenarios: List = [
         #"DEU_Frankfurt-3_25_I-1",
         #"DEU_Stu-1_49_I-1"
+        "DEU_Frankfurt-3_19_I-1",
+        "DEU_Frankfurt-3_23_I-1",
+        "DEU_Frankfurt-3_27_I-1",
+        "DEU_Frankfurt-3_29_I-1"
     ]
 
 
@@ -37,6 +41,10 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         id_scenario = filename.split(".")[0]
         if id_scenario in ignored_scenarios:
             continue
+
+        if("Frankfurt" in id_scenario):
+            continue
+
         print(f"Testing scenario {filename}")
         # read in scenario and planning problem set
         scenario, planning_problem_set = CommonRoadFileReader(
@@ -57,7 +65,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
         # ========== retrieving routes =========== #
         # here we retrieve the first route in the list, this is equivalent to: route = list_routes[0]
-        route: "Route" = route_selector.retrieve_shortest_route(retrieve_shortest=True)
+        route: "Route" = route_selector.retrieve_shortetest_route_with_least_lane_changes()
         print(f"[Time] Retrieving first route took {perf_counter() - t_start}")
 
         # Init route extendor

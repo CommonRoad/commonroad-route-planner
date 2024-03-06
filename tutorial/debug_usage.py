@@ -30,8 +30,8 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         path_scenarios = Path(__file__).parents[1] / "scenarios"
 
     use_list: List = [
-        "DEU_Stu-1_49_I-1",
-        "DEU_Frankfurt-3_25_I-1",
+        #"DEU_Stu-1_49_I-1",
+        "DEU_Frankfurt-3_19_I-1",
 
     ]
 
@@ -84,4 +84,4 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
 
 if __name__ == "__main__":
-    main(save_imgs=False, use_cr2023_challenge=False)
+    main(save_imgs=False, use_cr2023_challenge=True)
