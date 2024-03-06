@@ -309,7 +309,7 @@ class RoutePlanner:
             for idx, state in enumerate(self._planning_problem.goal.state_list):
 
                 if(not hasattr(state, "position")):
-                    self._logger.warning(f'[CR Route Planner] goal state of state list has no position entry, will pass')
+                    self._logger.info(f'[CR Route Planner] goal state of state list has no position entry, will pass')
                     continue
 
 
@@ -318,7 +318,8 @@ class RoutePlanner:
                     goal_position: np.ndarray = state.position.center
                 else:
                     # For uncertain position route planner takes first polygon
-                    self._logger.warning(f'[CR Route Planner] For uncertain positions, CR route planner uses the center of the first shape')
+                    self._logger.info(f'[CR Route Planner] For goals with geometric shape as definition,'
+                                      f' CR route planner uses the center of the first shape')
                     goal_position: np.ndarray = state.position.shapes[0].center
 
                 for lanelet_id_list in self.lanelet_network.find_lanelet_by_position([goal_position]):

@@ -29,6 +29,10 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
     ignored_scenarios: List = [
         #"DEU_Frankfurt-3_25_I-1",
         #"DEU_Stu-1_49_I-1"
+        #"DEU_Frankfurt-3_19_I-1",
+        #"DEU_Frankfurt-3_23_I-1",
+        #"DEU_Frankfurt-3_27_I-1",
+        #"DEU_Frankfurt-3_29_I-1"
     ]
 
 
@@ -37,6 +41,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         id_scenario = filename.split(".")[0]
         if id_scenario in ignored_scenarios:
             continue
+
         print(f"Testing scenario {filename}")
         # read in scenario and planning problem set
         scenario, planning_problem_set = CommonRoadFileReader(
@@ -49,15 +54,19 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         # ========== route planning =========== #
         # instantiate a route planner with the scenario and the planning problem
         route_planner = RoutePlanner(
-            scenario,
-            planning_problem
+            scenario=scenario,
+            planning_problem=planning_problem,
+            extended_search=False
         )
         # plan routes, and save the routes in a route candidate holder
         route_selector: "RouteSelector" = route_planner.plan_routes()
 
         # ========== retrieving routes =========== #
-        # here we retrieve the first route in the list, this is equivalent to: route = list_routes[0]
-        route: "Route" = route_selector.retrieve_shortest_route(retrieve_shortest=True)
+        # here we retrieve the shortest route that has the least amount of disjoint lane changes
+        route: "Route" = route_selector.retrieve_shortest_route(
+            retrieve_shortest=True,
+            consider_least_lance_changes=True
+        )
         print(f"[Time] Retrieving first route took {perf_counter() - t_start}")
 
         # Init route extendor

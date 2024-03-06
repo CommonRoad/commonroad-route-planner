@@ -105,6 +105,10 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
                     )
                 )
 
+                # apparently simple paths cannot deal with goal being on same lanelet as start
+                if(len(lanelets_ids) == 0 and id_lanelet_start == id_lanelet_goal):
+                    lanelets_ids.append([id_lanelet_goal])
+
         except nx.exception.NetworkXNoPath:
             # it is a normal behaviour because of the overlapping lanelets in a road network
             self._logger.error(
@@ -191,7 +195,8 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
                 and lanelet.adj_left_same_direction
                 and id_adj_left not in self._prohibited_lanelet_ids
             ):
-                edges.append((lanelet.lanelet_id, id_adj_left, {"weight": 4.0}))
+                weight: float = max(lanelet.distance[-1], self._lanelet_network.find_lanelet_by_id(id_adj_left).distance[-1])
+                edges.append((lanelet.lanelet_id, id_adj_left, {"weight": weight}))
 
             # add edge if right lanelet
             id_adj_right:int = lanelet.adj_right
@@ -200,7 +205,8 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
                 and lanelet.adj_right_same_direction
                 and id_adj_right not in self._prohibited_lanelet_ids
             ):
-                edges.append((lanelet.lanelet_id, id_adj_right, {"weight": 4.0}))
+                weight: float = max(lanelet.distance[-1], self._lanelet_network.find_lanelet_by_id(id_adj_right).distance[-1])
+                edges.append((lanelet.lanelet_id, id_adj_right, {"weight": weight}))
 
         # Edges in case of overtake during starting state
         for overtake_state in self._overtake_states:

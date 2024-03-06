@@ -1,3 +1,4 @@
+import copy
 import os
 
 import matplotlib.pyplot as plt
@@ -28,7 +29,9 @@ def visualize_route(route: Union["Route", "RouteSlice"],
                     save_path: str = os.path.join(os.getcwd(), 'img'),
                     draw_route_lanelets: bool = True,
                     draw_reference_path: bool = False,
-                    size_x: float = 10.0
+                    size_x: float = 10.0,
+                    size_factor_curvature: float = 5.0,
+                    curvature_threshold: float = 0.5
                     ) -> None:
     """
     Visualizes the given route.
@@ -40,6 +43,8 @@ def visualize_route(route: Union["Route", "RouteSlice"],
     :param draw_route_lanelets: draws lanelts of route in different color
     :param draw_reference_path: draws reference path
     :param size_x: size of matplotlib figure
+    :param size_factor_curvature: points with high curvature get drawn bigger
+    :param curvature_threshold: threshold above with curvature is considered higher
     """
 
     # obtain plot limits for a better visualization.
@@ -52,7 +57,7 @@ def visualize_route(route: Union["Route", "RouteSlice"],
     renderer = MPRenderer(plot_limits=plot_limits, figsize=(size_x, size_x / ratio_x_y))
 
     scenario.draw(renderer)
-    planning_problem.draw(renderer)
+
 
     # draw the initial state of the planning problem
     draw_state(renderer, planning_problem.initial_state)
@@ -94,10 +99,15 @@ def visualize_route(route: Union["Route", "RouteSlice"],
 
     # draw reference path with dots
     if draw_reference_path:
-        for position in route.reference_path:
-            occ_pos = Circle(radius=0.3, center=position)
-            renderer.draw_params.shape.facecolor = "#ff477e"
+        renderer.draw_params.shape.facecolor = "#ff477e"
+        for idx, position in enumerate(route.reference_path):
+            if(abs(route.path_curvature[idx]) > curvature_threshold):
+                occ_pos = Circle(radius=0.3 * size_factor_curvature, center=position)
+            else:
+                occ_pos = Circle(radius=0.3, center=position)
             occ_pos.draw(renderer)
+
+    planning_problem.draw(renderer)
 
     # render and show plot
     renderer.render()
