@@ -12,7 +12,7 @@ stages:
 before_script:
   - pip install poetry
   - poetry config virtualenvs.in-project true
-  - poetry install --with test, docs
+  - poetry install --with test,docs
   - source .venv/bin/activate
 
 ###### Test #########
