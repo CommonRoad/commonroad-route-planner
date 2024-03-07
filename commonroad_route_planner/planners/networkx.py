@@ -195,7 +195,7 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
                 and lanelet.adj_left_same_direction
                 and id_adj_left not in self._prohibited_lanelet_ids
             ):
-                weight: float = max(lanelet.distance[-1], self._lanelet_network.find_lanelet_by_id(id_adj_left).distance[-1])
+                weight: float = 1e6 - max(lanelet.distance[-1], self._lanelet_network.find_lanelet_by_id(id_adj_left).distance[-1])
                 edges.append((lanelet.lanelet_id, id_adj_left, {"weight": weight}))
 
             # add edge if right lanelet
@@ -205,7 +205,7 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
                 and lanelet.adj_right_same_direction
                 and id_adj_right not in self._prohibited_lanelet_ids
             ):
-                weight: float = max(lanelet.distance[-1], self._lanelet_network.find_lanelet_by_id(id_adj_right).distance[-1])
+                weight: float = 1e6 - max(lanelet.distance[-1], self._lanelet_network.find_lanelet_by_id(id_adj_right).distance[-1])
                 edges.append((lanelet.lanelet_id, id_adj_right, {"weight": weight}))
 
         # Edges in case of overtake during starting state
