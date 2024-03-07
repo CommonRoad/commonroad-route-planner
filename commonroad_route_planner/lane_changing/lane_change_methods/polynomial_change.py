@@ -1,12 +1,11 @@
 import copy
 
 import numpy as np
-from matplotlib import pyplot as plt
 from scipy.interpolate import CubicSpline, make_interp_spline
 
 
 # Typing
-from typing import List, Tuple
+from typing import Tuple
 
 
 
@@ -16,6 +15,12 @@ def generate_quintic_spline_ref_path(start_point: np.ndarray,
                                      ) -> np.ndarray:
     """
     quintic spline with derivatives 0
+
+    :param start_point: start point of quintic spline
+    :param end_point: end point of quintic spline
+    :param step_size: step size for interpolation abscissa
+
+    :return: (n,2) quintic spline array
     """
 
     start, end = determine_ascending_start_and_end(
@@ -47,6 +52,12 @@ def generate_cubic_spline_ref_path(start_point: np.ndarray,
                                     ) -> np.ndarray:
     """
     cubic spline with derivatives 0
+
+    :param start_point: start point of cubic spline
+    :param end_point: end point of cubic spline
+    :param step_size: step size for interpolation abscissa
+
+    :return: (n,2) cubic spline array
     """
 
     start, end = determine_ascending_start_and_end(
@@ -80,7 +91,7 @@ def determine_ascending_start_and_end(start: np.ndarray,
     :param start: (2,) start point
     :param end: (2,) end point
 
-    :return: (start, end) in ascending order
+    :return: (start point, end point) in ascending order, each as (2,) np array
     """
     if (start[0] > end[0]):
         temp = copy.copy(start)
@@ -89,21 +100,3 @@ def determine_ascending_start_and_end(start: np.ndarray,
 
     return (start, end)
 
-
-if __name__ == "__main__":
-    p_start = np.asarray([0, 0])
-    p_end = np.asarray([10, 10])
-
-    abscissa_values: np.ndarray = np.arange(p_start[0], p_end[0], 0.1)
-
-
-    cs = generate_cubic_spline_ref_path(
-        start_point=p_start,
-        end_point=p_end,
-    )
-
-
-    fig, ax = plt.subplots(figsize=(6.5, 4))
-    ax.plot(abscissa_values, cs, label="lane_change")
-
-    plt.show()

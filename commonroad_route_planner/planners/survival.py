@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 class NoGoalFoundRoutePlanner(BaseRoutePlanner):
     def __init__(self,
                  lanelet_network: "LaneletNetwork",
-                 logger: logging.Logger,
                  prohibited_lanelet_ids: List[int],
+                 logger: logging.Logger = None,
                  threshold_network_exploring: int = 20) -> None:
         """
         Planner if no goal is set.
@@ -35,7 +35,10 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
         self._threshold_network_exploring: int = threshold_network_exploring
 
 
-    def find_routes(self, id_lanelet_start: int, id_lanelet_goal: int) -> List[int]:
+    def find_routes(self,
+                    id_lanelet_start: int,
+                    id_lanelet_goal: int
+                    ) -> List[int]:
         """
         Finds a route along the lanelet network for survival scenarios.
 

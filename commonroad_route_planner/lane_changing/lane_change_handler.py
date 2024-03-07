@@ -39,76 +39,81 @@ class LaneChangeHandler:
                  lanelet_section: LaneletSection,
                  lanelet_network: LaneletNetwork,
                  route_lanelet_ids: List[int],
+                 clcs_extension: float = 50.0,
                  logger: Logger = None
                  ) -> None:
+        """
+        :param lanelet_start: start lanelet of lane change in lane section
+        :param lanelet_end: end lanelet of lane change
+        :param lanelet_network: lanelet network of scenario
+        :param route_lanelet_ids: lanelet ids of entire route
+        :param clcs_extension: how long the curvilinear coordinate system should be extended in longitudinal direction for lane changes
+        :param logger: logger
+        """
 
 
-        self.logger: Logger = logger if (logger is not None) else Logger(__name__)
+        self._logger: Logger = logger if (logger is not None) else Logger(__name__)
 
-        self.lanelet_start: Lanelet = lanelet_start
-        self.lanelet_end: Lanelet = lanelet_end
+        self._lanelet_start: Lanelet = lanelet_start
+        self._lanelet_end: Lanelet = lanelet_end
 
-        self.lanelet_section: LaneletSection = lanelet_section
-        self.lanelet_network: LaneletNetwork = lanelet_network
-        self.route_lanelet_ids: List[int] = route_lanelet_ids
+        self._lanelet_section: LaneletSection = lanelet_section
+        self._lanelet_network: LaneletNetwork = lanelet_network
+        self._route_lanelet_ids: List[int] = route_lanelet_ids
 
 
-        self.clcs: CurvilinearCoordinateSystem = None
+        self._clcs: CurvilinearCoordinateSystem = None
+        self._clcs_extension: float = clcs_extension
         self._init_clcs()
 
-        self.method_interface: MethodInterface = MethodInterface(
-            logger=self.logger
+        self._method_interface: MethodInterface = MethodInterface(
+            logger=self._logger
         )
 
 
+    @property
+    def lanelet_start(self) -> Lanelet:
+        """
+        :return: start lanelet of lane change
+        """
+        return self._lanelet_start
 
-    def _init_clcs(self,
-                   additional_lenght_in_meters: float = 50.0,
-                   ) -> None:
+    @property
+    def lanelet_end(self) -> Lanelet:
+        """
+        :return: end lanelet of lane change
+        """
+        return self._lanelet_end
 
-        # construct clcs abscissa around center of first lanelet of lane change
-        clcs_line: np.ndarray = copy.copy(self.lanelet_start.center_vertices)
-
-        # get distance between first two points and extrapolate start
-        point_0: np.ndarray = clcs_line[0, :]
-        point_1: np.ndarray = clcs_line[1, :]
-        distance: float = np.linalg.norm(point_1 - point_0)
-        num_new_points: int = math.ceil(additional_lenght_in_meters / distance)
-
-        delta_x: float = float(point_1[0] - point_0[0])
-        delta_y: float = float(point_1[1] - point_0[1])
-
-        for idx in range(1, num_new_points + 1):
-            new_point: np.ndarray = np.asarray([point_0[0] - idx * delta_x, point_0[1] - idx * delta_y])
-            clcs_line: np.ndarray = np.vstack((new_point, clcs_line))
-
-
-        # get distance between last two points and extrapolate end
-        point_0: np.ndarray = clcs_line[-2, :]
-        point_1: np.ndarray = clcs_line[-1, :]
-        distance: float = np.linalg.norm(point_1 - point_0)
-        num_new_points: int = math.ceil(additional_lenght_in_meters / distance)
-
-        delta_x: float = float(point_1[0] - point_0[0])
-        delta_y: float = float(point_1[1] - point_0[1])
-
-        for idx in range(1, num_new_points + 1):
-            new_point: np.ndarray = np.asarray([point_1[0] + idx * delta_x, point_1[1] + idx * delta_y])
-            clcs_line: np.ndarray = np.vstack((clcs_line, new_point))
+    @property
+    def lanelet_section(self) -> LaneletSection:
+        """
+        :return: lanelet section of parallel lanelets with same direction
+        """
+        return self._lanelet_section
 
 
-        # smooth and resample
-        clcs_line = pops.remove_duplicate_points(clcs_line)
-        clcs_line = chaikins_corner_cutting(clcs_line, num_refinements=8)
-        clcs_line = pops.resample_polyline(clcs_line, step=1)
+    @property
+    def clcs_extension(self) -> float:
+        """
+        :return: extension of curvilinear coordinate system along longitudinal axis
+        """
+        return self._clcs_extension
 
+    @property
+    def clcs(self) -> CurvilinearCoordinateSystem:
+        """
+        :return: curvilinear coordinate system of lane change
+        """
+        return self._clcs
 
-        self.clcs = CurvilinearCoordinateSystem(
-            clcs_line,
-            1000,
-            0.1
-        )
-        #plot_clcs_line_with_projection_domain(clcs_line, self.clcs)
+    @property
+    def method_interface(self) -> MethodInterface:
+        """
+        :return: method interface for lane change
+        """
+        return self._method_interface
+
 
 
 
@@ -143,13 +148,13 @@ class LaneChangeHandler:
             goal_region=goal_region
         )
 
-        ref_path_curv: np.ndarray = self.method_interface.compute_lane_change_ref_path(
+        ref_path_curv: np.ndarray = self._method_interface.compute_lane_change_ref_path(
             start_point=start_point,
             end_point=end_point,
             method=method
         )
 
-        reference_path: np.ndarray = self.clcs.convert_list_of_points_to_cartesian_coords(
+        reference_path: np.ndarray = self._clcs.convert_list_of_points_to_cartesian_coords(
             ref_path_curv,
             4
         )
@@ -167,6 +172,11 @@ class LaneChangeHandler:
         reference_path = pops.resample_polyline(reference_path, step=sample_step_size)
 
         return reference_path
+
+
+
+
+
 
 
 
@@ -188,23 +198,23 @@ class LaneChangeHandler:
                 # For uncertain position route planner takes first polygon
                 goal_mid_position: np.ndarray = goal_region.state_list[0].position.shapes[0].center
 
-            goal_lanelet_ids: List[int] = self.lanelet_network.find_lanelet_by_position([goal_mid_position])[0]
+            goal_lanelet_ids: List[int] = self._lanelet_network.find_lanelet_by_position([goal_mid_position])[0]
 
-            if(set(goal_lanelet_ids) & set(self.lanelet_section.adjacent_lanelet_ids)):
-                end_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
+            if(set(goal_lanelet_ids) & set(self._lanelet_section.adjacent_lanelet_ids)):
+                end_point: np.ndarray = self._clcs.convert_to_curvilinear_coords(
                     goal_mid_position[0],
                     goal_mid_position[1]
                 )
             else:
-                end_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
-                    self.lanelet_end.center_vertices[-1, 0],
-                    self.lanelet_end.center_vertices[-1, 1]
+                end_point: np.ndarray = self._clcs.convert_to_curvilinear_coords(
+                    self._lanelet_end.center_vertices[-1, 0],
+                    self._lanelet_end.center_vertices[-1, 1]
                 )
 
         else:
-            end_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
-                self.lanelet_end.center_vertices[-1, 0],
-                self.lanelet_end.center_vertices[-1, 1]
+            end_point: np.ndarray = self._clcs.convert_to_curvilinear_coords(
+                self._lanelet_end.center_vertices[-1, 0],
+                self._lanelet_end.center_vertices[-1, 1]
             )
 
         return end_point
@@ -223,22 +233,22 @@ class LaneChangeHandler:
 
 
         if(initial_state is not None):
-            initial_state_ids: List[int] = self.lanelet_network.find_lanelet_by_position([initial_state.position])[0]
-            if (set(initial_state_ids) & set(self.lanelet_section.adjacent_lanelet_ids)):
-                start_point = self.clcs.convert_to_curvilinear_coords(
+            initial_state_ids: List[int] = self._lanelet_network.find_lanelet_by_position([initial_state.position])[0]
+            if (set(initial_state_ids) & set(self._lanelet_section.adjacent_lanelet_ids)):
+                start_point = self._clcs.convert_to_curvilinear_coords(
                     initial_state.position[0],
                     initial_state.position[1],
                 )
             else:
-                start_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
-                    self.lanelet_start.center_vertices[0, 0],
-                    self.lanelet_start.center_vertices[0, 1],
+                start_point: np.ndarray = self._clcs.convert_to_curvilinear_coords(
+                    self._lanelet_start.center_vertices[0, 0],
+                    self._lanelet_start.center_vertices[0, 1],
                 )
 
         else:
-            start_point: np.ndarray = self.clcs.convert_to_curvilinear_coords(
-                self.lanelet_start.center_vertices[0, 0],
-                self.lanelet_start.center_vertices[0, 1],
+            start_point: np.ndarray = self._clcs.convert_to_curvilinear_coords(
+                self._lanelet_start.center_vertices[0, 0],
+                self._lanelet_start.center_vertices[0, 1],
             )
 
         return start_point
@@ -260,8 +270,8 @@ class LaneChangeHandler:
 
         # start lanelet
         start_lanelet_curv: np.ndarray = np.asarray(
-            self.clcs.convert_list_of_points_to_curvilinear_coords(
-                self.lanelet_start.center_vertices,
+            self._clcs.convert_list_of_points_to_curvilinear_coords(
+                self._lanelet_start.center_vertices,
                 4
             )
         )
@@ -270,7 +280,7 @@ class LaneChangeHandler:
 
         if (start_lanelet_curv.shape[0] > 0):
             start_lanelet_cart: np.ndarray = np.asarray(
-                self.clcs.convert_list_of_points_to_cartesian_coords(
+                self._clcs.convert_list_of_points_to_cartesian_coords(
                     start_lanelet_curv,
                     4
                 )
@@ -298,8 +308,8 @@ class LaneChangeHandler:
         """
 
         end_lanelet_curv: np.ndarray = np.asarray(
-            self.clcs.convert_list_of_points_to_curvilinear_coords(
-                self.lanelet_end.center_vertices,
+            self._clcs.convert_list_of_points_to_curvilinear_coords(
+                self._lanelet_end.center_vertices,
                 4
             )
         )
@@ -308,7 +318,7 @@ class LaneChangeHandler:
 
         if (end_lanelet_curv.shape[0] > 0):
             end_lanelet_cart: np.ndarray = np.asarray(
-                self.clcs.convert_list_of_points_to_cartesian_coords(
+                self._clcs.convert_list_of_points_to_cartesian_coords(
                     end_lanelet_curv,
                     4
                 )
@@ -320,6 +330,56 @@ class LaneChangeHandler:
         return reference_path
 
 
+
+    def _init_clcs(self) -> None:
+        """
+        initis curvilinear coordinate system
+        """
+
+        # construct _clcs abscissa around center of first lanelet of lane change
+        clcs_line: np.ndarray = copy.copy(self._lanelet_start.center_vertices)
+
+        # get distance between first two points and extrapolate start
+        point_0: np.ndarray = clcs_line[0, :]
+        point_1: np.ndarray = clcs_line[1, :]
+        distance: float = np.linalg.norm(point_1 - point_0)
+        num_new_points: int = math.ceil(self._clcs_extension / distance)
+
+        delta_x: float = float(point_1[0] - point_0[0])
+        delta_y: float = float(point_1[1] - point_0[1])
+
+        for idx in range(1, num_new_points + 1):
+            new_point: np.ndarray = np.asarray([point_0[0] - idx * delta_x, point_0[1] - idx * delta_y])
+            clcs_line: np.ndarray = np.vstack((new_point, clcs_line))
+
+
+        # get distance between last two points and extrapolate end
+        point_0: np.ndarray = clcs_line[-2, :]
+        point_1: np.ndarray = clcs_line[-1, :]
+        distance: float = np.linalg.norm(point_1 - point_0)
+        num_new_points: int = math.ceil(self._clcs_extension  / distance)
+
+        delta_x: float = float(point_1[0] - point_0[0])
+        delta_y: float = float(point_1[1] - point_0[1])
+
+        for idx in range(1, num_new_points + 1):
+            new_point: np.ndarray = np.asarray([point_1[0] + idx * delta_x, point_1[1] + idx * delta_y])
+            clcs_line: np.ndarray = np.vstack((clcs_line, new_point))
+
+
+        # smooth and resample
+        clcs_line = pops.remove_duplicate_points(clcs_line)
+        clcs_line = chaikins_corner_cutting(clcs_line, num_refinements=8)
+        clcs_line = pops.resample_polyline(clcs_line, step=1)
+
+
+        self._clcs = CurvilinearCoordinateSystem(
+            clcs_line,
+            1000,
+            0.1
+        )
+
+        #plot_clcs_line_with_projection_domain(clcs_line, self._clcs)
 
 
 

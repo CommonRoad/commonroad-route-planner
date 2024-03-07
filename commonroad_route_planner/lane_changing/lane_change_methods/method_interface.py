@@ -18,6 +18,9 @@ class MethodInterface:
     def __init__(self,
                  logger: Logger = None
                  ) -> None:
+        """
+        :param logger: Logger
+        """
 
         self._logger = logger if(logger is not None) else Logger(__name__)
 
