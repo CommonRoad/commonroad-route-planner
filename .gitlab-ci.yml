@@ -81,20 +81,20 @@ deploy_master:
   except:
     - tags
 
-
-#pages:
-#  stage: deploy
-#  publish: site
-#  only:
-#    - master
-#  script:
-#    - mkdocs build
-#  artifacts:
-#    paths:
-#      - site
-#  environment:
-#    name: Gitlab Pages
-#    url: https://cps.pages.gitlab.lrz.de/commonroad/commonroad-route-planner/
+# Deploy to gitlab pages
+pages:
+  stage: deploy
+  publish: site
+  only:
+    - develop
+  script:
+    - mkdocs build
+  artifacts:
+    paths:
+      - site
+  environment:
+    name: Gitlab Pages
+    url: https://cps.pages.gitlab.lrz.de/commonroad/commonroad-route-planner/
 
 
 
