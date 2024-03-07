@@ -8,15 +8,22 @@ from commonroad.planning.goal import GoalRegion
 from commonroad.scenario.lanelet import Lanelet, LaneletNetwork
 
 # Typing
-from typing import List, Tuple, Dict
+from typing import List
 
 
 
 
+def relative_orientation(angle_1: float,
+                         angle_2: float
+                         ) -> float:
+    """
+    Computes the angle between two angles.
 
+    :param angle_1: first angle in rad
+    :param angle_2: second angle in rad
 
-def relative_orientation(angle_1, angle_2) -> float:
-    """Computes the angle between two angles."""
+    :return: orientation in rad
+    """
     phi = (angle_2 - angle_1) % (2 * np.pi)
     if phi > np.pi:
         phi -= 2 * np.pi
@@ -46,22 +53,6 @@ def chaikins_corner_cutting(polyline: np.ndarray, num_refinements: int = 4) -> n
 
     return polyline
 
-
-def compute_polyline_length(polyline: np.ndarray) -> float:
-    """Computes the path length of a given polyline.
-
-    :param polyline: The polyline
-    :return: The path length of the polyline
-    """
-    assert (
-        isinstance(polyline, np.ndarray)
-        and polyline.ndim == 2
-        and len(polyline[:, 0]) > 2
-    ), "Polyline malformed for path length computation p={}".format(polyline)
-
-    distance_between_points = np.diff(polyline, axis=0)
-    # noinspection PyTypeChecker
-    return np.sum(np.sqrt(np.sum(distance_between_points**2, axis=1)))
 
 
 

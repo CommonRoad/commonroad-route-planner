@@ -1,22 +1,14 @@
-
+from dataclasses import dataclass
 
 # commonroad
 from commonroad.scenario.lanelet import LaneletNetwork, Lanelet
 
 
-# typing
-from typing import List, Tuple, Dict, TYPE_CHECKING
-
-
-
-
-
+@dataclass
 class OvertakeInitState:
     """
     Class for overtake init state.
     """
-    # TODO maybe dataclass?
-
 
     def __init__(self, original_lanelet_id: int, adjecent_lanelet_id: int, lanelet_network: LaneletNetwork):
         self.original_lanelet_id: int = original_lanelet_id

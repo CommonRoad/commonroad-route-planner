@@ -1,9 +1,6 @@
 import os
 from pathlib import Path
 from time import perf_counter
-import sys
-
-import numpy as np
 
 # commonrad
 from commonroad.common.file_reader import CommonRoadFileReader
@@ -11,7 +8,6 @@ from commonroad.common.file_reader import CommonRoadFileReader
 # Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
 from commonroad_route_planner.utility.visualization import visualize_route
-from commonroad_route_planner.utility.route_extension.route_extendor import RouteExtendor
 
 # typing
 from typing import List

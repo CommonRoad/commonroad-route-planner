@@ -3,13 +3,10 @@ from enum import Enum
 import numpy as np
 
 # third party
-from scipy.spatial.kdtree import KDTree
 
 
 # commonroad
-from commonroad.planning.planning_problem import PlanningProblem
 from commonroad.scenario.lanelet import LaneletNetwork
-from commonroad.scenario.scenario import Scenario
 from commonroad.planning.goal import GoalRegion
 from commonroad.planning.planning_problem import InitialState
 
@@ -18,7 +15,7 @@ from commonroad_route_planner.utility.route_util import (chaikins_corner_cutting
 from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
 from commonroad_route_planner.lane_changing.change_position import LaneChangePositionHandler, LaneChangeInstruction
 import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
-from commonroad_route_planner.utility.route_slice.route_slice import RouteSlice
+from commonroad_route_planner.frenet_tools.route_slice import RouteSlice
 from commonroad_route_planner.lane_changing.lane_change_handler import LaneChangeHandler
 from commonroad_route_planner.lane_changing.change_position import LaneChangeMarker
 from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
@@ -26,7 +23,7 @@ from commonroad_route_planner.lane_changing.lane_change_methods.method_interface
 
 
 # typing
-from typing import List, Set, Union
+from typing import List, Union
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from commonroad.scenario.scenario import LaneletNetwork, Lanelet

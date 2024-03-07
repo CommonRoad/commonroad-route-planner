@@ -1,11 +1,22 @@
 [tool.poetry]
 name = "commonroad-route-planner"
 version = "2024.3"
-description = ""
+description = "Route and reference path planning tool for CommonRoad scenarios"
 authors = ["Tobias Mascetta <commonroad@lists.lrz.de>"]
 license = "BSD"
 readme = "README.md"
+
+homepage = "https://commonroad.in.tum.de"
+keywords= ["autonomous", "automated", "vehicles", "driving", "motion", "planning", "prediction"]
+classifiers = [
+    "Programming Language :: Python :: 3.9",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: POSIX :: Linux",
+]
+
 packages = [{include = "commonroad_route_planner"}]
+
+# dependencies
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -16,18 +27,32 @@ shapely = ">=1.6.4.post2"
 matplotlib = ">=3.1.2"
 commonroad-drivability-checker = "^2023.1"
 
-
+# tutorial
 [tool.poetry.group.tutorial]
 optional = true
 
 [tool.poetry.group.tutorial.dependencies]
 jupyter = "^1.0.0"
 
+
+# test
 [tool.poetry.group.test]
 optional = true
 
 [tool.poetry.group.test.dependencies]
 coverage = "^6.5.0"
+
+# docs
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+mkdocstrings-python = "^1.8.0"
+mkdocs-material = "^9.5.10"
+
+
+
+# Build and Sys
 
 [build-system]
 requires = ["poetry-core"]

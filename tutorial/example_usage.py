@@ -8,7 +8,7 @@ from commonroad.common.file_reader import CommonRoadFileReader
 # Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
 from commonroad_route_planner.utility.visualization import visualize_route
-from commonroad_route_planner.utility.route_extension.route_extendor import RouteExtendor
+from commonroad_route_planner.frenet_tools.route_extendor import RouteExtendor
 
 
 # typing

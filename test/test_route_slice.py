@@ -10,10 +10,10 @@ from commonroad_route_planner.route_planner import RoutePlanner
 from commonroad_route_planner.utility.visualization import visualize_route
 
 # typing
-from typing import List, Tuple
+from typing import List
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from commonroad_route_planner.utility.route_slice.route_slice import RouteSlice
+    from commonroad_route_planner.frenet_tools.route_slice import RouteSlice
 
 
 

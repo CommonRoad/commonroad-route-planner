@@ -1,0 +1,28 @@
+site_name: CommonRoad Route Planner
+
+theme:
+  name: readthedocs
+  logo: assets/commonroad_white150.png
+
+plugins:
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: sphinx
+  - search
+
+nav:
+  - Introduction: index.md
+
+  - Example Usage: example.md
+
+  - Basic API Reference:
+      - "Route Planner": route_planner.md
+      - "Route Selector": route_selector.md
+      - "Route": route.md
+
+  - Frenet Frame Planning:
+      - "Route Extendor": route_extendor.md
+      - "Route Slice": route_slice.md
+

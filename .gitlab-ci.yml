@@ -12,10 +12,10 @@ stages:
 before_script:
   - pip install poetry
   - poetry config virtualenvs.in-project true
-  - poetry install --with test
+  - poetry install --with test, docs
   - source .venv/bin/activate
 
-# Run all tests in the tests folder
+###### Test #########
 unittest:
   stage: test
   script:
@@ -29,6 +29,17 @@ unittest:
         coverage_format: cobertura
         path: coverage.xml
 
+test_build_pages:
+  stage: test
+  allow_failure: true
+  script:
+    - mkdocs build
+  artifacts:
+    paths:
+      - site
+  needs: [ ]
+
+####### Style ##########
 flake8:
   stage: style
   needs: []
@@ -52,6 +63,12 @@ black:
   script:
     - black --check --verbose --diff --color commonroad_route_planner
 
+
+
+
+
+
+################# Deploy ##########
 # Deploy the package to the internal package registry
 deploy_master:
   stage: deploy
@@ -63,6 +80,24 @@ deploy_master:
     - master
   except:
     - tags
+
+
+#pages:
+#  stage: deploy
+#  publish: site
+#  only:
+#    - master
+#  script:
+#    - mkdocs build
+#  artifacts:
+#    paths:
+#      - site
+#  environment:
+#    name: Gitlab Pages
+#    url: https://cps.pages.gitlab.lrz.de/commonroad/commonroad-route-planner/
+
+
+
 # Deploy to PiPy
 #publish_pypi:
 #  stage: deploy
