@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "commonroad-route-planner"
-version = "2022.3"
+version = "2024.3"
 description = ""
-authors = ["Daniel Tar, Edmond Irani Liu <commonroad@lists.lrz.de>"]
+authors = ["Tobias Mascetta <commonroad@lists.lrz.de>"]
 license = "BSD"
 readme = "README.md"
 packages = [{include = "commonroad_route_planner"}]
@@ -15,8 +15,6 @@ numpy = ">=1.17.4"
 shapely = ">=1.6.4.post2"
 matplotlib = ">=3.1.2"
 commonroad-drivability-checker = "^2023.1"
-cvxpy = "^1.4.1"
-cvxopt = "^1.3.2"
 
 
 [tool.poetry.group.tutorial]
