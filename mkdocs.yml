@@ -13,7 +13,8 @@ plugins:
   - search
 
 nav:
-  - Introduction: index.md
+  - Introduction:
+    - "Introduction": index.md
 
   - Examples:
     - "Minimal Usage": minimal_example.md
@@ -26,7 +27,7 @@ nav:
       - "Route": route.md
 
   - Frenet Frame Planning:
-      - "Route Extendor": route_generator.md
+      - "Route Extendor": route_extendor.md
       - "Route Slice": route_slice.md
 
   - Route Generation:

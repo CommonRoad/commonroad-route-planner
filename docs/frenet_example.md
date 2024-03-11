@@ -1,5 +1,4 @@
-The subsequent code snippet shows the general usage of the CommonRoad Route Planner.
-Further examples can be found [here](https://github.com/commonroad/commonroad-route-planner/tutorials).
+The subsequent code snippet shows specific use cases for Planning in Frenet Frame.
 
 ```Python
 # commonrad
