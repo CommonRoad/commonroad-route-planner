@@ -94,3 +94,16 @@ class Route:
         )
 
 
+
+    def get_lanelet_section(self, lanelet_id: int) -> Union[LaneletSection, None]:
+        """
+        Takes lanelet id and retrieves lanelet section
+
+        :param lanelet_id: lanelet id for which the lanelet section should be returned
+
+        :return: lanelet section or none
+        """
+        if(lanelet_id not in self.lanelet_ids):
+            raise ValueError('Lanelet id not part of route')
+
+        return LaneletSection.get_section_by_lanelet_id(lanelet_id)
