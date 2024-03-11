@@ -86,7 +86,7 @@ pages:
   stage: deploy
   publish: site
   only:
-    - develop
+    - master
   script:
     - mkdocs build
   artifacts:
