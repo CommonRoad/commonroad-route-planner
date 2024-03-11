@@ -55,6 +55,7 @@ def visualize_route(route: Union["Route", "RouteSlice"],
 
     # instantiate a renderer for plotting
     renderer = MPRenderer(plot_limits=plot_limits, figsize=(size_x, size_x / ratio_x_y))
+    renderer.draw_params.dynamic_obstacle.draw_icon = True
 
     scenario.draw(renderer)
 
@@ -74,6 +75,7 @@ def visualize_route(route: Union["Route", "RouteSlice"],
         renderer.draw_params.lanelet_network.lanelet.unique_colors = (
             False  # colorizes center_vertices and labels of each lanelet differently
         )
+        renderer.draw_params.dynamic_obstacle.draw_icon = True
         renderer.draw_params.lanelet_network.lanelet.draw_stop_line = False
         renderer.draw_params.lanelet_network.lanelet.stop_line_color = "#ffffff"
         renderer.draw_params.lanelet_network.lanelet.draw_line_markings = True

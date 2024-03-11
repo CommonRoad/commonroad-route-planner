@@ -1,7 +1,10 @@
 # CommonRoad Route Planner
 TODO: Add Batches
 
-The CommonRoad Route Planner
+The CommonRoad Route Planner aims to give an extendable, light-weight route- and reference path planner for the CommonRoad project
+
+![Example Route](assets/example_route.png)
+
 
 ## Project status
 TBGD
@@ -22,8 +25,8 @@ It is recommended to use [poetry](https://python-poetry.org/) as an environment 
 Clone the repository and install it with poetry.
 ```shell
 git clone TODO DD GITUB
-poetry shell
-poetry install
+conda activate ENVIRONMENT
+pip install .
 ```
 
 ### Examples
@@ -34,13 +37,13 @@ An example script for visualizing predictions is provided [here](example.md).
 ## Documentation
 You can generate the documentation within your activated Poetry environment using.
 ```bash
-poetry shell
+conda activate ENVIRONMENT
 mkdocs build
 ```
 The documentation will be located under site, where you can open `index.html` in your browser to view it.
 For updating the documentation you can also use the live preview:
 ```bash
-poetry shell
+conda activate ENVIRONMENT
 mkdocs serve
 ```
 
