@@ -31,20 +31,18 @@ from commonroad_route_planner.route_candidate_holder import RouteGenerator
 from commonroad_route_planner.utility.route_util import (lanelet_orientation_at_position, relative_orientation)
 from commonroad_route_planner.utility.overtake_init_state import OvertakeInitState
 from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
-from commonroad_route_planner.route_generation_methods.default_generation_method import DefaultGenerationMethod
+from commonroad_route_planner.route_generation_strategies.default_generation_strategy import DefaultGenerationStrategy
 # typing
 from typing import List, Union
 
-#  _logger = logging.getLogger(__name__)
 
 
 class RoutePlanner:
-    """Main class for planning routes in CommonRoad scenarios.
+    """
+    Main class for planning routes in CommonRoad scenarios.
 
     This is a high-level _planner that plans on the lanelet level. It returns the best routes for each pair
-    of start/goal lanelets, with each route in the form of an ordered list of lanelet IDs. Depending on the
-    utilized backend, the best route may have the shortest distance (if using NETWORKX and NETWORKX_REVERSED)
-    or may have the lowest cost computed per the heuristic function (if using PRIORITY_QUEUE).
+    of start/goal lanelets, with each route in the form of an ordered list of lanelet IDs.
     In survival scenarios (no goal lanelet), the _planner advances in the order of forward, right, left when possible.
     """
 
@@ -56,7 +54,7 @@ class RoutePlanner:
                  planning_problem: PlanningProblem,
                  extended_search: bool = False,
                  prohibited_lanelet_ids: List[int] = None,
-                 logging_level: int = logging.INFO
+                 logging_level: int = logging.WARNING
                  ) -> None:
         """
         Initialization of a RoutePlanner object.
@@ -65,7 +63,7 @@ class RoutePlanner:
         :param planning_problem: cr planning problem
         :param extended_search: necessary, if not the shortest route is searched, e.g. if a specific lanelet must be included
         :param prohibited_lanelet_ids: lanelets ids that must not be used
-        :param logging_level: logging level
+        :param logging_level: logging level, default to warning
         """
 
         self._logging_level = logging_level
@@ -154,10 +152,13 @@ class RoutePlanner:
 
     def plan_routes(self,
                     lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE,
-                    RouteGenerationMethod: Union[DefaultGenerationMethod] = DefaultGenerationMethod
+                    GenerationStrategy: Union[DefaultGenerationStrategy] = DefaultGenerationStrategy
                     ) -> RouteGenerator:
         """
         Plans routes for every pair of start/goal lanelets. If no goal lanelet ID is given then return a survival route.
+
+        :param lane_change_method: Method for lane changes, e.g. quintic splines
+        :param GenerationStrategy: generation strategy for route
 
         :return: list of lanelet ids from start to goal.
         """
@@ -189,7 +190,7 @@ class RoutePlanner:
             prohibited_lanelet_ids=self._prohibited_lanelet_ids,
             logger=self._logger,
             lane_change_method=lane_change_method,
-            GenerationMethod=RouteGenerationMethod
+            GenerationStrategy=GenerationStrategy
         )
 
 

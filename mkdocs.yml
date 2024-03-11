@@ -29,3 +29,11 @@ nav:
       - "Route Extendor": route_generator.md
       - "Route Slice": route_slice.md
 
+  - Route Generation:
+      - "Route Generation via Strategy Pattern": route_generation_strategy.md
+
+
+  - Lane Changing:
+      - "Different Methods for Lane Changing": lane_changing.md
+
+

@@ -17,6 +17,7 @@ import commonroad_route_planner.utility.polyline_operations.polyline_operations 
 from commonroad_route_planner.lane_changing.lane_change_handler import LaneChangeHandler
 from commonroad_route_planner.lane_changing.change_position import LaneChangeMarker
 from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
+from commonroad_route_planner.route_generation_strategies.base_generation_strategy import BaseGenerationStrategy
 
 
 
@@ -27,9 +28,9 @@ if TYPE_CHECKING:
     from commonroad.scenario.scenario import LaneletNetwork, Lanelet
 
 
-class DefaultGenerationMethod:
+class DefaultGenerationStrategy(BaseGenerationStrategy):
     """
-    Default method to generate and update a route
+    Default strategy to generate and update a route
     """
 
     logger: logging.Logger = logging.Logger(__name__)
@@ -58,13 +59,13 @@ class DefaultGenerationMethod:
         :rtype Route
         """
 
-        sections: List[LaneletSection] = DefaultGenerationMethod._calc_route_sections(
+        sections: List[LaneletSection] = DefaultGenerationStrategy._calc_route_sections(
             lanelet_ids=lanelet_ids,
             lanelet_network=lanelet_network
         )
 
 
-        reference_path, num_lane_change_actions = DefaultGenerationMethod._calc_reference_path(
+        reference_path, num_lane_change_actions = DefaultGenerationStrategy._calc_reference_path(
             lanelet_ids=lanelet_ids,
             lanelet_network=lanelet_network,
             initial_state=initial_state,
@@ -204,7 +205,7 @@ class DefaultGenerationMethod:
 
             else:
                 # lane change required
-                lanelet_end: Lanelet = DefaultGenerationMethod._find_last_lanelet_of_lane_change(
+                lanelet_end: Lanelet = DefaultGenerationStrategy._find_last_lanelet_of_lane_change(
                     lanelet_start=lanelet,
                     lanelet_section=lanelet_section,
                     lanelet_ids=lanelet_ids,
@@ -275,7 +276,7 @@ class DefaultGenerationMethod:
 
         # if route ends in lane section of lane change
         if (lanelet_return is None):
-            DefaultGenerationMethod.logger.info(f'Encountered goal in lane change')
+            DefaultGenerationStrategy.logger.info(f'Encountered goal in lane change')
             lanelet_return: Lanelet = lanelet_network.find_lanelet_by_id(lanelet_ids[-1])
 
         return lanelet_return

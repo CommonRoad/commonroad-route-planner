@@ -15,7 +15,7 @@ from commonroad.scenario.state import InitialState
 from commonroad_route_planner.route import Route
 from commonroad_route_planner.utility.visualization import debug_visualize
 from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
-from commonroad_route_planner.route_generation_methods.default_generation_method import DefaultGenerationMethod
+from commonroad_route_planner.route_generation_strategies.default_generation_strategy import DefaultGenerationStrategy
 
 # typing
 from typing import List, Set, Tuple, Union
@@ -36,7 +36,7 @@ class RouteGenerator:
                  logger: logging.Logger,
                  prohibited_lanelet_ids: List[int]=None,
                  lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE,
-                 GenerationMethod: Union[DefaultGenerationMethod] = DefaultGenerationMethod,
+                 GenerationStrategy: Union[DefaultGenerationStrategy] = DefaultGenerationStrategy,
                  ) -> None:
         """
         :param lanelet_network: cr lanelet network,
@@ -45,10 +45,12 @@ class RouteGenerator:
         :param route_candidates: list of list of lanelet ids of routes
         :param logger: central logger
         :param prohibited_lanelet_ids: prohibited lanelet ids
+        :param lane_change_method: method to compute lane changes
+        :param GenerationStrategy: strategy to generate route
         """
 
         self._logger = logger
-        GenerationMethod.logger = logger
+        GenerationStrategy.logger = logger
 
         self._lanelet_network: LaneletNetwork = lanelet_network
         self._prohibited_lanelet_ids: List[int] = prohibited_lanelet_ids if(prohibited_lanelet_ids is not None) else list()
@@ -59,10 +61,10 @@ class RouteGenerator:
         self._lane_change_method: LaneChangeMethod = lane_change_method
 
         # create a list of Route objects for all routes found by the route planner which is not empty
-        self._GenerationMethod: Union[DefaultGenerationMethod] = GenerationMethod
+        self._GenerationMethod: Union[DefaultGenerationStrategy] = GenerationStrategy
 
         self._route_candidates: List[Route] = [
-            GenerationMethod.generate_route(
+            GenerationStrategy.generate_route(
                 lanelet_network=lanelet_network,
                 lanelet_ids=lanelet_ids,
                 initial_state=initial_state,

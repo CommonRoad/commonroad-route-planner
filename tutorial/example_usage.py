@@ -10,7 +10,7 @@ from commonroad_route_planner.route_planner import RoutePlanner
 from commonroad_route_planner.utility.visualization import visualize_route
 from commonroad_route_planner.frenet_tools.route_extendor import RouteExtendor
 from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
-from commonroad_route_planner.route_generation_methods.default_generation_method import DefaultGenerationMethod
+from commonroad_route_planner.route_generation_strategies.default_generation_strategy import DefaultGenerationStrategy
 
 
 # typing
@@ -61,14 +61,14 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
             extended_search=False,
         )
         # plan routes, and save the routes in a route candidate holder
-        route_selector: "RouteGenerator" = route_planner.plan_routes(
+        route_generator: "RouteGenerator" = route_planner.plan_routes(
             lane_change_method=LaneChangeMethod.QUINTIC_SPLINE,
-            RouteGenerationMethod=DefaultGenerationMethod
+            GenerationStrategy=DefaultGenerationStrategy
         )
 
         # ========== retrieving routes =========== #
         # here we retrieve the shortest route that has the least amount of disjoint lane changes
-        route: "Route" = route_selector.retrieve_shortest_route(
+        route: "Route" = route_generator.retrieve_shortest_route(
             retrieve_shortest=True,
             consider_least_lance_changes=True
         )
@@ -84,7 +84,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
 
         # option 2: retrieve all routes
-        list_routes, num_routes_retrieved = route_selector.retrieve_all_routes()
+        list_routes, num_routes_retrieved = route_generator.retrieve_all_routes()
         print(f"Number of routes retrieved: {num_routes_retrieved}")
 
         # ========== visualization =========== #

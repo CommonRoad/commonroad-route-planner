@@ -19,7 +19,7 @@ from commonroad.scenario.lanelet import Lanelet
 # Own code base
 from commonroad_route_planner.route import Route
 import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
-from commonroad_route_planner.route_generation_methods.default_generation_method import DefaultGenerationMethod
+from commonroad_route_planner.route_generation_strategies.default_generation_strategy import DefaultGenerationStrategy
 
 # typing
 from typing import List, Union
@@ -34,13 +34,13 @@ class RouteExtendor:
 
     def __init__(self, route: Route,
                  extrapolation_length: float = 5.0,
-                 RouteGenerationMethod: Union[DefaultGenerationMethod] = DefaultGenerationMethod
+                 RouteGenerationMethod: Union[DefaultGenerationStrategy] = DefaultGenerationStrategy
                  ) -> None:
         self.route: Route = route
         #additional_lenght_in_meters
         self.extrapolation_length: float = extrapolation_length
 
-        self.RouteGenerationMethod: Union[DefaultGenerationMethod] = RouteGenerationMethod
+        self.RouteGenerationMethod: Union[DefaultGenerationStrategy] = RouteGenerationMethod
 
 
     def _perform_no_successor_extension(self)-> None:
