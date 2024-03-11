@@ -22,10 +22,10 @@ nav:
 
   - Basic API Reference:
       - "Route Planner": route_planner.md
-      - "Route Selector": route_selector.md
+      - "Route Generator": route_generator.md
       - "Route": route.md
 
   - Frenet Frame Planning:
-      - "Route Extendor": route_extendor.md
+      - "Route Extendor": route_generator.md
       - "Route Slice": route_slice.md
 
