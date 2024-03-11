@@ -26,22 +26,8 @@ def main(path_to_xml: str, save_imgs: bool = False, save_path: str = ""):
     # retrieve the first planning problem in the problem set
     planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
 
-    # ========== route planning =========== #
-    # instantiate a route planner with the scenario and the planning problem
-    route_planner = RoutePlanner(
-        scenario=scenario,
-        planning_problem=planning_problem,
-        extended_search=False
-    )
-    # plan routes, and save the routes in a route candidate holder
-    route_selector: "RouteSelector" = route_planner.plan_routes()
-
-    # ========== retrieving the best route =========== #
-    # here we retrieve the shortest route that has the least amount of disjoint lane changes
-    route: "Route" = route_selector.retrieve_shortest_route(
-        retrieve_shortest=True,
-        consider_least_lance_changes=True
-    )
+    # Get route object
+    route: Route = RoutePlanner(scenario, planning_problem).plan_routes().retrieve_shortest_route()
 
     # ========== For Planning in Frenet Frame, it might be useful to extend the route a bit =========== #
     # Init route extendor
@@ -49,20 +35,8 @@ def main(path_to_xml: str, save_imgs: bool = False, save_path: str = ""):
     # Extend reference path at start and end
     route_extendor.extend_reference_path_at_start_and_end()
 
-    # ========== You can also retrieve all routes =========== #
-    list_routes, num_routes_retrieved = route_selector.retrieve_all_routes()
-    print(f"Number of routes retrieved: {num_routes_retrieved}")
-
-    # ========== visualization =========== #
-    visualize_route(
-        route=route,
-        scenario=scenario,
-        planning_problem=planning_problem,
-        save_img=save_imgs,
-        draw_route_lanelets=True,
-        draw_reference_path=True,
-        save_path=save_path,
-    )
+    # This is unnecessary but shows that the route_extendor modified the route object
+    route: Route = route_extendor.get_route()
 
 
 if __name__ == "__main__":

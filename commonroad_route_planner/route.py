@@ -184,7 +184,7 @@ class Route:
 
     def update_geometric_ref_path_properties(self,
                                              reference_path: np.ndarray=None,
-                                             default_resample_step: float=2):
+                                             default_resample_step: float=2) -> None:
         """
         Updates the geometric properties of ref path.
         If reference path is specified, the new reference path will be updated and resamples before.

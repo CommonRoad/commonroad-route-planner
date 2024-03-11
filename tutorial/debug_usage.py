@@ -14,7 +14,7 @@ from typing import List
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from commonroad_route_planner.route_selector import RouteSelector
+    from commonroad_route_planner.route_candidate_holder import RouteSelector
     from commonroad_route_planner.route import Route
 
 

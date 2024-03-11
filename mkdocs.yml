@@ -15,7 +15,10 @@ plugins:
 nav:
   - Introduction: index.md
 
-  - Example Usage: example.md
+  - Examples:
+    - "Minimal Usage": minimal_example.md
+    - "Overall Usage": example.md
+    - "Planning in Frenet Frame": frenet_example.md
 
   - Basic API Reference:
       - "Route Planner": route_planner.md
