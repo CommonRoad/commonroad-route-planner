@@ -15,15 +15,17 @@ from commonroad.scenario.state import InitialState
 from commonroad_route_planner.route import Route
 from commonroad_route_planner.utility.visualization import debug_visualize
 from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
+from commonroad_route_planner.route_generation_methods.default_generation_method import DefaultGenerationMethod
 
 # typing
 from typing import List, Set, Tuple, Union
 
 
 
-class RouteSelector:
+class RouteGenerator:
     """
-    Selects a route from the route planner, per default the shortest route.
+    Generates routes from a given sequence of lanelets, per default the shortest route.
+    Offers methods to select them.
     """
 
     def __init__(self,
@@ -33,7 +35,8 @@ class RouteSelector:
                  route_candidates: List[List[int]],
                  logger: logging.Logger,
                  prohibited_lanelet_ids: List[int]=None,
-                 lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE
+                 lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE,
+                 GenerationMethod: Union[DefaultGenerationMethod] = DefaultGenerationMethod,
                  ) -> None:
         """
         :param lanelet_network: cr lanelet network,
@@ -45,6 +48,7 @@ class RouteSelector:
         """
 
         self._logger = logger
+        GenerationMethod.logger = logger
 
         self._lanelet_network: LaneletNetwork = lanelet_network
         self._prohibited_lanelet_ids: List[int] = prohibited_lanelet_ids if(prohibited_lanelet_ids is not None) else list()
@@ -55,16 +59,17 @@ class RouteSelector:
         self._lane_change_method: LaneChangeMethod = lane_change_method
 
         # create a list of Route objects for all routes found by the route planner which is not empty
+        self._GenerationMethod: Union[DefaultGenerationMethod] = GenerationMethod
+
         self._route_candidates: List[Route] = [
-            Route(
+            GenerationMethod.generate_route(
                 lanelet_network=lanelet_network,
-                lanelet_ids=route,
+                lanelet_ids=lanelet_ids,
+                initial_state=initial_state,
+                goal_region=goal_region,
                 prohibited_lanelet_ids=prohibited_lanelet_ids,
-                initial_state = self._initial_state,
-                goal_region=self._goal_region,
-                logger=self._logger,
-                lane_change_method=self._lane_change_method
-            ) for route in route_candidates if route
+                lane_change_method=lane_change_method
+            ) for lanelet_ids in route_candidates if lanelet_ids
         ]
 
         self._num_route_candidates: int = len(self._route_candidates)
@@ -204,12 +209,12 @@ class RouteSelector:
         # multpiple routes
         else:
             sorted_routes: List[Route] = sorted(
-                self._route_candidates, key=lambda x: x.num_lane_change_action, reverse=False
+                self._route_candidates, key=lambda x: x.num_lane_change_actions, reverse=False
             )
 
             minimal_lane_change_routes: List[Route] = [
                 route for route in sorted_routes
-                if route.num_lane_change_action == sorted_routes[0].num_lane_change_action
+                if route.num_lane_change_actions == sorted_routes[0].num_lane_change_actions
             ]
 
             minimal_lane_change_routes_by_length = sorted(
@@ -277,7 +282,7 @@ class RouteSelector:
         """
 
         lanelet_ids: Set[int] = set(lanelet_ids_to_go_through)
-        route_ids: Set[int] = set(route._lanelet_ids)
+        route_ids: Set[int] = set(route.lanelet_ids)
         if(lanelet_ids.issubset(route_ids)):
             return True
         else:

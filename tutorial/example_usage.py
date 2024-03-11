@@ -9,13 +9,15 @@ from commonroad.common.file_reader import CommonRoadFileReader
 from commonroad_route_planner.route_planner import RoutePlanner
 from commonroad_route_planner.utility.visualization import visualize_route
 from commonroad_route_planner.frenet_tools.route_extendor import RouteExtendor
+from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
+from commonroad_route_planner.route_generation_methods.default_generation_method import DefaultGenerationMethod
 
 
 # typing
 from typing import List
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from commonroad_route_planner.route_candidate_holder import RouteSelector
+    from commonroad_route_planner.route_candidate_holder import RouteGenerator
     from commonroad_route_planner.route import Route
 
 
@@ -56,10 +58,13 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         route_planner = RoutePlanner(
             scenario=scenario,
             planning_problem=planning_problem,
-            extended_search=False
+            extended_search=False,
         )
         # plan routes, and save the routes in a route candidate holder
-        route_selector: "RouteSelector" = route_planner.plan_routes()
+        route_selector: "RouteGenerator" = route_planner.plan_routes(
+            lane_change_method=LaneChangeMethod.QUINTIC_SPLINE,
+            RouteGenerationMethod=DefaultGenerationMethod
+        )
 
         # ========== retrieving routes =========== #
         # here we retrieve the shortest route that has the least amount of disjoint lane changes

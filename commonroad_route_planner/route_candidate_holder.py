@@ -7,7 +7,7 @@ from commonroad.scenario.state import InitialState
 
 
 # own code base
-from commonroad_route_planner.route_selector import RouteSelector
+from commonroad_route_planner.route_generator import RouteGenerator
 from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
 
 
@@ -17,7 +17,7 @@ from typing import List, Set
 
 
 
-class RouteCandidateHolder(RouteSelector):
+class RouteCandidateHolder(RouteGenerator):
     """
     For Legacy reasons.
     """

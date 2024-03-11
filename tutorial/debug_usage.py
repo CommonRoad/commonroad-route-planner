@@ -14,7 +14,7 @@ from typing import List
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from commonroad_route_planner.route_candidate_holder import RouteSelector
+    from commonroad_route_planner.route_candidate_holder import RouteGenerator
     from commonroad_route_planner.route import Route
 
 
@@ -55,7 +55,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
             extended_search=False
         )
         # plan routes, and save the routes in a route candidate holder
-        route_selector: "RouteSelector" = route_planner.plan_routes()
+        route_selector: "RouteGenerator" = route_planner.plan_routes()
 
         # ========== retrieving routes =========== #
         # here we retrieve the first route in the list, this is equivalent to: route = list_routes[0]

@@ -27,10 +27,11 @@ from commonroad_route_planner.planners.networkx import (
     NetworkxRoutePlanner,
 )
 from commonroad_route_planner.planners.survival import NoGoalFoundRoutePlanner
-from commonroad_route_planner.route_candidate_holder import RouteSelector
+from commonroad_route_planner.route_candidate_holder import RouteGenerator
 from commonroad_route_planner.utility.route_util import (lanelet_orientation_at_position, relative_orientation)
 from commonroad_route_planner.utility.overtake_init_state import OvertakeInitState
 from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
+from commonroad_route_planner.route_generation_methods.default_generation_method import DefaultGenerationMethod
 # typing
 from typing import List, Union
 
@@ -128,7 +129,7 @@ class RoutePlanner:
                                                 planning_problem: PlanningProblem,
                                                 extended_search: bool = False,
                                                 prohibited_lanelet_ids: List[int] = None,
-                                                ) -> RouteSelector:
+                                                ) -> RouteGenerator:
         """
         Updates planning problem and recomputes necessary parts.
         Returns a new route selector.
@@ -152,8 +153,9 @@ class RoutePlanner:
 
 
     def plan_routes(self,
-                    lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE
-                    ) -> RouteSelector:
+                    lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE,
+                    RouteGenerationMethod: Union[DefaultGenerationMethod] = DefaultGenerationMethod
+                    ) -> RouteGenerator:
         """
         Plans routes for every pair of start/goal lanelets. If no goal lanelet ID is given then return a survival route.
 
@@ -179,14 +181,15 @@ class RoutePlanner:
         if(len(routes) == 0):
             raise ValueError(f'[CR Route Planner] _planner {self._planner} could not find a single route')
 
-        return RouteSelector(
+        return RouteGenerator(
             lanelet_network=self._lanelet_network,
             initial_state=self._planning_problem.initial_state,
             goal_region=self._planning_problem.goal,
             route_candidates=routes,
             prohibited_lanelet_ids=self._prohibited_lanelet_ids,
             logger=self._logger,
-            lane_change_method=lane_change_method
+            lane_change_method=lane_change_method,
+            GenerationMethod=RouteGenerationMethod
         )
 
 

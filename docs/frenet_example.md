@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from commonroad_route_planner.route import Route
-    from commonroad_route_planner.route_candidate_holder import RouteSelector
+    from commonroad_route_planner.route_candidate_holder import RouteGenerator
 
 
 def main(path_to_xml: str, save_imgs: bool = False, save_path: str = ""):
