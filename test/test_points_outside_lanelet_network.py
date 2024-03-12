@@ -41,7 +41,6 @@ class TestPointsOutsideLaneletNetwork(unittest.TestCase):
             "DEU_Stu-1_49_I-1.xml",
         ]
 
-        # TODO: Make the scenarios from the ignored list above work
         if development:
             ignored_scenarios = []
 

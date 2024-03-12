@@ -5,7 +5,6 @@ description = "Route and reference path planning tool for CommonRoad scenarios"
 authors = ["Tobias Mascetta <commonroad@lists.lrz.de>"]
 license = "BSD"
 readme = "README.md"
-copyright = "TUM Cyber-Physical Systems Group"
 
 homepage = "https://commonroad.in.tum.de"
 keywords= ["autonomous", "automated", "vehicles", "driving", "motion", "planning", "prediction"]

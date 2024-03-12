@@ -7,7 +7,8 @@ The CommonRoad Route Planner aims to give an extendable, light-weight route- and
 
 
 ## Project status
-TBGD
+This tool is still under development but has already been successfully deployed in both simulation and on real-world 
+autonomous vehicles.
 
 We highly welcome your contribution.
 If you want to contribute a prediction algorithm, please create an issue/pull request in our TODO: ADD GITHUB REPO

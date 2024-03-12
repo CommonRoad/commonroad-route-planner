@@ -44,7 +44,6 @@ def compute_scalar_curvature_from_polyline(polyline: np.ndarray) -> np.ndarray:
     :param polyline: polyline for which curvature should be calculated
     :return: curvature along  polyline
     """
-    # FIXME: WTF ????
     assert (
         isinstance(polyline, np.ndarray)
         and polyline.ndim == 2
