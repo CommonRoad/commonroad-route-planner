@@ -121,7 +121,7 @@ publish_pypi:
     - release
   script:
     - poetry build
-    - poetry publish -u ${CR_PYPI_RELEASE_USERNAME} -p ${CR_PYPI_RELEASE_PASSWORD}
+    - poetry publish -u __token__ -p ${CR_PYPI_RELEASE_API_TOKEN}
   environment:
     name: production
     url: https://pypi.org/project/commonroad-route-planner
