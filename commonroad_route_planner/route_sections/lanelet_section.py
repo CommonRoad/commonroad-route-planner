@@ -28,7 +28,6 @@ class LaneletSection:
             warnings.warn("Could not find section for lanelet id")
             return None
 
-
     def __init__(self, lanelet: "Lanelet", lanelet_network: "LaneletNetwork") -> None:
 
         # current lanelet

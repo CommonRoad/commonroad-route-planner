@@ -171,7 +171,6 @@ class RouteExtendor:
         distance is below a certain threshold (currently infinity), additional points are being placed
         """
 
-
         # check if there is a successor lane.
         last_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(
             self.route.lanelet_ids[-1]
