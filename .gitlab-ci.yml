@@ -52,8 +52,8 @@ flake8:
     - master
     - release
   script:
-    - pip install flake8 flake8-todo
-    - flake8 commonroad_route_planner/ --extend-ignore=E501
+    - pip install flake8
+    - flake8 commonroad_route_planner/ --extend-ignore=E501,E203
 
 black:
   stage: style
