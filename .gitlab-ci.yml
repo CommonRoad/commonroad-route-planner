@@ -101,17 +101,27 @@ pages:
     name: Gitlab Pages
     url: https://cps.pages.gitlab.lrz.de/commonroad/commonroad-route-planner/
 
+# deploy to external pypy-test from master
+push_to_external_pipy_test_registry:
+  stage: deploy
+  when: manual
+  only:
+    - master
+  script:
+    - poetry config repositories.test https://test.pypi.org/legacy/
+    - poetry build
+    - poetry publish --repository test -u __token__ -p ${CR_PYPI_TEST_API_TOKEN}
 
 
-# Deploy to PiPy
-#publish_pypi:
-#  stage: deploy
-#  when: manual
-#  only:
-#    - master
-#  script:
-#    - poetry build
-#    - poetry publish -u ${CR_PYPI_RELEASE_USERNAME} -p ${CR_PYPI_RELEASE_PASSWORD}
-#  environment:
-#    name: production
-#    url: https://pypi.org/project/commonroad-route-planner
+# Deploy to PiPy from release
+publish_pypi:
+  stage: deploy
+  when: manual
+  only:
+    - release
+  script:
+    - poetry build
+    - poetry publish -u ${CR_PYPI_RELEASE_USERNAME} -p ${CR_PYPI_RELEASE_PASSWORD}
+  environment:
+    name: production
+    url: https://pypi.org/project/commonroad-route-planner

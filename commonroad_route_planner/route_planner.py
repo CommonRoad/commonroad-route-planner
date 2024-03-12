@@ -1,7 +1,7 @@
 __author__ = (
     "Tobias Mascetta, Daniel Tar, Peter Kocsis, Edmond Irani Liu, Luis Gressenbuch"
 )
-__copyright__ = ""
+__copyright__ = "TUM Cyber-Physical Systems Group"
 __credits__ = [""]
 __version__ = "2024.1"
 __maintainer__ = "Tobias Mascetta"
