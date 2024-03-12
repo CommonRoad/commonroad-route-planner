@@ -34,9 +34,15 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         :param overtake_states: if initial state is in an overtake situation
         :param extended_search: necessary, if not the shortest but any route should be included
         """
-        super().__init__(lanelet_network=lanelet_network, prohibited_lanelet_ids=prohibited_lanelet_ids, logger=logger)
+        super().__init__(
+            lanelet_network=lanelet_network,
+            prohibited_lanelet_ids=prohibited_lanelet_ids,
+            logger=logger,
+        )
 
-        self._overtake_states: List[OvertakeInitState] = overtake_states if (overtake_states is not None) else list()
+        self._overtake_states: List[OvertakeInitState] = (
+            overtake_states if (overtake_states is not None) else list()
+        )
 
         self._extended_search: bool = extended_search
 
@@ -122,7 +128,13 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         # Edges in case of overtake during starting state
         for overtake_state in self._overtake_states:
             graph.add_edges_from(
-                [(overtake_state.original_lanelet_id, overtake_state.adjecent_lanelet_id, {"weight": 0})]
+                [
+                    (
+                        overtake_state.original_lanelet_id,
+                        overtake_state.adjecent_lanelet_id,
+                        {"weight": 0},
+                    )
+                ]
             )
 
         return graph
@@ -149,7 +161,9 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
                 if id_successor in self._prohibited_lanelet_ids:
                     continue
 
-                edges.append((lanelet.lanelet_id, id_successor, {"weight": lanelet.distance[-1]}))
+                edges.append(
+                    (lanelet.lanelet_id, id_successor, {"weight": lanelet.distance[-1]})
+                )
 
         # add all nodes and edges to graph
         graph.add_nodes_from(nodes)
@@ -176,23 +190,39 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
 
             # add edge if left lanelet
             id_adj_left: int = lanelet.adj_left
-            if id_adj_left and lanelet.adj_left_same_direction and id_adj_left not in self._prohibited_lanelet_ids:
+            if (
+                id_adj_left
+                and lanelet.adj_left_same_direction
+                and id_adj_left not in self._prohibited_lanelet_ids
+            ):
                 weight: float = 1e6 - max(
-                    lanelet.distance[-1], self._lanelet_network.find_lanelet_by_id(id_adj_left).distance[-1]
+                    lanelet.distance[-1],
+                    self._lanelet_network.find_lanelet_by_id(id_adj_left).distance[-1],
                 )
                 edges.append((lanelet.lanelet_id, id_adj_left, {"weight": weight}))
 
             # add edge if right lanelet
             id_adj_right: int = lanelet.adj_right
-            if id_adj_right and lanelet.adj_right_same_direction and id_adj_right not in self._prohibited_lanelet_ids:
+            if (
+                id_adj_right
+                and lanelet.adj_right_same_direction
+                and id_adj_right not in self._prohibited_lanelet_ids
+            ):
                 weight: float = 1e6 - max(
-                    lanelet.distance[-1], self._lanelet_network.find_lanelet_by_id(id_adj_right).distance[-1]
+                    lanelet.distance[-1],
+                    self._lanelet_network.find_lanelet_by_id(id_adj_right).distance[-1],
                 )
                 edges.append((lanelet.lanelet_id, id_adj_right, {"weight": weight}))
 
         # Edges in case of overtake during starting state
         for overtake_state in self._overtake_states:
-            edges.append((overtake_state.original_lanelet_id, overtake_state.adjecent_lanelet_id, {"weight": 1.0}))
+            edges.append(
+                (
+                    overtake_state.original_lanelet_id,
+                    overtake_state.adjecent_lanelet_id,
+                    {"weight": 1.0},
+                )
+            )
 
         # add all nodes and edges to graph
         graph.add_nodes_from(nodes)

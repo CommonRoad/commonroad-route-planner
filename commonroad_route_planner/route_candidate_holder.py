@@ -8,7 +8,9 @@ from commonroad.scenario.state import InitialState
 
 # own code base
 from commonroad_route_planner.route_generator import RouteGenerator
-from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
+from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import (
+    LaneChangeMethod,
+)
 
 
 # typing

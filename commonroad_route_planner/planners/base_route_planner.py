@@ -6,7 +6,12 @@ from commonroad.scenario.lanelet import LaneletNetwork
 
 
 class BaseRoutePlanner(metaclass=ABCMeta):
-    def __init__(self, lanelet_network: LaneletNetwork, logger: Logger, prohibited_lanelet_ids: List[int] = None):
+    def __init__(
+        self,
+        lanelet_network: LaneletNetwork,
+        logger: Logger,
+        prohibited_lanelet_ids: List[int] = None,
+    ):
         """
         Base class for a route planner.
         """
@@ -17,7 +22,9 @@ class BaseRoutePlanner(metaclass=ABCMeta):
         )
 
     @abstractmethod
-    def find_routes(self, id_lanelet_start: int, id_lanelet_goal: int) -> List[List[int]]:
+    def find_routes(
+        self, id_lanelet_start: int, id_lanelet_goal: int
+    ) -> List[List[int]]:
         pass
 
     @property

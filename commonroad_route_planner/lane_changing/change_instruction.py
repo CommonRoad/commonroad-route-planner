@@ -32,7 +32,9 @@ class LaneChangeInstruction:
         else:
             return None
 
-    def __init__(self, lanelet: "Lanelet", lane_change_marker: "LaneChangeMarker") -> None:
+    def __init__(
+        self, lanelet: "Lanelet", lane_change_marker: "LaneChangeMarker"
+    ) -> None:
         """
         :param lanelet: lanelet of lane change
         :param lane_change_marker: lane change marker signifiying whether to change in this lanelet

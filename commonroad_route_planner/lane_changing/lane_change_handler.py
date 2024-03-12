@@ -131,15 +131,21 @@ class LaneChangeHandler:
         # uses selected lane change method to construct lane change path
         # if goal and/or start are within lane change, use parts of end/start lane outside them
 
-        start_point: np.ndarray = self._define_start_point_of_lane_change_in_cvl(initial_state=initial_state)
+        start_point: np.ndarray = self._define_start_point_of_lane_change_in_cvl(
+            initial_state=initial_state
+        )
 
-        end_point: np.ndarray = self._define_end_point_of_lance_change_in_cvl(goal_region=goal_region)
+        end_point: np.ndarray = self._define_end_point_of_lance_change_in_cvl(
+            goal_region=goal_region
+        )
 
         ref_path_curv: np.ndarray = self._method_interface.compute_lane_change_ref_path(
             start_point=start_point, end_point=end_point, method=method
         )
 
-        reference_path: np.ndarray = self._clcs.convert_list_of_points_to_cartesian_coords(ref_path_curv, 4)
+        reference_path: np.ndarray = (
+            self._clcs.convert_list_of_points_to_cartesian_coords(ref_path_curv, 4)
+        )
 
         reference_path: np.ndarray = self._add_start_portion_of_lanelet(
             reference_path=reference_path, start_point=start_point
@@ -153,7 +159,9 @@ class LaneChangeHandler:
 
         return reference_path
 
-    def _define_end_point_of_lance_change_in_cvl(self, goal_region: GoalRegion) -> np.ndarray:
+    def _define_end_point_of_lance_change_in_cvl(
+        self, goal_region: GoalRegion
+    ) -> np.ndarray:
         """
         Defines start point of lane change given the initial state.
 
@@ -164,12 +172,18 @@ class LaneChangeHandler:
 
         if goal_region is not None:
             if hasattr(goal_region.state_list[0].position, "center"):
-                goal_mid_position: np.ndarray = goal_region.state_list[0].position.center
+                goal_mid_position: np.ndarray = goal_region.state_list[
+                    0
+                ].position.center
             else:
                 # For uncertain position route planner takes first polygon
-                goal_mid_position: np.ndarray = goal_region.state_list[0].position.shapes[0].center
+                goal_mid_position: np.ndarray = (
+                    goal_region.state_list[0].position.shapes[0].center
+                )
 
-            goal_lanelet_ids: List[int] = self._lanelet_network.find_lanelet_by_position([goal_mid_position])[0]
+            goal_lanelet_ids: List[int] = (
+                self._lanelet_network.find_lanelet_by_position([goal_mid_position])[0]
+            )
 
             if set(goal_lanelet_ids) & set(self._lanelet_section.adjacent_lanelet_ids):
                 end_point: np.ndarray = self._clcs.convert_to_curvilinear_coords(
@@ -177,17 +191,21 @@ class LaneChangeHandler:
                 )
             else:
                 end_point: np.ndarray = self._clcs.convert_to_curvilinear_coords(
-                    self._lanelet_end.center_vertices[-1, 0], self._lanelet_end.center_vertices[-1, 1]
+                    self._lanelet_end.center_vertices[-1, 0],
+                    self._lanelet_end.center_vertices[-1, 1],
                 )
 
         else:
             end_point: np.ndarray = self._clcs.convert_to_curvilinear_coords(
-                self._lanelet_end.center_vertices[-1, 0], self._lanelet_end.center_vertices[-1, 1]
+                self._lanelet_end.center_vertices[-1, 0],
+                self._lanelet_end.center_vertices[-1, 1],
             )
 
         return end_point
 
-    def _define_start_point_of_lane_change_in_cvl(self, initial_state: InitialState) -> np.ndarray:
+    def _define_start_point_of_lane_change_in_cvl(
+        self, initial_state: InitialState
+    ) -> np.ndarray:
         """
         Defines start point of lane change given the initial state.
 
@@ -197,7 +215,11 @@ class LaneChangeHandler:
         """
 
         if initial_state is not None:
-            initial_state_ids: List[int] = self._lanelet_network.find_lanelet_by_position([initial_state.position])[0]
+            initial_state_ids: List[int] = (
+                self._lanelet_network.find_lanelet_by_position(
+                    [initial_state.position]
+                )[0]
+            )
             if set(initial_state_ids) & set(self._lanelet_section.adjacent_lanelet_ids):
                 start_point = self._clcs.convert_to_curvilinear_coords(
                     initial_state.position[0],
@@ -217,7 +239,9 @@ class LaneChangeHandler:
 
         return start_point
 
-    def _add_start_portion_of_lanelet(self, reference_path: np.ndarray, start_point: np.ndarray) -> np.ndarray:
+    def _add_start_portion_of_lanelet(
+        self, reference_path: np.ndarray, start_point: np.ndarray
+    ) -> np.ndarray:
         """
         Adds start portion to lanelet, if reference path start after lanelet
 
@@ -229,21 +253,31 @@ class LaneChangeHandler:
 
         # start lanelet
         start_lanelet_curv: np.ndarray = np.asarray(
-            self._clcs.convert_list_of_points_to_curvilinear_coords(self._lanelet_start.center_vertices, 4)
+            self._clcs.convert_list_of_points_to_curvilinear_coords(
+                self._lanelet_start.center_vertices, 4
+            )
         )
 
-        start_lanelet_curv: np.ndarray = start_lanelet_curv[start_lanelet_curv[:, 0] < start_point[0], :]
+        start_lanelet_curv: np.ndarray = start_lanelet_curv[
+            start_lanelet_curv[:, 0] < start_point[0], :
+        ]
 
         if start_lanelet_curv.shape[0] > 0:
             start_lanelet_cart: np.ndarray = np.asarray(
-                self._clcs.convert_list_of_points_to_cartesian_coords(start_lanelet_curv, 4)
+                self._clcs.convert_list_of_points_to_cartesian_coords(
+                    start_lanelet_curv, 4
+                )
             )
 
-            reference_path: np.ndarray = np.concatenate((start_lanelet_cart, reference_path), axis=0)
+            reference_path: np.ndarray = np.concatenate(
+                (start_lanelet_cart, reference_path), axis=0
+            )
 
         return reference_path
 
-    def _add_end_portion_of_lanelet(self, reference_path: np.ndarray, end_point: np.ndarray) -> np.ndarray:
+    def _add_end_portion_of_lanelet(
+        self, reference_path: np.ndarray, end_point: np.ndarray
+    ) -> np.ndarray:
         """
         Adds end portion to lanelet, if reference path ends before lanelet
 
@@ -254,16 +288,24 @@ class LaneChangeHandler:
         """
 
         end_lanelet_curv: np.ndarray = np.asarray(
-            self._clcs.convert_list_of_points_to_curvilinear_coords(self._lanelet_end.center_vertices, 4)
+            self._clcs.convert_list_of_points_to_curvilinear_coords(
+                self._lanelet_end.center_vertices, 4
+            )
         )
 
-        end_lanelet_curv: np.ndarray = end_lanelet_curv[end_lanelet_curv[:, 0] > end_point[0], :]
+        end_lanelet_curv: np.ndarray = end_lanelet_curv[
+            end_lanelet_curv[:, 0] > end_point[0], :
+        ]
 
         if end_lanelet_curv.shape[0] > 0:
             end_lanelet_cart: np.ndarray = np.asarray(
-                self._clcs.convert_list_of_points_to_cartesian_coords(end_lanelet_curv, 4)
+                self._clcs.convert_list_of_points_to_cartesian_coords(
+                    end_lanelet_curv, 4
+                )
             )
-            reference_path: np.ndarray = np.concatenate((reference_path, end_lanelet_cart), axis=0)
+            reference_path: np.ndarray = np.concatenate(
+                (reference_path, end_lanelet_cart), axis=0
+            )
 
         return reference_path
 
@@ -285,7 +327,9 @@ class LaneChangeHandler:
         delta_y: float = float(point_1[1] - point_0[1])
 
         for idx in range(1, num_new_points + 1):
-            new_point: np.ndarray = np.asarray([point_0[0] - idx * delta_x, point_0[1] - idx * delta_y])
+            new_point: np.ndarray = np.asarray(
+                [point_0[0] - idx * delta_x, point_0[1] - idx * delta_y]
+            )
             clcs_line: np.ndarray = np.vstack((new_point, clcs_line))
 
         # get distance between last two points and extrapolate end
@@ -298,7 +342,9 @@ class LaneChangeHandler:
         delta_y: float = float(point_1[1] - point_0[1])
 
         for idx in range(1, num_new_points + 1):
-            new_point: np.ndarray = np.asarray([point_1[0] + idx * delta_x, point_1[1] + idx * delta_y])
+            new_point: np.ndarray = np.asarray(
+                [point_1[0] + idx * delta_x, point_1[1] + idx * delta_y]
+            )
             clcs_line: np.ndarray = np.vstack((clcs_line, new_point))
 
         # smooth and resample

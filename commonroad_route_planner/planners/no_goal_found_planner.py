@@ -28,7 +28,9 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
         """
 
         super(NoGoalFoundRoutePlanner, self).__init__(
-            lanelet_network=lanelet_network, prohibited_lanelet_ids=prohibited_lanelet_ids, logger=logger
+            lanelet_network=lanelet_network,
+            prohibited_lanelet_ids=prohibited_lanelet_ids,
+            logger=logger,
         )
 
         self._threshold_network_exploring: int = threshold_network_exploring
@@ -52,7 +54,10 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
         lanelet = self._lanelet_network.find_lanelet_by_id(id_lanelet_current)
 
         loop_cnt: int = 0
-        while id_lanelet_current not in route and loop_cnt < self._threshold_network_exploring:
+        while (
+            id_lanelet_current not in route
+            and loop_cnt < self._threshold_network_exploring
+        ):
             route.append(lanelet.lanelet_id)
 
             found_new_lanelet = False
@@ -61,17 +66,31 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
                 lanelet = self._lanelet_network.find_lanelet_by_id(lanelet.successor[0])
                 found_new_lanelet = True
 
-            if not found_new_lanelet and lanelet.adj_right and lanelet.adj_right_same_direction:
+            if (
+                not found_new_lanelet
+                and lanelet.adj_right
+                and lanelet.adj_right_same_direction
+            ):
                 # try to go right
-                lanelet_adj_right = self._lanelet_network.find_lanelet_by_id(lanelet.adj_right)
+                lanelet_adj_right = self._lanelet_network.find_lanelet_by_id(
+                    lanelet.adj_right
+                )
                 if len(lanelet_adj_right.successor) > 0:
                     # right lanelet has successor
-                    lanelet = self._lanelet_network.find_lanelet_by_id(lanelet.adj_right)
+                    lanelet = self._lanelet_network.find_lanelet_by_id(
+                        lanelet.adj_right
+                    )
                     found_new_lanelet = True
 
-            if not found_new_lanelet and lanelet.adj_left and lanelet.adj_left_same_direction:
+            if (
+                not found_new_lanelet
+                and lanelet.adj_left
+                and lanelet.adj_left_same_direction
+            ):
                 # try to go left
-                lanelet_adj_left = self._lanelet_network.find_lanelet_by_id(lanelet.adj_left)
+                lanelet_adj_left = self._lanelet_network.find_lanelet_by_id(
+                    lanelet.adj_left
+                )
                 if len(lanelet_adj_left.successor) > 0:
                     # left lanelet has successor
                     lanelet = self._lanelet_network.find_lanelet_by_id(lanelet.adj_left)
@@ -87,7 +106,11 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
             loop_cnt += 1
 
         if len(route) == 0:
-            self._logger.error("[CR Route Planner] No goal found Route planner could not find a Route")
-            raise ValueError("[CR Route Planner] No goal found Route planner could not find a Route")
+            self._logger.error(
+                "[CR Route Planner] No goal found Route planner could not find a Route"
+            )
+            raise ValueError(
+                "[CR Route Planner] No goal found Route planner could not find a Route"
+            )
 
         return route

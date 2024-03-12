@@ -66,7 +66,9 @@ class LaneletSection:
         self.adjacent_lanelets.append(self.lanelet)
 
         # init attributes
-        self.adjacent_lanelet_ids = [lanelet.lanelet_id for lanelet in self.adjacent_lanelets]
+        self.adjacent_lanelet_ids = [
+            lanelet.lanelet_id for lanelet in self.adjacent_lanelets
+        ]
 
     def _recursively_get_adjacent_left(self, lanelet_base: "Lanelet"):
 
@@ -74,7 +76,9 @@ class LaneletSection:
         if lanelet_base.adj_left is not None:
             # check that it is not opposite direction
             if lanelet_base.adj_left_same_direction is True:
-                new_lanelet: "Lanelet" = self.lanelet_network.find_lanelet_by_id(lanelet_base.adj_left)
+                new_lanelet: "Lanelet" = self.lanelet_network.find_lanelet_by_id(
+                    lanelet_base.adj_left
+                )
                 if new_lanelet not in self.adjacent_lanelets:
                     self.adjacent_lanelets.append(new_lanelet)
                     self._recursively_get_adjacent_left(new_lanelet)
@@ -84,7 +88,9 @@ class LaneletSection:
         if lanelet_base.adj_right is not None:
             # check that it is not opposite direction
             if lanelet_base.adj_right_same_direction is True:
-                new_lanelet: "Lanelet" = self.lanelet_network.find_lanelet_by_id(lanelet_base.adj_right)
+                new_lanelet: "Lanelet" = self.lanelet_network.find_lanelet_by_id(
+                    lanelet_base.adj_right
+                )
                 if new_lanelet not in self.adjacent_lanelets:
                     self.adjacent_lanelets.append(new_lanelet)
                     self._recursively_get_adjacent_right(new_lanelet)

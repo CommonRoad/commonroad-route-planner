@@ -12,12 +12,19 @@ from commonroad.planning.planning_problem import InitialState
 from commonroad_route_planner.utility.route_util import chaikins_corner_cutting
 from commonroad_route_planner.route import Route
 from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
-from commonroad_route_planner.lane_changing.change_position import LaneChangePositionHandler, LaneChangeInstruction
+from commonroad_route_planner.lane_changing.change_position import (
+    LaneChangePositionHandler,
+    LaneChangeInstruction,
+)
 import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
 from commonroad_route_planner.lane_changing.lane_change_handler import LaneChangeHandler
 from commonroad_route_planner.lane_changing.change_position import LaneChangeMarker
-from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
-from commonroad_route_planner.route_generation_strategies.base_generation_strategy import BaseGenerationStrategy
+from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import (
+    LaneChangeMethod,
+)
+from commonroad_route_planner.route_generation_strategies.base_generation_strategy import (
+    BaseGenerationStrategy,
+)
 
 
 # typing
@@ -62,21 +69,31 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
             lanelet_ids=lanelet_ids, lanelet_network=lanelet_network
         )
 
-        reference_path, num_lane_change_actions = DefaultGenerationStrategy._calc_reference_path(
-            lanelet_ids=lanelet_ids,
-            lanelet_network=lanelet_network,
-            initial_state=initial_state,
-            goal_region=goal_region,
-            lane_change_method=lane_change_method,
+        reference_path, num_lane_change_actions = (
+            DefaultGenerationStrategy._calc_reference_path(
+                lanelet_ids=lanelet_ids,
+                lanelet_network=lanelet_network,
+                initial_state=initial_state,
+                goal_region=goal_region,
+                lane_change_method=lane_change_method,
+            )
         )
 
         # save additional information about the reference path
-        interpoint_distances: np.ndarray = pops.compute_interpoint_distances_from_polyline(reference_path)
+        interpoint_distances: np.ndarray = (
+            pops.compute_interpoint_distances_from_polyline(reference_path)
+        )
         average_interpoint_distance: float = np.mean(interpoint_distances, axis=0)
-        path_length_per_point: np.ndarray = pops.compute_path_length_per_point(reference_path)
+        path_length_per_point: np.ndarray = pops.compute_path_length_per_point(
+            reference_path
+        )
         length_reference_path: float = pops.compute_length_of_polyline(reference_path)
-        path_orientation: np.ndarray = pops.compute_orientation_from_polyline(reference_path)
-        path_curvature: np.ndarray = pops.compute_scalar_curvature_from_polyline(reference_path)
+        path_orientation: np.ndarray = pops.compute_orientation_from_polyline(
+            reference_path
+        )
+        path_curvature: np.ndarray = pops.compute_scalar_curvature_from_polyline(
+            reference_path
+        )
 
         return Route(
             lanelet_network=lanelet_network,
@@ -113,12 +130,22 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
 
         resample_step: float = route.average_interpoint_distance
         reference_path = pops.sample_polyline(reference_path, step=resample_step)
-        route.interpoint_distances = pops.compute_interpoint_distances_from_polyline(reference_path)
+        route.interpoint_distances = pops.compute_interpoint_distances_from_polyline(
+            reference_path
+        )
         route.average_interpoint_distance = np.mean(route.interpoint_distances, axis=0)
-        route.path_length_per_point = pops.compute_path_length_per_point(route.reference_path)
-        route.length_reference_path = pops.compute_length_of_polyline(route.reference_path)
-        route.path_orientation = pops.compute_orientation_from_polyline(route.reference_path)
-        route.path_curvature = pops.compute_scalar_curvature_from_polyline(route.reference_path)
+        route.path_length_per_point = pops.compute_path_length_per_point(
+            route.reference_path
+        )
+        route.length_reference_path = pops.compute_length_of_polyline(
+            route.reference_path
+        )
+        route.path_orientation = pops.compute_orientation_from_polyline(
+            route.reference_path
+        )
+        route.path_curvature = pops.compute_scalar_curvature_from_polyline(
+            route.reference_path
+        )
 
         return route
 
@@ -139,7 +166,9 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
         """
 
         sections: List[LaneletSection] = [
-            LaneletSection(lanelet_network.find_lanelet_by_id(lanelet_id), lanelet_network)
+            LaneletSection(
+                lanelet_network.find_lanelet_by_id(lanelet_id), lanelet_network
+            )
             for lanelet_id in lanelet_ids
         ]
         return sections
@@ -166,8 +195,8 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
         :rtype Tuple[np.ndarray, int]
         """
 
-        lane_change_position_handler: LaneChangePositionHandler = LaneChangePositionHandler(
-            lanelet_ids, lanelet_network
+        lane_change_position_handler: LaneChangePositionHandler = (
+            LaneChangePositionHandler(lanelet_ids, lanelet_network)
         )
         num_lane_change_action: int = 0
         reference_path: np.ndarray = None
@@ -180,12 +209,18 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
 
             # Sample the center vertices of the lanelet as foundation for the reference path
             lanelet: "Lanelet" = lanelet_network.find_lanelet_by_id(lanelet_id)
-            centerline_vertices: np.ndarray = pops.sample_polyline(lanelet.center_vertices, step_resample)
-            lanelet_section: LaneletSection = LaneletSection.get_section_by_lanelet_id(lanelet_id)
+            centerline_vertices: np.ndarray = pops.sample_polyline(
+                lanelet.center_vertices, step_resample
+            )
+            lanelet_section: LaneletSection = LaneletSection.get_section_by_lanelet_id(
+                lanelet_id
+            )
 
             # get driving instruction object for lanelet
-            instruction: LaneChangeInstruction = lane_change_position_handler.get_driving_instruction_for_lanelet(
-                lanelet
+            instruction: LaneChangeInstruction = (
+                lane_change_position_handler.get_driving_instruction_for_lanelet(
+                    lanelet
+                )
             )
 
             if instruction.instruction_markers == LaneChangeMarker.NO_CHANGE:
@@ -198,11 +233,13 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
 
             else:
                 # lane change required
-                lanelet_end: Lanelet = DefaultGenerationStrategy._find_last_lanelet_of_lane_change(
-                    lanelet_start=lanelet,
-                    lanelet_section=lanelet_section,
-                    lanelet_ids=lanelet_ids,
-                    lanelet_network=lanelet_network,
+                lanelet_end: Lanelet = (
+                    DefaultGenerationStrategy._find_last_lanelet_of_lane_change(
+                        lanelet_start=lanelet,
+                        lanelet_section=lanelet_section,
+                        lanelet_ids=lanelet_ids,
+                        lanelet_network=lanelet_network,
+                    )
                 )
                 lane_change_handler: LaneChangeHandler = LaneChangeHandler(
                     lanelet_start=lanelet,
@@ -217,7 +254,9 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
                 skip_ids.extend(lanelet_section.adjacent_lanelet_ids)
 
                 lane_change_path: np.ndarray = lane_change_handler.compute_lane_change(
-                    initial_state=initial_state, goal_region=goal_region, method=lane_change_method
+                    initial_state=initial_state,
+                    goal_region=goal_region,
+                    method=lane_change_method,
                 )
 
                 # No lane change required
@@ -261,12 +300,16 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
         # NOTE: This check assumes that self._lanelet_ids has the correct order from start to finish
         for i in range(idx_start, (len(lanelet_ids))):
             if lanelet_ids[i] not in lanelet_section.adjacent_lanelet_ids:
-                lanelet_return: Lanelet = lanelet_network.find_lanelet_by_id(lanelet_ids[i - 1])
+                lanelet_return: Lanelet = lanelet_network.find_lanelet_by_id(
+                    lanelet_ids[i - 1]
+                )
                 break
 
         # if route ends in lane section of lane change
         if lanelet_return is None:
             DefaultGenerationStrategy.logger.info("Encountered goal in lane change")
-            lanelet_return: Lanelet = lanelet_network.find_lanelet_by_id(lanelet_ids[-1])
+            lanelet_return: Lanelet = lanelet_network.find_lanelet_by_id(
+                lanelet_ids[-1]
+            )
 
         return lanelet_return

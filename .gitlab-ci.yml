@@ -41,19 +41,6 @@ test_build_pages:
 
 
 ####### Style ##########
-## linting
-pre_commit:
-  stage: style
-  before_script:
-    - pip install pre-commit
-  only:
-    - develop
-    - master
-    - release
-  script:
-    - pre-commit run --all-files --show-diff-on-failure
-
-
 flake8:
   stage: style
   needs: []
@@ -66,7 +53,7 @@ flake8:
     - release
   script:
     - pip install flake8 flake8-todo
-    - flake8 commonroad_route_planner
+    - flake8 commonroad_route_planner/ --extend-ignore=E501
 
 black:
   stage: style
@@ -79,7 +66,7 @@ black:
     - master
     - release
   script:
-    - black --check --verbose --diff --color commonroad_route_planner
+    - black --check --verbose --diff --color commonroad_route_planner/
 
 
 

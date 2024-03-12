@@ -29,7 +29,11 @@ class MethodInterface:
         self._logger = logger if (logger is not None) else Logger(__name__)
 
     def compute_lane_change_ref_path(
-        self, start_point: np.ndarray, end_point: np.ndarray, method=LaneChangeMethod.QUINTIC_SPLINE, step_size=0.1
+        self,
+        start_point: np.ndarray,
+        end_point: np.ndarray,
+        method=LaneChangeMethod.QUINTIC_SPLINE,
+        step_size=0.1,
     ) -> np.ndarray:
         """
         Computes cubic lane change

@@ -27,7 +27,9 @@ def relative_orientation(angle_1: float, angle_2: float) -> float:
     return phi
 
 
-def chaikins_corner_cutting(polyline: np.ndarray, num_refinements: int = 4) -> np.ndarray:
+def chaikins_corner_cutting(
+    polyline: np.ndarray, num_refinements: int = 4
+) -> np.ndarray:
     """Chaikin's corner cutting algorithm.
 
     Chaikin's corner cutting algorithm smooths a polyline by replacing each original point with two new points.
@@ -90,32 +92,54 @@ def sort_lanelet_ids_by_orientation(
             lanelet_orientation = lanelet_orientation_at_position(lanelet, position)
             return np.abs(relative_orientation(lanelet_orientation, orientation))
 
-        orientation_differences = np.array(list(map(get_lanelet_relative_orientation, lanelet_id_list)))
+        orientation_differences = np.array(
+            list(map(get_lanelet_relative_orientation, lanelet_id_list))
+        )
         sorted_indices = np.argsort(orientation_differences)
         return list(lanelet_id_list[sorted_indices])
 
 
-def sort_lanelet_ids_by_goal(lanelet_network: LaneletNetwork, goal_region: GoalRegion) -> List[int]:
+def sort_lanelet_ids_by_goal(
+    lanelet_network: LaneletNetwork, goal_region: GoalRegion
+) -> List[int]:
     """Sorts lanelet ids by goal region
 
     :return: lanelet id, if the obstacle is out of lanelet boundary (no lanelet is found, therefore return the
     lanelet id of last time step)
     """
-    if hasattr(goal_region, "lanelets_of_goal_position") and goal_region.lanelets_of_goal_position is not None:
-        goal_lanelet_id_batch_list = list(goal_region.lanelets_of_goal_position.values())
-        goal_lanelet_id_list = [item for sublist in goal_lanelet_id_batch_list for item in sublist]
+    if (
+        hasattr(goal_region, "lanelets_of_goal_position")
+        and goal_region.lanelets_of_goal_position is not None
+    ):
+        goal_lanelet_id_batch_list = list(
+            goal_region.lanelets_of_goal_position.values()
+        )
+        goal_lanelet_id_list = [
+            item for sublist in goal_lanelet_id_batch_list for item in sublist
+        ]
         goal_lanelet_id_set = set(goal_lanelet_id_list)
         goal_lanelets = [
-            lanelet_network.find_lanelet_by_id(goal_lanelet_id) for goal_lanelet_id in goal_lanelet_id_list
+            lanelet_network.find_lanelet_by_id(goal_lanelet_id)
+            for goal_lanelet_id in goal_lanelet_id_list
         ]
         goal_lanelets_with_successor = np.array(
             [
-                1.0 if len(set(goal_lanelet.successor).intersection(goal_lanelet_id_set)) > 0 else 0.0
+                (
+                    1.0
+                    if len(
+                        set(goal_lanelet.successor).intersection(goal_lanelet_id_set)
+                    )
+                    > 0
+                    else 0.0
+                )
                 for goal_lanelet in goal_lanelets
             ]
         )
 
-        return [x for _, x in sorted(zip(goal_lanelets_with_successor, goal_lanelet_id_list))]
+        return [
+            x
+            for _, x in sorted(zip(goal_lanelets_with_successor, goal_lanelet_id_list))
+        ]
 
     if goal_region.state_list is not None and len(goal_region.state_list) != 0:
         if len(goal_region.state_list) > 1:
@@ -123,11 +147,15 @@ def sort_lanelet_ids_by_goal(lanelet_network: LaneletNetwork, goal_region: GoalR
         goal_state = goal_region.state_list[0]
 
         if hasattr(goal_state, "orientation"):
-            goal_orientation: float = (goal_state.orientation.start + goal_state.orientation.end) / 2
+            goal_orientation: float = (
+                goal_state.orientation.start + goal_state.orientation.end
+            ) / 2
 
         else:
             goal_orientation = 0.0
-            warnings.warn("The goal state has no <orientation> attribute! It is set to 0.0")
+            warnings.warn(
+                "The goal state has no <orientation> attribute! It is set to 0.0"
+            )
 
         if hasattr(goal_state, "position"):
             goal_shape: Shape = goal_state.position

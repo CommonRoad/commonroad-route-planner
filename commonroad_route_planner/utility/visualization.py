@@ -86,8 +86,12 @@ def visualize_route(
         renderer.draw_params.lanelet_network.lanelet.show_label = False
         renderer.draw_params.lanelet_network.lanelet.draw_linewidth = 1
         renderer.draw_params.lanelet_network.lanelet.fill_lanelet = True
-        renderer.draw_params.lanelet_network.lanelet.facecolor = "#469d89"  # color for filling
-        renderer.draw_params.lanelet_network.lanelet.zorder = 30  # put it higher in the plot, to make it visible
+        renderer.draw_params.lanelet_network.lanelet.facecolor = (
+            "#469d89"  # color for filling
+        )
+        renderer.draw_params.lanelet_network.lanelet.zorder = (
+            30  # put it higher in the plot, to make it visible
+        )
         renderer.draw_params.lanelet_network.lanelet.center_bound_color = (
             "#3232ff"  # color of the found route with arrow
         )
@@ -170,7 +174,9 @@ def plot_clcs_line_with_projection_domain(clcs_line: np.ndarray, clcs):
         occ_pos.draw(rnd, draw_param)
 
     proj_domain_border = np.asarray(clcs.projection_domain())
-    rnd.ax.plot(proj_domain_border[:, 0], proj_domain_border[:, 1], zorder=100, color="orange")
+    rnd.ax.plot(
+        proj_domain_border[:, 0], proj_domain_border[:, 1], zorder=100, color="orange"
+    )
     plt.show()
 
 
@@ -187,7 +193,9 @@ def draw_state(renderer: MPRenderer, state: InitialState, color="#ee6c4d") -> No
     occ_state.draw(renderer)
 
 
-def obtain_plot_limits_from_routes(route: Union["Route", "RouteSlice"], border: float = 15) -> List[int]:
+def obtain_plot_limits_from_routes(
+    route: Union["Route", "RouteSlice"], border: float = 15
+) -> List[int]:
     """
     Obtrains plot limits from lanelets of routes
 
@@ -215,7 +223,9 @@ def obtain_plot_limits_from_routes(route: Union["Route", "RouteSlice"], border: 
     return plot_limits
 
 
-def obtain_plot_limits_from_reference_path(route: Union["Route", "RouteSlice"], border: float = 10.0) -> List[int]:
+def obtain_plot_limits_from_reference_path(
+    route: Union["Route", "RouteSlice"], border: float = 10.0
+) -> List[int]:
     """
     Obtrains plot limits from reference path
 

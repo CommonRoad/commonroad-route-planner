@@ -21,7 +21,12 @@ class RouteSlice:
     """
 
     def __init__(
-        self, route: "Route", x: float, y: float, distance_ahead_in_m: float = 30.0, distance_behind_in_m: float = 7.0
+        self,
+        route: "Route",
+        x: float,
+        y: float,
+        distance_ahead_in_m: float = 30.0,
+        distance_behind_in_m: float = 7.0,
     ) -> None:
         """
         :param route: route object the slice is from
@@ -55,12 +60,24 @@ class RouteSlice:
         # self._init_lanelet_ids()
 
         # save additional information about sliced reference path
-        self._interpoint_distances: np.ndarray = pops.compute_interpoint_distances_from_polyline(self._reference_path)
-        self._average_interpoint_distance: float = np.mean(self._interpoint_distances, axis=0)
-        self._path_length_per_point: np.ndarray = pops.compute_path_length_per_point(self._reference_path)
-        self._length_reference_path: float = pops.compute_length_of_polyline(self._reference_path)
-        self._path_orientation: np.ndarray = pops.compute_orientation_from_polyline(self._reference_path)
-        self._path_curvature: np.ndarray = pops.compute_scalar_curvature_from_polyline(self._reference_path)
+        self._interpoint_distances: np.ndarray = (
+            pops.compute_interpoint_distances_from_polyline(self._reference_path)
+        )
+        self._average_interpoint_distance: float = np.mean(
+            self._interpoint_distances, axis=0
+        )
+        self._path_length_per_point: np.ndarray = pops.compute_path_length_per_point(
+            self._reference_path
+        )
+        self._length_reference_path: float = pops.compute_length_of_polyline(
+            self._reference_path
+        )
+        self._path_orientation: np.ndarray = pops.compute_orientation_from_polyline(
+            self._reference_path
+        )
+        self._path_curvature: np.ndarray = pops.compute_scalar_curvature_from_polyline(
+            self._reference_path
+        )
 
     @property
     def original_route(self) -> "Route":
@@ -156,7 +173,9 @@ class RouteSlice:
 
         running_distance: float = 0
         self._point_idx_ahead: int = point_idx
-        for idx in range(point_idx + 1, self._original_route.reference_path.shape[0] - 1):
+        for idx in range(
+            point_idx + 1, self._original_route.reference_path.shape[0] - 1
+        ):
             running_distance += abs(self._original_route.interpoint_distances[idx])
             self._point_idx_ahead = idx
             if running_distance >= self._distance_ahead_in_m:
@@ -170,7 +189,9 @@ class RouteSlice:
             if running_distance >= self._distance_behind_in_m:
                 break
 
-        self._reference_path = self._original_route.reference_path[self._point_idx_behind : self._point_idx_ahead, :]
+        self._reference_path = self._original_route.reference_path[
+            self._point_idx_behind : self._point_idx_ahead, :
+        ]
 
         if self._reference_path is None or len(self._reference_path) == 0:
             raise ValueError(f"Could not slice reference path={self._reference_path}")
@@ -180,13 +201,19 @@ class RouteSlice:
         Checks the value of first and last point of original route and adds all lanelet ids between them
         """
 
-        # TODO: Debug
-
         # Find index of first and last point of slice ref path and corresponding lanelet ids
         behind_point: np.ndarray = self._reference_path[0, :]
         infront_point: np.ndarray = self._reference_path[-1, :]
-        behind_lanelet_id: int = self._original_route.lanelet_network.find_lanelet_by_position([behind_point])[0][0]
-        infront_lanelet_id: int = self._original_route.lanelet_network.find_lanelet_by_position([infront_point])[0][0]
+        behind_lanelet_id: int = (
+            self._original_route.lanelet_network.find_lanelet_by_position(
+                [behind_point]
+            )[0][0]
+        )
+        infront_lanelet_id: int = (
+            self._original_route.lanelet_network.find_lanelet_by_position(
+                [infront_point]
+            )[0][0]
+        )
 
         # As the lanelet ids are ordered in the route class we know that every id between behind and front also
         # has to be part of the route slice

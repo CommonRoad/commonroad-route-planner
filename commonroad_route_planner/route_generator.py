@@ -13,8 +13,12 @@ from commonroad.scenario.state import InitialState
 # own code base
 from commonroad_route_planner.route import Route
 from commonroad_route_planner.utility.visualization import debug_visualize
-from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
-from commonroad_route_planner.route_generation_strategies.default_generation_strategy import DefaultGenerationStrategy
+from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import (
+    LaneChangeMethod,
+)
+from commonroad_route_planner.route_generation_strategies.default_generation_strategy import (
+    DefaultGenerationStrategy,
+)
 
 # typing
 from typing import List, Set, Tuple, Union
@@ -35,7 +39,9 @@ class RouteGenerator:
         logger: logging.Logger,
         prohibited_lanelet_ids: List[int] = None,
         lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE,
-        GenerationStrategy: Union[DefaultGenerationStrategy] = DefaultGenerationStrategy,
+        GenerationStrategy: Union[
+            DefaultGenerationStrategy
+        ] = DefaultGenerationStrategy,
     ) -> None:
         """
         :param lanelet_network: cr lanelet network,
@@ -122,14 +128,19 @@ class RouteGenerator:
         """
 
         if consider_least_lance_changes:
-            return self.retrieve_shortetest_route_with_least_lane_changes(included_lanelet_ids=included_lanelet_ids)
+            return self.retrieve_shortetest_route_with_least_lane_changes(
+                included_lanelet_ids=included_lanelet_ids
+            )
 
         else:
             return self.retrieve_first_route(
-                retrieve_shortest=retrieve_shortest, included_lanelet_ids=included_lanelet_ids
+                retrieve_shortest=retrieve_shortest,
+                included_lanelet_ids=included_lanelet_ids,
             )
 
-    def retrieve_first_route(self, retrieve_shortest: bool = True, included_lanelet_ids: List[int] = None) -> Route:
+    def retrieve_first_route(
+        self, retrieve_shortest: bool = True, included_lanelet_ids: List[int] = None
+    ) -> Route:
         """
         Retrieves the first Route object.
         If retrieve shortest, the shortest route is used and orientation of the lanelet is checked.
@@ -152,16 +163,22 @@ class RouteGenerator:
         # multpiple routes
         else:
             sorted_routes: List[Route] = sorted(
-                self._route_candidates, key=lambda x: x.length_reference_path, reverse=False
+                self._route_candidates,
+                key=lambda x: x.length_reference_path,
+                reverse=False,
             )
 
             for route in sorted_routes:
                 # check init state orientation
-                if self._heuristic_check_matching_orientation_of_initial_state(route.reference_path):
+                if self._heuristic_check_matching_orientation_of_initial_state(
+                    route.reference_path
+                ):
                     if included_lanelet_ids is None:
                         selected_route = route
                         break
-                    elif self._check_routes_includes_lanelets(route, included_lanelet_ids):
+                    elif self._check_routes_includes_lanelets(
+                        route, included_lanelet_ids
+                    ):
                         # additionally check if lanelets are included
                         selected_route = route
                         break
@@ -175,8 +192,9 @@ class RouteGenerator:
 
         return selected_route
 
-    def retrieve_shortetest_route_with_least_lane_changes(self, included_lanelet_ids: List[int] = None) -> Route:
-
+    def retrieve_shortetest_route_with_least_lane_changes(
+        self, included_lanelet_ids: List[int] = None
+    ) -> Route:
         """
         Retrieves route with least lane changes. Tie break is length of reference path
 
@@ -197,26 +215,35 @@ class RouteGenerator:
         # multpiple routes
         else:
             sorted_routes: List[Route] = sorted(
-                self._route_candidates, key=lambda x: x.num_lane_change_actions, reverse=False
+                self._route_candidates,
+                key=lambda x: x.num_lane_change_actions,
+                reverse=False,
             )
 
             minimal_lane_change_routes: List[Route] = [
                 route
                 for route in sorted_routes
-                if route.num_lane_change_actions == sorted_routes[0].num_lane_change_actions
+                if route.num_lane_change_actions
+                == sorted_routes[0].num_lane_change_actions
             ]
 
             minimal_lane_change_routes_by_length = sorted(
-                minimal_lane_change_routes, key=lambda x: x.length_reference_path, reverse=False
+                minimal_lane_change_routes,
+                key=lambda x: x.length_reference_path,
+                reverse=False,
             )
 
             for route in minimal_lane_change_routes_by_length:
                 # check init state orientation
-                if self._heuristic_check_matching_orientation_of_initial_state(route.reference_path):
+                if self._heuristic_check_matching_orientation_of_initial_state(
+                    route.reference_path
+                ):
                     if included_lanelet_ids is None:
                         selected_route = route
                         break
-                    elif self._check_routes_includes_lanelets(route, included_lanelet_ids):
+                    elif self._check_routes_includes_lanelets(
+                        route, included_lanelet_ids
+                    ):
                         # additionally check if lanelets are included
                         selected_route = route
                         break
@@ -257,7 +284,9 @@ class RouteGenerator:
             return False
 
     @staticmethod
-    def _check_routes_includes_lanelets(route: Route, lanelet_ids_to_go_through: List[int]) -> bool:
+    def _check_routes_includes_lanelets(
+        route: Route, lanelet_ids_to_go_through: List[int]
+    ) -> bool:
         """
         Checks wheter lanelets are included.
         """

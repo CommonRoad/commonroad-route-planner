@@ -35,7 +35,10 @@ def generate_quintic_spline_ref_path(
     ordinate_values: np.ndarray = quintic_spline(abscissa_values)
 
     interpolated_values: np.ndarray = np.asarray(
-        [[abscissa_values[i], ordinate_values[i]] for i in range(abscissa_values.shape[0])]
+        [
+            [abscissa_values[i], ordinate_values[i]]
+            for i in range(abscissa_values.shape[0])
+        ]
     )
 
     return interpolated_values
@@ -59,19 +62,26 @@ def generate_cubic_spline_ref_path(
     abscissa_values: np.ndarray = np.arange(start[0], end[0], step_size)
 
     cubic_spline: CubicSpline = CubicSpline(
-        x=np.asarray([start[0], end[0]]), y=np.asarray([start[1], end[1]]), bc_type="clamped"
+        x=np.asarray([start[0], end[0]]),
+        y=np.asarray([start[1], end[1]]),
+        bc_type="clamped",
     )
 
     ordinate_values: np.ndarray = cubic_spline(abscissa_values)
 
     interpolated_values: np.ndarray = np.asarray(
-        [[abscissa_values[i], ordinate_values[i]] for i in range(abscissa_values.shape[0])]
+        [
+            [abscissa_values[i], ordinate_values[i]]
+            for i in range(abscissa_values.shape[0])
+        ]
     )
 
     return interpolated_values
 
 
-def determine_ascending_start_and_end(start: np.ndarray, end: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def determine_ascending_start_and_end(
+    start: np.ndarray, end: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     :param start: (2,) start point
     :param end: (2,) end point

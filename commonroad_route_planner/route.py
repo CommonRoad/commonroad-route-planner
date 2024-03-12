@@ -12,7 +12,9 @@ from commonroad.planning.planning_problem import InitialState
 # own code base
 from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
 from commonroad_route_planner.frenet_tools.route_slice import RouteSlice
-from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
+from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import (
+    LaneChangeMethod,
+)
 
 
 # typing
@@ -57,7 +59,11 @@ class Route:
     path_curvature: np.ndarray
 
     def get_route_slice_from_position(
-        self, x: float, y: float, distance_ahead_in_m: float = 30, distance_behind_in_m: float = 7
+        self,
+        x: float,
+        y: float,
+        distance_ahead_in_m: float = 30,
+        distance_behind_in_m: float = 7,
     ) -> RouteSlice:
         """
         Takes an x and y coordinate, finds, the closest point on the reference path and returns slice of the reference
@@ -71,7 +77,11 @@ class Route:
         :return: route slice
         """
         return RouteSlice(
-            self, x, y, distance_ahead_in_m=distance_ahead_in_m, distance_behind_in_m=distance_behind_in_m
+            self,
+            x,
+            y,
+            distance_ahead_in_m=distance_ahead_in_m,
+            distance_behind_in_m=distance_behind_in_m,
         )
 
     def get_lanelet_section(self, lanelet_id: int) -> Union[LaneletSection, None]:
