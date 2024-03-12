@@ -10,6 +10,9 @@ plugins:
         python:
           options:
             docstring_style: sphinx
+            show_root_heading: false
+            heading_level: 3
+            show_module_names: False
   - search
 
 nav:
@@ -27,14 +30,11 @@ nav:
       - "Route": route.md
 
   - Frenet Frame Planning:
-      - "Route Extendor": route_extendor.md
-      - "Route Slice": route_slice.md
+      - "Tools": frenet.md
 
   - Route Generation:
-      - "Route Generation via Strategy Pattern": route_generation_strategy.md
-
+      - "Route Generation via Strategy Pattern": route_generation.md
 
   - Lane Changing:
-      - "Different Methods for Lane Changing": lane_changing.md
-
+      - "Lane Changing via Handlers and Methods": lane_changing.md
 

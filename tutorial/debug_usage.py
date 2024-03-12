@@ -20,17 +20,16 @@ if TYPE_CHECKING:
 
 def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
     # ========== initialization =========== #
-    if (use_cr2023_challenge):
+    if use_cr2023_challenge:
         path_scenarios = Path(__file__).parents[1] / "tutorial/commonroad_challenge_2023"
     else:
         path_scenarios = Path(__file__).parents[1] / "scenarios"
 
     use_list: List = [
-        #"DEU_Stu-1_49_I-1",
-        #"DEU_Stu-1_49_I-1",
-        #"USA_US101-22_1_T-1",
+        # "DEU_Stu-1_49_I-1",
+        # "DEU_Stu-1_49_I-1",
+        # "USA_US101-22_1_T-1",
         "DEU_Frankfurt-3_19_I-1",
-
     ]
 
     for idx, filename in enumerate(sorted(os.listdir(path_scenarios))):
@@ -40,20 +39,14 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
             continue
         print(f"Testing scenario {filename}")
         # read in scenario and planning problem set
-        scenario, planning_problem_set = CommonRoadFileReader(
-            f"{path_scenarios / id_scenario}.xml"
-        ).open()
+        scenario, planning_problem_set = CommonRoadFileReader(f"{path_scenarios / id_scenario}.xml").open()
         # retrieve the first planning problem in the problem set
         planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
 
         t_start = perf_counter()
         # ========== route planning =========== #
         # instantiate a route planner with the scenario and the planning problem
-        route_planner = RoutePlanner(
-            scenario=scenario,
-            planning_problem=planning_problem,
-            extended_search=False
-        )
+        route_planner = RoutePlanner(scenario=scenario, planning_problem=planning_problem, extended_search=False)
         # plan routes, and save the routes in a route candidate holder
         route_selector: "RouteGenerator" = route_planner.plan_routes()
 
@@ -61,7 +54,6 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         # here we retrieve the first route in the list, this is equivalent to: route = list_routes[0]
         route: "Route" = route_selector.retrieve_shortest_route()
         print(f"[Time] Retrieving first route took {perf_counter() - t_start}")
-
 
         # option 2: retrieve all routes
         list_routes, num_routes_retrieved = route_selector.retrieve_all_routes()
@@ -79,7 +71,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
         print(f"checked {(idx * 100 / len(os.listdir(path_scenarios))):.2f}% of scenarios")
 
-        print(f" \n \n")
+        print(" \n \n")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,3 @@
-import copy
 import os
 
 import matplotlib.pyplot as plt
@@ -14,25 +13,26 @@ from commonroad.visualization.mp_renderer import MPRenderer
 from commonroad.visualization.draw_params import MPDrawParams
 
 
-
 # typing
 from typing import Union, List
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from commonroad_route_planner.route import Route, RouteSlice
 
 
-def visualize_route(route: Union["Route", "RouteSlice"],
-                    scenario:Scenario,
-                    planning_problem: PlanningProblem,
-                    save_img: bool = True,
-                    save_path: str = os.path.join(os.getcwd(), 'img'),
-                    draw_route_lanelets: bool = True,
-                    draw_reference_path: bool = False,
-                    size_x: float = 10.0,
-                    size_factor_curvature: float = 5.0,
-                    curvature_threshold: float = 0.5
-                    ) -> None:
+def visualize_route(
+    route: Union["Route", "RouteSlice"],
+    scenario: Scenario,
+    planning_problem: PlanningProblem,
+    save_img: bool = True,
+    save_path: str = os.path.join(os.getcwd(), "img"),
+    draw_route_lanelets: bool = True,
+    draw_reference_path: bool = False,
+    size_x: float = 10.0,
+    size_factor_curvature: float = 5.0,
+    curvature_threshold: float = 0.5,
+) -> None:
     """
     Visualizes the given route.
 
@@ -58,7 +58,6 @@ def visualize_route(route: Union["Route", "RouteSlice"],
     renderer.draw_params.dynamic_obstacle.draw_icon = True
 
     scenario.draw(renderer)
-
 
     # draw the initial state of the planning problem
     draw_state(renderer, planning_problem.initial_state)
@@ -87,12 +86,8 @@ def visualize_route(route: Union["Route", "RouteSlice"],
         renderer.draw_params.lanelet_network.lanelet.show_label = False
         renderer.draw_params.lanelet_network.lanelet.draw_linewidth = 1
         renderer.draw_params.lanelet_network.lanelet.fill_lanelet = True
-        renderer.draw_params.lanelet_network.lanelet.facecolor = (
-            "#469d89"  # color for filling
-        )
-        renderer.draw_params.lanelet_network.lanelet.zorder = (
-            30  # put it higher in the plot, to make it visible
-        )
+        renderer.draw_params.lanelet_network.lanelet.facecolor = "#469d89"  # color for filling
+        renderer.draw_params.lanelet_network.lanelet.zorder = 30  # put it higher in the plot, to make it visible
         renderer.draw_params.lanelet_network.lanelet.center_bound_color = (
             "#3232ff"  # color of the found route with arrow
         )
@@ -103,7 +98,7 @@ def visualize_route(route: Union["Route", "RouteSlice"],
     if draw_reference_path:
         renderer.draw_params.shape.facecolor = "#ff477e"
         for idx, position in enumerate(route.reference_path):
-            if(abs(route.path_curvature[idx]) > curvature_threshold):
+            if abs(route.path_curvature[idx]) > curvature_threshold:
                 occ_pos = Circle(radius=0.3 * size_factor_curvature, center=position)
             else:
                 occ_pos = Circle(radius=0.3, center=position)
@@ -117,19 +112,18 @@ def visualize_route(route: Union["Route", "RouteSlice"],
     plt.margins(0, 0)
     plt.title(str(scenario.scenario_id))
 
-    if(save_img):
+    if save_img:
         save_name: str = os.path.join(save_path, str(scenario.scenario_id))
-        plt.savefig(save_name, format='png')
+        plt.savefig(save_name, format="png")
     else:
         plt.show()
 
 
-
-
-def debug_visualize(route_list: List["Route"],
-                    lanelet_network: LaneletNetwork,
-                    size_x: float = 10.0,
-                    ) -> None:
+def debug_visualize(
+    route_list: List["Route"],
+    lanelet_network: LaneletNetwork,
+    size_x: float = 10.0,
+) -> None:
     """
     Visualizes the given route.
     """
@@ -157,13 +151,10 @@ def debug_visualize(route_list: List["Route"],
 
     plt.margins(0, 0)
 
-
     plt.show()
 
 
-def plot_clcs_line_with_projection_domain(clcs_line: np.ndarray,
-
-                                          clcs):
+def plot_clcs_line_with_projection_domain(clcs_line: np.ndarray, clcs):
     """
     Plots scenario including projection domain of the curvilinear coordinate system used by reach_interface
     :param config: Configuration object of the ReachInterface
@@ -172,7 +163,6 @@ def plot_clcs_line_with_projection_domain(clcs_line: np.ndarray,
     draw_param = MPDrawParams()
     draw_param.time_begin = 0
 
-
     rnd.render()
 
     for idx in range(clcs_line.shape[0]):
@@ -180,18 +170,11 @@ def plot_clcs_line_with_projection_domain(clcs_line: np.ndarray,
         occ_pos.draw(rnd, draw_param)
 
     proj_domain_border = np.asarray(clcs.projection_domain())
-    rnd.ax.plot(proj_domain_border[:, 0], proj_domain_border[:, 1], zorder=100, color='orange')
+    rnd.ax.plot(proj_domain_border[:, 0], proj_domain_border[:, 1], zorder=100, color="orange")
     plt.show()
 
 
-
-
-
-
-def draw_state(renderer: MPRenderer,
-               state: InitialState,
-               color="#ee6c4d"
-               ) -> None:
+def draw_state(renderer: MPRenderer, state: InitialState, color="#ee6c4d") -> None:
     """
     Draws CommonRoad state
 
@@ -204,9 +187,7 @@ def draw_state(renderer: MPRenderer,
     occ_state.draw(renderer)
 
 
-def obtain_plot_limits_from_routes(route: Union["Route", "RouteSlice"],
-                                   border: float = 15
-                                   )->List[int]:
+def obtain_plot_limits_from_routes(route: Union["Route", "RouteSlice"], border: float = 15) -> List[int]:
     """
     Obtrains plot limits from lanelets of routes
 
@@ -234,9 +215,7 @@ def obtain_plot_limits_from_routes(route: Union["Route", "RouteSlice"],
     return plot_limits
 
 
-def obtain_plot_limits_from_reference_path(route: Union["Route", "RouteSlice"],
-                                           border: float = 10.0
-                                           ) -> List[int]:
+def obtain_plot_limits_from_reference_path(route: Union["Route", "RouteSlice"], border: float = 10.0) -> List[int]:
     """
     Obtrains plot limits from reference path
 

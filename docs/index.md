@@ -13,7 +13,7 @@ We highly welcome your contribution.
 If you want to contribute a prediction algorithm, please create an issue/pull request in our TODO: ADD GITHUB REPO
 
 ## Installation and Usage
-We recommend to use PyCharm (Professional) as IDE.  
+We recommend to use PyCharm (Professional) as IDE.
 ### Usage in other projects
 We provide an PyPI package which can be installed with the following command
 ```shell
@@ -30,7 +30,7 @@ pip install .
 ```
 
 ### Examples
-We recommend to use PyCharm (Professional) as IDE. 
+We recommend to use PyCharm (Professional) as IDE.
 An example script for visualizing predictions is provided [here](example.md).
 
 

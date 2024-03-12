@@ -13,7 +13,7 @@ The planner supports different backends to search for the shortest route in the 
 
 ## Using the scenario files with git.lsf
 This repo contains a number of scenario xml files in [/scenarios](/scenarios/). They are stored with git large-file-system (git lfs).
-If you want to download these scenario files, before cloning this repo, do the following: 
+If you want to download these scenario files, before cloning this repo, do the following:
 
 1. install git-lsf via `sudo apt-get install -y git-lfs` and `git lfs install`
 2. use `git config --global credential.helper store`
@@ -33,7 +33,7 @@ You can configure your python poetry environment in PyCharm similar to anaconda 
 
 #### Conda + Poetry
 Alternatively, you can just create a conda environment, install poetry in it and use the install command from above inside the conda environment.
-This way, you don't have to deal with conflicting python versions. However, contrary to just using plain poetry, you have to chose the conda 
+This way, you don't have to deal with conflicting python versions. However, contrary to just using plain poetry, you have to chose the conda
 environment as your interpreter in your IDE.
 
 

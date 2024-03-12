@@ -8,11 +8,9 @@ from scipy.interpolate import CubicSpline, make_interp_spline
 from typing import Tuple
 
 
-
-def generate_quintic_spline_ref_path(start_point: np.ndarray,
-                                     end_point: np.ndarray,
-                                     step_size: float = 0.1
-                                     ) -> np.ndarray:
+def generate_quintic_spline_ref_path(
+    start_point: np.ndarray, end_point: np.ndarray, step_size: float = 0.1
+) -> np.ndarray:
     """
     quintic spline with derivatives 0
 
@@ -23,10 +21,7 @@ def generate_quintic_spline_ref_path(start_point: np.ndarray,
     :return: (n,2) quintic spline array
     """
 
-    start, end = determine_ascending_start_and_end(
-        start=start_point,
-        end=end_point
-    )
+    start, end = determine_ascending_start_and_end(start=start_point, end=end_point)
 
     abscissa_values: np.ndarray = np.arange(start[0], end[0], step_size)
 
@@ -34,7 +29,7 @@ def generate_quintic_spline_ref_path(start_point: np.ndarray,
         x=np.asarray([start[0], end[0]]),
         y=np.asarray([start[1], end[1]]),
         k=5,
-        bc_type=([(1, 0.0), (2, 0.0)], [(1, 0.0), (2, 0.0)])
+        bc_type=([(1, 0.0), (2, 0.0)], [(1, 0.0), (2, 0.0)]),
     )
 
     ordinate_values: np.ndarray = quintic_spline(abscissa_values)
@@ -46,10 +41,9 @@ def generate_quintic_spline_ref_path(start_point: np.ndarray,
     return interpolated_values
 
 
-def generate_cubic_spline_ref_path(start_point: np.ndarray,
-                                    end_point: np.ndarray,
-                                    step_size: float = 0.1
-                                    ) -> np.ndarray:
+def generate_cubic_spline_ref_path(
+    start_point: np.ndarray, end_point: np.ndarray, step_size: float = 0.1
+) -> np.ndarray:
     """
     cubic spline with derivatives 0
 
@@ -60,17 +54,12 @@ def generate_cubic_spline_ref_path(start_point: np.ndarray,
     :return: (n,2) cubic spline array
     """
 
-    start, end = determine_ascending_start_and_end(
-        start=start_point,
-        end=end_point
-    )
+    start, end = determine_ascending_start_and_end(start=start_point, end=end_point)
 
     abscissa_values: np.ndarray = np.arange(start[0], end[0], step_size)
 
     cubic_spline: CubicSpline = CubicSpline(
-        x=np.asarray([start[0], end[0]]),
-        y=np.asarray([start[1], end[1]]),
-        bc_type='clamped'
+        x=np.asarray([start[0], end[0]]), y=np.asarray([start[1], end[1]]), bc_type="clamped"
     )
 
     ordinate_values: np.ndarray = cubic_spline(abscissa_values)
@@ -82,21 +71,16 @@ def generate_cubic_spline_ref_path(start_point: np.ndarray,
     return interpolated_values
 
 
-
-
-def determine_ascending_start_and_end(start: np.ndarray,
-                                      end: np.ndarray
-                                      ) -> Tuple[np.ndarray, np.ndarray]:
+def determine_ascending_start_and_end(start: np.ndarray, end: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
     :param start: (2,) start point
     :param end: (2,) end point
 
     :return: (start point, end point) in ascending order, each as (2,) np array
     """
-    if (start[0] > end[0]):
+    if start[0] > end[0]:
         temp = copy.copy(start)
         start = copy.copy(end)
         end = temp
 
     return (start, end)
-

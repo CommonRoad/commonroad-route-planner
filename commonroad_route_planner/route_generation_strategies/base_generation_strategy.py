@@ -21,10 +21,10 @@ class BaseGenerationStrategy(ABC):
     @staticmethod
     @abstractmethod
     def generate_route(
-            lanelet_network: LaneletNetwork,
-            lanelet_ids: List[int],
-            initial_state: InitialState,
-            goal_region: GoalRegion,
+        lanelet_network: LaneletNetwork,
+        lanelet_ids: List[int],
+        initial_state: InitialState,
+        goal_region: GoalRegion,
     ) -> Route:
         """
         Instantiates route
@@ -36,13 +36,9 @@ class BaseGenerationStrategy(ABC):
         """
         pass
 
-
     @staticmethod
     @abstractmethod
-    def update_route(
-            route: Route,
-            reference_path: np.ndarray
-    ) -> Route:
+    def update_route(route: Route, reference_path: np.ndarray) -> Route:
         """
         updates route given a reference path
 

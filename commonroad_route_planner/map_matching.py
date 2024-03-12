@@ -13,12 +13,17 @@ class MapMatcher:
     """
     Takes a given trajectory from the past and tries to match the points to lanelets
     """
+
     def __init__(self, lanelet_network: LaneletNetwork):
         self.lanelet_network: LaneletNetwork = lanelet_network
 
-    def map_matching(self, trajectory: List[State], initial_state: InitialState = None,
-                     allow_diagonal_transition: bool = False, 
-                     relax_consistency_constraint: int = 0) -> List[int]:
+    def map_matching(
+        self,
+        trajectory: List[State],
+        initial_state: InitialState = None,
+        allow_diagonal_transition: bool = False,
+        relax_consistency_constraint: int = 0,
+    ) -> List[int]:
         """
         Conduct map matching for given trajectory.
         """
@@ -27,41 +32,34 @@ class MapMatcher:
         occurring_lanelet_ids = set()
         if initial_state is not None:
             # add initial state to trajectory
-            assert initial_state.time_step == trajectory[0].time_step-1
+            assert initial_state.time_step == trajectory[0].time_step - 1
             trajectory.insert(0, initial_state)
 
         for k in range(len(trajectory)):
-            occupancy_dict[k] = self.lanelet_network.find_lanelet_by_position(
-                [trajectory[k].position]
-            )[0]
+            occupancy_dict[k] = self.lanelet_network.find_lanelet_by_position([trajectory[k].position])[0]
             for lt_id in occupancy_dict[k]:
                 occurring_lanelet_ids.add(lt_id)
 
         occurring_lanelet_ids = sorted(occurring_lanelet_ids)
-        lanelet_mapping = dict(
-            zip(occurring_lanelet_ids, range(len(occurring_lanelet_ids)))
-        )
+        lanelet_mapping = dict(zip(occurring_lanelet_ids, range(len(occurring_lanelet_ids))))
         occupancy_matrix = np.zeros((len(occurring_lanelet_ids), len(trajectory)), bool)
         for key, val in occupancy_dict.items():
             for v in val:
                 occupancy_matrix[lanelet_mapping[v], key] = True
 
         number_time_steps = len(trajectory)
-        number_lanelets = len(occurring_lanelet_ids)
 
         # decision variable
         x = cp.Variable(np.shape(occupancy_matrix), boolean=True)
 
         # constraints
-        constr = [
-            x[:, :] <= occupancy_matrix[:, :]
-        ]  # only choose lanelets that are available
+        constr = [x[:, :] <= occupancy_matrix[:, :]]  # only choose lanelets that are available
 
         for k in range(number_time_steps):
             constr += [cp.sum(x[:, k]) <= 1]  # at most match one lanelet at each timestep
 
         for k in range(number_time_steps):
-            upper_lim = min(k+relax_consistency_constraint+1, number_time_steps)
+            upper_lim = min(k + relax_consistency_constraint + 1, number_time_steps)
             constr += [cp.sum(x[:, k:upper_lim]) >= 1]  # relax
 
         # consider lanelet network topology
@@ -100,9 +98,7 @@ class MapMatcher:
             for v in to_be_removed:  # start with deleting at the end
                 preceding_lanelets.remove(v)
 
-            preceding_lanelets.append(
-                lanelet_mapping[lt_id]
-            )  # one can also continue on the same lanelet
+            preceding_lanelets.append(lanelet_mapping[lt_id])  # one can also continue on the same lanelet
 
             for k in range(number_time_steps - 1 - relax_consistency_constraint):
                 # occupancy of all preceding lanelets (and oneself) >= current lanelet
@@ -119,9 +115,7 @@ class MapMatcher:
                     ]
                 ]
 
-        m = cp.Problem(
-            cp.Minimize(cp.sum(cp.abs((cp.diff(x, axis=1)))) - cp.sum(x)), constraints=constr
-        )
+        m = cp.Problem(cp.Minimize(cp.sum(cp.abs((cp.diff(x, axis=1)))) - cp.sum(x)), constraints=constr)
 
         m.solve(cp.GLPK_MI)
 
@@ -130,9 +124,7 @@ class MapMatcher:
             #  Maybe try higher value for relax_consistency and allow diagonal transition.
             raise ValueError("Try higher relax_consistency value or allow diagonal transitions.")
 
-        raw_result = (
-            x.value
-        )
+        raw_result = x.value
         lanelet_trajectory = []
         for k in range(number_time_steps):
             ind = np.argmax(raw_result[:, k])
@@ -153,31 +145,39 @@ class MapMatcher:
 
     def post_processing(self, lanelet_sequence: List[int]) -> List[int]:
         i = 0  # number of insertions
-        for j in range(len(lanelet_sequence)-1):
-            if lanelet_sequence[i+j+1] in self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i+j]).successor:
+        for j in range(len(lanelet_sequence) - 1):
+            if (
+                lanelet_sequence[i + j + 1]
+                in self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i + j]).successor
+            ):
                 pass
-            elif self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i+j]).adj_left is not None:
-                if self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i+j]).adj_left_same_direction:
-                    if lanelet_sequence[i+j+1] in self.lanelet_network.find_lanelet_by_id(
-                        self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i+j]).adj_left
-                    ).successor:
-                        lanelet_sequence.insert(i+j+1,
-                                                self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i+j]).adj_left)
+            elif self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i + j]).adj_left is not None:
+                if self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i + j]).adj_left_same_direction:
+                    if (
+                        lanelet_sequence[i + j + 1]
+                        in self.lanelet_network.find_lanelet_by_id(
+                            self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i + j]).adj_left
+                        ).successor
+                    ):
+                        lanelet_sequence.insert(
+                            i + j + 1, self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i + j]).adj_left
+                        )
                         i += 1
                         logging.info("Correction applied.")
-            elif self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i+j]).adj_right is not None:
-                if self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i+j]).adj_right_same_direction:
-                    if lanelet_sequence[i+j+1] in self.lanelet_network.find_lanelet_by_id(
-                        self.lanelet_network.find_lanelet_by_id((lanelet_sequence[i+j])).adj_right
-                    ).successor:
-                        lanelet_sequence.insert(i+j+1,
-                                                self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i+j]).adj_right)
+            elif self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i + j]).adj_right is not None:
+                if self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i + j]).adj_right_same_direction:
+                    if (
+                        lanelet_sequence[i + j + 1]
+                        in self.lanelet_network.find_lanelet_by_id(
+                            self.lanelet_network.find_lanelet_by_id((lanelet_sequence[i + j])).adj_right
+                        ).successor
+                    ):
+                        lanelet_sequence.insert(
+                            i + j + 1, self.lanelet_network.find_lanelet_by_id(lanelet_sequence[i + j]).adj_right
+                        )
                         i += 1
                         logging.info("Correction applied.")
             else:
                 raise ValueError  # could not repair / reconstruct lanelet sequence
 
         return lanelet_sequence
-
-
-

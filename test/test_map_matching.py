@@ -9,6 +9,7 @@ class TestMapMatching(unittest.TestCase):
     """
     Unit test for FloFi's map matching
     """
+
     def test_Garching(self):
         scenario, planning_problem = CommonRoadFileReader(
             Path(__file__).parents[1] / "scenarios/DEU_Gar-3_2_T-1.xml"
@@ -16,10 +17,7 @@ class TestMapMatching(unittest.TestCase):
 
         mm = MapMatcher(scenario.lanelet_network)
         dyn_obst = scenario.dynamic_obstacles[0]
-        lt_sequence = mm.map_matching(
-            dyn_obst.prediction.trajectory.state_list,
-            dyn_obst.initial_state
-        )
+        lt_sequence = mm.map_matching(dyn_obst.prediction.trajectory.state_list, dyn_obst.initial_state)
 
         assert lt_sequence == [54508, 54541, 54494, 54520, 54490]
 
@@ -39,22 +37,5 @@ class TestMapMatching(unittest.TestCase):
 
         for obst_id, solution in solutions.items():
             dyn_obst = scenario.obstacle_by_id(obst_id)
-            lt_sequence = mm.map_matching(
-                dyn_obst.prediction.trajectory.state_list,
-                dyn_obst.initial_state,
-                True, 4
-            )
+            lt_sequence = mm.map_matching(dyn_obst.prediction.trajectory.state_list, dyn_obst.initial_state, True, 4)
             assert lt_sequence == solution
-
-
-
-
-
-
-
-
-
-
-
-
-

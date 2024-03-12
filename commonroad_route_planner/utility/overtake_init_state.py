@@ -17,9 +17,3 @@ class OvertakeInitState:
         self.lanelet_network: LaneletNetwork = lanelet_network
         self.original_lanelet: Lanelet = lanelet_network.find_lanelet_by_id(original_lanelet_id)
         self.adjecent_lanelet: Lanelet = lanelet_network.find_lanelet_by_id(adjecent_lanelet_id)
-
-
-
-
-
-

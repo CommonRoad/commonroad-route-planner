@@ -25,7 +25,7 @@ def main(path_to_xml: str, save_imgs: bool = False, save_path: str = ""):
     # retrieve the first planning problem in the problem set
     planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
 
-    
+
     # Get route object
     route: Route = RoutePlanner(scenario, planning_problem).plan_routes().retrieve_shortest_route()
 

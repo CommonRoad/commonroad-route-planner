@@ -12,12 +12,11 @@ from commonroad_route_planner.route_sections.lanelet_section import LaneletSecti
 from typing import List
 
 
-
-
 class TestRouteSlice(unittest.TestCase):
     """
     Tests whether reference path intersects with goal region
     """
+
     def test_route_section(self):
 
         scenario_name: str = "ZAM_Turorial-1_2_T-1_modified"
@@ -27,44 +26,35 @@ class TestRouteSlice(unittest.TestCase):
 
         path_scenarios = Path(__file__).parents[1] / "scenarios"
 
-
         print(f"Testing scenario {scenario_name}")
         # read in scenario and planning problem set
-        scenario, planning_problem_set = CommonRoadFileReader(
-            f"{path_scenarios / scenario_name}.xml"
-        ).open()
+        scenario, planning_problem_set = CommonRoadFileReader(f"{path_scenarios / scenario_name}.xml").open()
 
         # Plan route with extended search
         planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
-        route_planner = RoutePlanner(
-            scenario=scenario,
-            planning_problem=planning_problem,
-            extended_search=True
-        )
+        route_planner = RoutePlanner(scenario=scenario, planning_problem=planning_problem, extended_search=True)
 
         included_lanelet_ids: List[int] = [1932]
 
         route_selector = route_planner.plan_routes()
-        route = route_selector.retrieve_shortest_route(retrieve_shortest=True,
-                                                       included_lanelet_ids=included_lanelet_ids)
-
+        route = route_selector.retrieve_shortest_route(
+            retrieve_shortest=True, included_lanelet_ids=included_lanelet_ids
+        )
 
         lanelet_section: LaneletSection = route.get_lanelet_section(lanelet_id=lanelet_id)
 
-        if(adjacent_lanelets_ids != sorted(lanelet_section.adjacent_lanelet_ids, reverse=False)):
-            raise ValueError(f"Expected adjacent ids: {adjacent_lanelets_ids} \n"
-                             f"\t but got {sorted(lanelet_section.adjacent_lanelet_ids, reverse=False)}"
-                             )
+        if adjacent_lanelets_ids != sorted(lanelet_section.adjacent_lanelet_ids, reverse=False):
+            raise ValueError(
+                f"Expected adjacent ids: {adjacent_lanelets_ids} \n"
+                f"\t but got {sorted(lanelet_section.adjacent_lanelet_ids, reverse=False)}"
+            )
         else:
-            print(f'Got expected route section {sorted(lanelet_section.adjacent_lanelet_ids, reverse=False)}')
+            print(f"Got expected route section {sorted(lanelet_section.adjacent_lanelet_ids, reverse=False)}")
 
-
-        if(has_neighbors != lanelet_section.has_neighbors()):
-            raise ValueError(f"Expected has_neighbors={has_neighbors} \n"
-                             f"\t but got {lanelet_section.has_neighbors()}"
-                             )
+        if has_neighbors != lanelet_section.has_neighbors():
+            raise ValueError(
+                f"Expected has_neighbors={has_neighbors} \n" f"\t but got {lanelet_section.has_neighbors()}"
+            )
 
         else:
-            print(f'Got expected expected has_neighbors={lanelet_section.has_neighbors()}')
-
-
+            print(f"Got expected expected has_neighbors={lanelet_section.has_neighbors()}")
