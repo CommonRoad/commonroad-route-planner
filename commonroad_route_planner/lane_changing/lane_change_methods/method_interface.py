@@ -20,6 +20,7 @@ class MethodInterface:
     """
     Interface for the different lane changing methods.
     """
+
     def __init__(self, logger: Logger = None) -> None:
         """
         :param logger: Logger
