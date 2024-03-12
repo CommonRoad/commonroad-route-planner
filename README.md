@@ -1,45 +1,60 @@
 # CommonRoad Route Planner
+The CommonRoad Route Planner aims to give an extendable, light-weight route- and reference path planner for the CommonRoad project
+This tool is built for and Ubuntu 22.04 and Python3 ^3.8.
 
-The basic functionality of this package is to twofold:
-- find sequences of lanelets (also referred to as routes) that lead from the initial lanelet(s) to the goal lanelet(s) of a given planning problem. It also works with survival scenarios (where no goal region is specified).
-- generate a reference path as a high-level behavior for each of the planned route, which can be used to construct a curvilinear coordinate system at a later stage.
-
-### Supported Backends
-
-The planner supports different backends to search for the shortest route in the scenario:
-
-1. NETWORKX: uses built-in functions from the networkx package, tends to change lanes later
+## Documentation
+The documentation can be found [here](https://cps.pages.gitlab.lrz.de/commonroad-route-planner/)
 
 
-## Using the scenario files with git.lsf
-This repo contains a number of scenario xml files in [/scenarios](/scenarios/). They are stored with git large-file-system (git lfs).
-If you want to download these scenario files, before cloning this repo, do the following:
+## Project status
+This tool is still under development but has already been successfully deployed in both simulation and on real-world 
+autonomous vehicles.
 
-1. install git-lsf via `sudo apt-get install -y git-lfs` and `git lfs install`
-2. use `git config --global credential.helper store`
-3. clone repo
+We highly welcome your contribution.
 
+## Installation and Usage
+We recommend to use PyCharm (Professional) as IDE.
 
-## Installation
-
-
-#### Poetry
-This module uses python-poetry for installation. After installing poetry via pip-install, run in the root folder:
-
-```bash
-poetry install .
+### Usage in other projects
+We provide an PyPI package which can be installed with the following command
+```shell
+pip install commonroad-route-planner
 ```
-You can configure your python poetry environment in PyCharm similar to anaconda etc.
 
-#### Conda + Poetry
-Alternatively, you can just create a conda environment, install poetry in it and use the install command from above inside the conda environment.
-This way, you don't have to deal with conflicting python versions. However, contrary to just using plain poetry, you have to chose the conda
-environment as your interpreter in your IDE.
+### Development
+It is recommended to use [poetry](https://python-poetry.org/) as an environment manager.
+Clone the repository and install it with poetry. Currently, only the internal repository can be cloned.
+This repo contains a number of scenario xml files in /scenarios. They are stored with git large-file-system (git lfs).
+If you want to download these scenario files, before cloning this repo, do the following:
+```shell
+sudo apt-get install -y git-lfs and git lfs install
+git config --global credential.helper store
+git clone https://gitlab.lrz.de/cps/commonroad-route-planner.git
+conda activate ENVIRONMENT
+pip install .
+```
+
+### Examples
+We recommend to use PyCharm (Professional) as IDE.
+Examples can be found on our CommonRoad website
+
+
+## Documentation
+You can generate the documentation within your activated Poetry environment using.
+```bash
+conda activate ENVIRONMENT
+mkdocs build
+```
+The documentation will be located under site, where you can open `index.html` in your browser to view it.
+For updating the documentation you can also use the live preview:
+```bash
+conda activate ENVIRONMENT
+mkdocs serve
+```
+
+## Authors
+Responsible: Tobias Mascetta, tobias.mascetta[at]tum.de
 
 
 
-**Note that poetry uses your system python version number as default**
 
-## Minimal Example
-
-We provide a basic [tutorial](/test/test_example.py)

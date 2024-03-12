@@ -1,17 +1,14 @@
 # CommonRoad Route Planner
-TODO: Add Batches
-
 The CommonRoad Route Planner aims to give an extendable, light-weight route- and reference path planner for the CommonRoad project
 
 ![Example Route](assets/example_route.png)
 
-
+This tool is built for and Ubuntu 22.04 and Python3 ^3.8.
 ## Project status
 This tool is still under development but has already been successfully deployed in both simulation and on real-world 
 autonomous vehicles.
 
 We highly welcome your contribution.
-If you want to contribute a prediction algorithm, please create an issue/pull request in our TODO: ADD GITHUB REPO
 
 ## Installation and Usage
 We recommend to use PyCharm (Professional) as IDE.
@@ -23,9 +20,13 @@ pip install commonroad-route-planner
 
 ### Development
 It is recommended to use [poetry](https://python-poetry.org/) as an environment manager.
-Clone the repository and install it with poetry.
+Clone the repository and install it with poetry. Currently, only the internal repository can be cloned.
+This repo contains a number of scenario xml files in /scenarios. They are stored with git large-file-system (git lfs).
+If you want to download these scenario files, before cloning this repo, do the following:
 ```shell
-git clone TODO DD GITUB
+sudo apt-get install -y git-lfs and git lfs install
+git config --global credential.helper store
+git clone https://gitlab.lrz.de/cps/commonroad-route-planner.git
 conda activate ENVIRONMENT
 pip install .
 ```
@@ -52,5 +53,3 @@ mkdocs serve
 Responsible: Tobias Mascetta, tobias.mascetta[at]tum.de
 
 
-## References
-TBD
