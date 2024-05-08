@@ -220,7 +220,7 @@ class RoutePlanner:
         """
         # if there are no lanelets of the goal, activate the NoGoalFound _planner
         if len(self._ids_lanelets_goal) == 0:
-            self._logger.warning(
+            self._logger.debug(
                 "Starting NoGoalFound Planner, since no goal information was found"
             )
             self._planner = NoGoalFoundRoutePlanner(
@@ -298,7 +298,7 @@ class RoutePlanner:
                         self._overtake_states.append(overtake_state)
 
         if len(self._id_lanelets_start) > 1:
-            self._logger.warning(
+            self._logger.debug(
                 "Multiple start lanelet IDs: some may fail to reach goal lanelet"
             )
 
@@ -315,7 +315,7 @@ class RoutePlanner:
         # If the goal region is directly defined by lanelets, use it
         if hasattr(self._planning_problem.goal, "lanelets_of_goal_position"):
             if self._planning_problem.goal.lanelets_of_goal_position is None:
-                self._logger.warning("Lanelets_of_goal_position not given")
+                self._logger.debug("Lanelets_of_goal_position not given")
 
             else:
                 for (
@@ -357,4 +357,4 @@ class RoutePlanner:
             )
 
         if len(self.ids_lanelets_goal) == 0:
-            self._logger.warning("Could not find a single goal position or lane")
+            self._logger.debug("Could not find a single goal position or lane")
