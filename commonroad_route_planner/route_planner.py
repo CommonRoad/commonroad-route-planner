@@ -3,14 +3,13 @@ __author__ = (
 )
 __copyright__ = "TUM Cyber-Physical Systems Group"
 __credits__ = [""]
-__version__ = "2024.1.1"
+__version__ = "2024.2.0"
 __maintainer__ = "Tobias Mascetta"
 __email__ = "tobias.mascetta@tum.de"
 __status__ = "Release"
 
 
 import logging
-
 import numpy as np
 
 
@@ -56,8 +55,9 @@ class RoutePlanner:
 
     def __init__(
         self,
-        scenario: Scenario,
+        lanelet_network: LaneletNetwork,
         planning_problem: PlanningProblem,
+        scenario: Union[Scenario, None] = None,
         extended_search: bool = False,
         prohibited_lanelet_ids: List[int] = None,
         logging_level: int = logging.WARNING,
@@ -65,7 +65,7 @@ class RoutePlanner:
         """
         Initialization of a RoutePlanner object.
 
-        :param scenario: cr scenario
+        :param lanelet_network: cr lanelet network
         :param planning_problem: cr planning problem
         :param extended_search: necessary, if not the shortest route is searched, e.g.
             if a specific lanelet must be included
@@ -77,7 +77,8 @@ class RoutePlanner:
         self._logger = logging.Logger(name=__name__, level=logging_level)
 
         self._scenario: Scenario = scenario
-        self._lanelet_network: LaneletNetwork = scenario.lanelet_network
+
+        self._lanelet_network: LaneletNetwork = lanelet_network
         self._planning_problem: PlanningProblem = planning_problem
 
         self._extended_search: bool = extended_search
@@ -99,6 +100,9 @@ class RoutePlanner:
         """
         :return: cr scenario
         """
+        self._logger.warning(
+            "[Deprecation Warning] Will be removed in upcoming releases, lanelet_network attr. required"
+        )
         return self._scenario
 
     @property

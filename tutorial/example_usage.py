@@ -53,7 +53,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         # ========== route planning =========== #
         # instantiate a route planner with the scenario and the planning problem
         route_planner = RoutePlanner(
-            scenario=scenario,
+            lanelet_network=scenario.lanelet_network,
             planning_problem=planning_problem,
             extended_search=False,
         )
