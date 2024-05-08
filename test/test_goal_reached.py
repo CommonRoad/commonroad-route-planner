@@ -95,7 +95,7 @@ class TestGoalReached(unittest.TestCase):
 
             # Plan route
             planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
-            route_planner = RoutePlanner(scenario, planning_problem)
+            route_planner = RoutePlanner(scenario.lanelet_network, planning_problem)
             route_selector = route_planner.plan_routes()
             route = route_selector.retrieve_shortest_route(retrieve_shortest=True)
 
