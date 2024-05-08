@@ -1,10 +1,11 @@
 # Changelog
 
 
-## [2024.1.1]
+## [2024.2.0]
 ### Changed
 - Route planner now uses lanelet_network instead of scenario as argument.
 - Moved scenario as optional argument to be deprecated in future releases.
+- Changed some logger warnings to debug
 
 
 
