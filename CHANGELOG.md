@@ -1,5 +1,25 @@
 # Changelog
 
+
+## [2024.2.0]
+### Changed
+- Route planner now uses lanelet_network instead of scenario as argument.
+- Moved scenario as optional argument to be deprecated in future releases.
+- Changed some logger warnings to debug
+
+
+
+## [2024.1.1]
+### Fixed
+- CR Drivability Checker dependency set to major
+
+
+## [2024.1.0]
+### Changed
+- Total refactor
+
+
+
 ## [2022.11]
 
 ### Changed

@@ -79,7 +79,7 @@ class TestPointsOutsideLaneletNetwork(unittest.TestCase):
         planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
 
         # Plan route
-        route_planner = RoutePlanner(scenario, planning_problem)
+        route_planner = RoutePlanner(scenario.lanelet_network, planning_problem)
         route_selector = route_planner.plan_routes()
         route = route_selector.retrieve_shortest_route(retrieve_shortest=True)
 

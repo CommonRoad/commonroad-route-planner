@@ -61,7 +61,7 @@ class TestIncludedLanelets(unittest.TestCase):
 
             # Plan route with extended search
             planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
-            route_planner = RoutePlanner(scenario=scenario, planning_problem=planning_problem, extended_search=True)
+            route_planner = RoutePlanner(lanelet_network=scenario.lanelet_network, planning_problem=planning_problem, extended_search=True)
 
             included_lanelet_ids: List[int] = [1932]
 

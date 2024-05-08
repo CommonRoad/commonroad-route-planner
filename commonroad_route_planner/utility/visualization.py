@@ -118,6 +118,9 @@ def visualize_route(
 
     if save_img:
         save_name: str = os.path.join(save_path, str(scenario.scenario_id))
+        os.makedirs(
+            os.path.dirname(save_name), exist_ok=True
+        )  # Ensure the directory exists
         plt.savefig(save_name, format="png")
     else:
         plt.show()
