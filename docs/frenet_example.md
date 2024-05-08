@@ -26,7 +26,7 @@ def main(path_to_xml: str, save_imgs: bool = False, save_path: str = ""):
     planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
 
     # Get route object
-    route: Route = RoutePlanner(scenario, planning_problem).plan_routes().retrieve_shortest_route()
+    route: Route = RoutePlanner(scenario.lanelet_network, planning_problem).plan_routes().retrieve_shortest_route()
 
     # ========== For Planning in Frenet Frame, it might be useful to extend the route a bit =========== #
     # Init route extendor

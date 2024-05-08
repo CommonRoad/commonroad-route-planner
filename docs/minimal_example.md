@@ -27,7 +27,7 @@ def main(path_to_xml: str, save_imgs: bool = False, save_path: str = ""):
 
 
     # Get route object
-    route: Route = RoutePlanner(scenario, planning_problem).plan_routes().retrieve_shortest_route()
+    route: Route = RoutePlanner(scenario.lanelet_network, planning_problem).plan_routes().retrieve_shortest_route()
 
 
 if __name__ == "__main__":
