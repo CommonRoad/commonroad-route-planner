@@ -31,7 +31,7 @@ def main(path_to_xml: str, save_imgs: bool = False, save_path: str = ""):
     # ========== route planning =========== #
     # instantiate a route planner with the scenario and the planning problem
     route_planner = RoutePlanner(
-        scenario=scenario,
+        lanelet_network=scenario.lanelet_network,
         planning_problem=planning_problem,
         extended_search=False,
     )
