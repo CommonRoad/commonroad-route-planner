@@ -22,9 +22,9 @@ packages = [{include = "commonroad_route_planner"}]
 python = "^3.8"
 commonroad-io = ">=2022.2"
 networkx = ">=2.4"
-numpy = ">=1.17.4"
+numpy = ">=1.17.4,<2.0"
 shapely = ">=1.6.4.post2"
-matplotlib = ">=3.1.2"
+matplotlib = ">=3.1.2,<3.9"
 commonroad-drivability-checker = ">=2023.1"
 
 # tutorial
