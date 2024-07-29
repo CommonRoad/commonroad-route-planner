@@ -18,6 +18,9 @@ before_script:
 ###### Test #########
 unittest:
   stage: test
+  except:
+    - public
+    - feature/release_check
   script:
     - coverage run --source=./commonroad_route_planner -m unittest discover test
     - coverage report -m || true
@@ -38,6 +41,16 @@ test_build_pages:
     paths:
       - site
   needs: [ ]
+
+
+test_no_scenario_files:
+  stage: test
+  only:
+    - public
+    - feature/release_check
+  script:
+    - if [ -d scenarios/ ]; then exit 1; fi
+
 
 
 ####### Style ##########
