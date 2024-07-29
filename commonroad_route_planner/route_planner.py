@@ -142,6 +142,12 @@ class RoutePlanner:
 
         :return: route selector object
         """
+        # Reset lists
+        self._id_lanelets_start = list()
+        self._ids_lanelets_goal = list()
+        self._overtake_states = list()
+
+        # update planning problems
         self._planning_problem = planning_problem
         self._extended_search: bool = extended_search
         self._prohibited_lanelet_ids: List[int] = (
