@@ -1,6 +1,12 @@
 # Changelog
 
 
+
+## [2024.2.1]
+### Changed
+- bugfix update_planning problem to empty previous planning problem initial state and goal
+
+
 ## [2024.2.0]
 ### Changed
 - Route planner now uses lanelet_network instead of scenario as argument.
