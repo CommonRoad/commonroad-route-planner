@@ -7,6 +7,8 @@ from commonroad.common.file_reader import CommonRoadFileReader
 # Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
 from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
+from commonroad_route_planner.reference_path_planner import ReferencePathPlanner
+from commonroad_route_planner.lanelet_sequence import LaneletSequence
 
 # typing
 from typing import List
@@ -30,14 +32,23 @@ class TestRouteSlice(unittest.TestCase):
         # read in scenario and planning problem set
         scenario, planning_problem_set = CommonRoadFileReader(f"{path_scenarios / scenario_name}.xml").open()
 
-        # Plan route with extended search
+        # Plan reference_path with extended search
         planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
         route_planner = RoutePlanner(lanelet_network=scenario.lanelet_network, planning_problem=planning_problem, extended_search=True)
 
         included_lanelet_ids: List[int] = [1932]
 
-        route_selector = route_planner.plan_routes()
-        route = route_selector.retrieve_shortest_route(
+        # find routing sequence as sequence of lanelet ids
+        route_candidates: List[LaneletSequence] = route_planner.plan_routes()
+
+        # generate reference paths
+        ref_path_generator: ReferencePathPlanner = ReferencePathPlanner(
+            lanelet_network=scenario.lanelet_network,
+            planning_problem=planning_problem,
+            routes=route_candidates
+        )
+
+        route = ref_path_generator.plan_shortest_reference_path(
             retrieve_shortest=True, included_lanelet_ids=included_lanelet_ids
         )
 

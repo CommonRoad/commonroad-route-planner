@@ -49,7 +49,7 @@ class LaneletSection:
 
     def has_neighbors(self) -> bool:
         """
-        Returns true if this section consits of more than one route
+        Returns true if this section consits of more than one reference_path
         """
         return True if (len(self.adjacent_lanelets) > 1) else False
 

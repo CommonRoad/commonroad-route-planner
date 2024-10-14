@@ -18,11 +18,11 @@ from typing import Union, List
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from commonroad_route_planner.route import Route, RouteSlice
+    from commonroad_route_planner.reference_path import ReferencePath, RouteSlice
 
 
 def visualize_route(
-    route: Union["Route", "RouteSlice"],
+    reference_path: Union["ReferencePath", "RouteSlice"],
     scenario: Scenario,
     planning_problem: PlanningProblem,
     save_img: bool = True,
@@ -34,13 +34,13 @@ def visualize_route(
     curvature_threshold: float = 0.5,
 ) -> None:
     """
-    Visualizes the given route.
+    Visualizes the given reference_path.
 
-    :param route: route or route slice
+    :param reference_path: reference_path or reference_path slice
     :param planning_problem: cr planning problem
     :param save_img: if true, will not display but save imgs instead
     :param save_path: where to save the images to
-    :param draw_route_lanelets: draws lanelts of route in different color
+    :param draw_route_lanelets: draws lanelts of reference_path in different color
     :param draw_reference_path: draws reference path
     :param size_x: size of matplotlib figure
     :param size_factor_curvature: points with high curvature get drawn bigger
@@ -48,7 +48,7 @@ def visualize_route(
     """
 
     # obtain plot limits for a better visualization.
-    plot_limits = obtain_plot_limits_from_reference_path(route)
+    plot_limits = obtain_plot_limits_from_reference_path(reference_path)
 
     # set the figure size and ratio
     ratio_x_y = (plot_limits[1] - plot_limits[0]) / (plot_limits[3] - plot_limits[2])
@@ -62,11 +62,11 @@ def visualize_route(
     # draw the initial state of the planning problem
     draw_state(renderer, planning_problem.initial_state)
 
-    # draw lanelets of the route
+    # draw lanelets of the reference_path
     if draw_route_lanelets:
 
         list_lanelets = []
-        for id_lanelet in route.lanelet_ids:
+        for id_lanelet in reference_path.lanelet_ids:
             lanelet = scenario.lanelet_network.find_lanelet_by_id(id_lanelet)
             list_lanelets.append(lanelet)
         lanelet_network = LaneletNetwork.create_from_lanelet_list(list_lanelets)
@@ -93,7 +93,7 @@ def visualize_route(
             30  # put it higher in the plot, to make it visible
         )
         renderer.draw_params.lanelet_network.lanelet.center_bound_color = (
-            "#3232ff"  # color of the found route with arrow
+            "#3232ff"  # color of the found reference_path with arrow
         )
 
         lanelet_network.draw(renderer)
@@ -101,8 +101,8 @@ def visualize_route(
     # draw reference path with dots
     if draw_reference_path:
         renderer.draw_params.shape.facecolor = "#ff477e"
-        for idx, position in enumerate(route.reference_path):
-            if abs(route.path_curvature[idx]) > curvature_threshold:
+        for idx, position in enumerate(reference_path.reference_path):
+            if abs(reference_path.path_curvature[idx]) > curvature_threshold:
                 occ_pos = Circle(radius=0.3 * size_factor_curvature, center=position)
             else:
                 occ_pos = Circle(radius=0.3, center=position)
@@ -127,12 +127,12 @@ def visualize_route(
 
 
 def debug_visualize(
-    route_list: List["Route"],
+    route_list: List["ReferencePath"],
     lanelet_network: LaneletNetwork,
     size_x: float = 10.0,
 ) -> None:
     """
-    Visualizes the given route.
+    Visualizes the given reference_path.
     """
 
     # obtain plot limits for a better visualization.
@@ -197,12 +197,12 @@ def draw_state(renderer: MPRenderer, state: InitialState, color="#ee6c4d") -> No
 
 
 def obtain_plot_limits_from_routes(
-    route: Union["Route", "RouteSlice"], border: float = 15
+    route: Union["ReferencePath", "RouteSlice"], border: float = 15
 ) -> List[int]:
     """
     Obtrains plot limits from lanelets of routes
 
-    :param route: route object
+    :param route: reference_path object
 
     :return: list [xmin, xmax, ymin, xmax] of plot limits
     """
@@ -227,12 +227,12 @@ def obtain_plot_limits_from_routes(
 
 
 def obtain_plot_limits_from_reference_path(
-    route: Union["Route", "RouteSlice"], border: float = 10.0
+    route: Union["ReferencePath", "RouteSlice"], border: float = 10.0
 ) -> List[int]:
     """
     Obtrains plot limits from reference path
 
-    :param route: route object
+    :param route: reference_path object
 
     :return: list [xmin, xmax, ymin, xmax] of plot limits
     """

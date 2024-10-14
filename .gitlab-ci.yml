@@ -6,6 +6,7 @@ cache:
 
 stages:
   - style
+  - testinstall
   - test
   - deploy
 
@@ -13,7 +14,10 @@ before_script:
   - pip install poetry
   - poetry config virtualenvs.in-project true
   - poetry install --with test,docs,mapmatching
+  - poetry update
   - source .venv/bin/activate
+
+
 
 ###### Test #########
 unittest:
