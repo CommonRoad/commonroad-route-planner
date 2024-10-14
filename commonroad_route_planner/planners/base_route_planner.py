@@ -13,7 +13,7 @@ class BaseRoutePlanner(metaclass=ABCMeta):
         prohibited_lanelet_ids: List[int] = None,
     ):
         """
-        Base class for a route planner.
+        Base class for a reference_path planner.
         """
         self._logger = logger
         self._lanelet_network = lanelet_network

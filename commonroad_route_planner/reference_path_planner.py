@@ -6,12 +6,10 @@ from scipy.spatial.kdtree import KDTree
 
 
 # commonroad
-from commonroad.planning.goal import GoalRegion
 from commonroad.scenario.lanelet import LaneletNetwork
-from commonroad.scenario.state import InitialState
 
 # own code base
-from commonroad_route_planner.route import Route
+from commonroad_route_planner.reference_path import ReferencePath
 from commonroad_route_planner.utility.visualization import debug_visualize
 from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import (
     LaneChangeMethod,
@@ -19,78 +17,85 @@ from commonroad_route_planner.lane_changing.lane_change_methods.method_interface
 from commonroad_route_planner.route_generation_strategies.default_generation_strategy import (
     DefaultGenerationStrategy,
 )
+from commonroad.planning.planning_problem import PlanningProblem
+from commonroad_route_planner.lanelet_sequence import LaneletSequence
 
 # typing
 from typing import List, Set, Tuple, Union
 
 
-class RouteGenerator:
+class ReferencePathPlanner:
     """
-    Generates routes from a given sequence of lanelets, per default the shortest route.
+    Generates reference paths from a given sequence of lanelets, per default the shortest reference_path.
     Offers methods to select them.
     """
 
     def __init__(
         self,
         lanelet_network: LaneletNetwork,
-        initial_state: InitialState,
-        goal_region: GoalRegion,
-        route_candidates: List[List[int]],
-        logger: logging.Logger,
+        planning_problem: PlanningProblem,
+        routes: List[LaneletSequence],
         prohibited_lanelet_ids: List[int] = None,
         lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE,
-        GenerationStrategy: Union[
+        generation_strategy: Union[
             DefaultGenerationStrategy
         ] = DefaultGenerationStrategy,
+        logging_level: int = logging.WARNING,
     ) -> None:
         """
         :param lanelet_network: cr lanelet network,
-        :param initial_state: cr initial state
-        :param goal_region: cr goal
-        :param route_candidates: list of list of lanelet ids of routes
+        :param planning_problem: cr planning problem,
+        :param routes: list of LaneletSequence objects, each representing a reference_path
         :param logger: central logger
         :param prohibited_lanelet_ids: prohibited lanelet ids
         :param lane_change_method: method to compute lane changes
-        :param GenerationStrategy: strategy to generate route
+        :param GenerationStrategy: strategy to generate reference_path
         """
 
-        self._logger = logger
-        GenerationStrategy.logger = logger
+        self._logging_level = logging_level
+        self._logger = logging.Logger(name=__name__, level=logging_level)
+        generation_strategy.logger = self._logger
 
         self._lanelet_network: LaneletNetwork = lanelet_network
         self._prohibited_lanelet_ids: List[int] = (
             prohibited_lanelet_ids if (prohibited_lanelet_ids is not None) else list()
         )
 
-        self._initial_state: InitialState = initial_state
-        self._goal_region: GoalRegion = goal_region
+        self._planning_problem: PlanningProblem = planning_problem
 
         self._lane_change_method: LaneChangeMethod = lane_change_method
 
-        # create a list of Route objects for all routes found by the route planner which is not empty
-        self._GenerationMethod: Union[DefaultGenerationStrategy] = GenerationStrategy
+        # create a list of ReferencePath objects for all routes found by the reference_path planner which is not empty
+        self._GenerationMethod: Union[DefaultGenerationStrategy] = generation_strategy
 
-        self._route_candidates: List[Route] = [
-            GenerationStrategy.generate_route(
+        self._route_candidates: List[ReferencePath] = [
+            generation_strategy.generate_route(
                 lanelet_network=lanelet_network,
-                lanelet_ids=lanelet_ids,
-                initial_state=initial_state,
-                goal_region=goal_region,
+                lanelet_ids=lanelet_sequence.lanelet_ids,
+                initial_state=self._planning_problem.initial_state,
+                goal_region=self._planning_problem.goal,
                 prohibited_lanelet_ids=prohibited_lanelet_ids,
                 lane_change_method=lane_change_method,
             )
-            for lanelet_ids in route_candidates
-            if lanelet_ids
+            for lanelet_sequence in routes
+            if lanelet_sequence.lanelet_ids
         ]
 
         self._num_route_candidates: int = len(self._route_candidates)
 
         if self._num_route_candidates == 0:
-            self._logger.error("could not compute a single route due to clcs")
-            raise ValueError("could not compute a single route due to clcs")
+            self._logger.error("could not compute a single reference_path due to clcs")
+            raise ValueError("could not compute a single reference_path due to clcs")
 
     @property
-    def route_candidates(self) -> List[Route]:
+    def planning_problem(self) -> PlanningProblem:
+        """
+        :return: cr planning problem
+        """
+        return self._planning_problem
+
+    @property
+    def route_candidates(self) -> List[ReferencePath]:
         """
         :return: list of routes
         """
@@ -110,59 +115,59 @@ class RouteGenerator:
         """
         return self._lane_change_method
 
-    def retrieve_shortest_route(
+    def plan_shortest_reference_path(
         self,
         retrieve_shortest: bool = True,
         consider_least_lance_changes: bool = True,
         included_lanelet_ids: List[int] = None,
-    ) -> Route:
+    ) -> ReferencePath:
         """
-        Retrieves shortest route object.
+        Retrieves shortest reference_path object.
         Optionally can be forced to go through specific lanelets.
 
         :param retrieve_shortest: if True, will only find shortest distance routes,
         :param consider_least_lance_changes: considers least amount of disjoint lane changes, if possible
         :param included_lanelet_ids: forces planner to go throug lanelets, if possible. Will ignore retrieve_shortest
 
-        :return: route instance
+        :return: reference_path instance
         """
 
         if consider_least_lance_changes:
-            return self.retrieve_shortetest_route_with_least_lane_changes(
+            return self.plan_shortetest_reference_path_with_least_lane_changes(
                 included_lanelet_ids=included_lanelet_ids
             )
 
         else:
-            return self.retrieve_first_route(
+            return self.plan_first_reference_path(
                 retrieve_shortest=retrieve_shortest,
                 included_lanelet_ids=included_lanelet_ids,
             )
 
-    def retrieve_first_route(
+    def plan_first_reference_path(
         self, retrieve_shortest: bool = True, included_lanelet_ids: List[int] = None
-    ) -> Route:
+    ) -> ReferencePath:
         """
-        Retrieves the first Route object.
-        If retrieve shortest, the shortest route is used and orientation of the lanelet is checked.
+        Retrieves the first ReferencePath object.
+        If retrieve shortest, the shortest reference_path is used and orientation of the lanelet is checked.
 
         :param retrieve_shortest: if True, only checks shortest distance routes
-        :param included_lanelet_ids: forces planner to go through lanelets if possible. Ignores shortest route
+        :param included_lanelet_ids: forces planner to go through lanelets if possible. Ignores shortest reference_path
 
-        :return: route object
+        :return: reference_path object
         """
 
         # No routes
         if len(self._route_candidates) == 0:
-            self._logger.error("Not a single route candidate was found")
-            raise ValueError("[CR Not a single route candidate was found")
+            self._logger.error("Not a single reference_path candidate was found")
+            raise ValueError("[CR Not a single reference_path candidate was found")
 
-        # one route
+        # one reference_path
         elif len(self._route_candidates) == 1 or not retrieve_shortest:
             selected_route = self._route_candidates[0]
 
         # multpiple routes
         else:
-            sorted_routes: List[Route] = sorted(
+            sorted_routes: List[ReferencePath] = sorted(
                 self._route_candidates,
                 key=lambda x: x.length_reference_path,
                 reverse=False,
@@ -185,42 +190,42 @@ class RouteGenerator:
             else:
                 debug_visualize(self._route_candidates, self._lanelet_network)
                 self._logger.error(
-                    "could not find a well oriented route. Perhaps increase distance threshold, "
-                    "returning first route"
+                    "could not find a well oriented reference_path. Perhaps increase distance threshold, "
+                    "returning first reference_path"
                 )
                 selected_route = sorted_routes[0]
 
         return selected_route
 
-    def retrieve_shortetest_route_with_least_lane_changes(
+    def plan_shortetest_reference_path_with_least_lane_changes(
         self, included_lanelet_ids: List[int] = None
-    ) -> Route:
+    ) -> ReferencePath:
         """
-        Retrieves route with least lane changes. Tie break is length of reference path
+        Retrieves reference_path with least lane changes. Tie break is length of reference path
 
         :param included_lanelet_ids: forces planner to go throug lanelets, if possible. Will ignore retrieve_shortest
 
-        :return: route instance
+        :return: reference_path instance
         """
 
         # No routes
         if len(self._route_candidates) == 0:
-            self._logger.error("Not a single route candidate was found")
-            raise ValueError("Not a single route candidate was found")
+            self._logger.error("Not a single reference_path candidate was found")
+            raise ValueError("Not a single reference_path candidate was found")
 
-        # one route
+        # one reference_path
         elif len(self._route_candidates) == 1:
             selected_route = self._route_candidates[0]
 
         # multpiple routes
         else:
-            sorted_routes: List[Route] = sorted(
+            sorted_routes: List[ReferencePath] = sorted(
                 self._route_candidates,
                 key=lambda x: x.num_lane_change_actions,
                 reverse=False,
             )
 
-            minimal_lane_change_routes: List[Route] = [
+            minimal_lane_change_routes: List[ReferencePath] = [
                 route
                 for route in sorted_routes
                 if route.num_lane_change_actions
@@ -250,18 +255,18 @@ class RouteGenerator:
             else:
                 debug_visualize(self._route_candidates, self._lanelet_network)
                 self._logger.error(
-                    "could not find a well oriented route. Perhaps increase distance threshold, "
-                    "returning first route"
+                    "could not find a well oriented reference_path. Perhaps increase distance threshold, "
+                    "returning first reference_path"
                 )
                 selected_route = minimal_lane_change_routes_by_length[0]
 
         return selected_route
 
-    def retrieve_all_routes(self) -> Tuple[List[Route], int]:
+    def plan_all_reference_paths(self) -> Tuple[List[ReferencePath], int]:
         """
-        Returns the list of Route objects and the total number of routes
+        Returns the list of ReferencePath objects and the total number of routes
 
-        :return: Tuple of list of route candidates and total number of routes
+        :return: Tuple of list of reference_path candidates and total number of routes
         """
         return self._route_candidates, self._num_route_candidates
 
@@ -276,7 +281,9 @@ class RouteGenerator:
         # Algorithm
         # ----------
         # use KDTree to check for closest point on ref path
-        distance, idx = KDTree(reference_path).query(self._initial_state.position)
+        distance, idx = KDTree(reference_path).query(
+            self._planning_problem.initial_state.position
+        )
 
         if distance <= distance_threshold_in_meters:
             return True
@@ -285,7 +292,7 @@ class RouteGenerator:
 
     @staticmethod
     def _check_routes_includes_lanelets(
-        route: Route, lanelet_ids_to_go_through: List[int]
+        route: ReferencePath, lanelet_ids_to_go_through: List[int]
     ) -> bool:
         """
         Checks wheter lanelets are included.
@@ -300,8 +307,8 @@ class RouteGenerator:
 
     def __repr__(self):
         return (
-            f"RouteCandidateHolder(#candidates:{len(self._route_candidates)},initial_state={self._initial_state},"
-            f"_goal_region={self._goal_region})"
+            f"RouteCandidateHolder(#candidates:{len(self._route_candidates)},initial_state={self.planning_problem.initial_state},"
+            f"_goal_region={self.planning_problem.goal})"
         )
 
     def __str__(self):

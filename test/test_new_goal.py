@@ -13,8 +13,9 @@ from commonroad.geometry.shape import Rectangle
 
 # Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
-from commonroad_route_planner.utility.visualization import visualize_route
-from commonroad_route_planner.frenet_tools.route_extendor import RouteExtendor
+from commonroad_route_planner.reference_path_planner import ReferencePathPlanner
+from commonroad_route_planner.reference_path import ReferencePath
+from commonroad_route_planner.lanelet_sequence import LaneletSequence
 from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
 from commonroad_route_planner.route_generation_strategies.default_generation_strategy import DefaultGenerationStrategy
 from commonroad_route_planner.utility.exceptions import PointNotOnGoalLaneletException
@@ -23,10 +24,6 @@ from commonroad_route_planner.utility.exceptions import PointNotOnGoalLaneletExc
 # typing
 from typing import List
 from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from commonroad_route_planner.route_candidate_holder import RouteGenerator
-    from commonroad_route_planner.route import Route
 
 
 
@@ -43,12 +40,19 @@ class UpdatePlanningProblemTest(unittest.TestCase):
         route_planner = RoutePlanner(
             lanelet_network=scenario.lanelet_network,
             planning_problem=planning_problem,
-            extended_search=False,
         )
-        route_generator: "RouteGenerator" = route_planner.plan_routes(
-            lane_change_method=LaneChangeMethod.QUINTIC_SPLINE, GenerationStrategy=DefaultGenerationStrategy
+
+        routes: List[LaneletSequence] = route_planner.plan_routes()
+
+        ref_path_planner: ReferencePathPlanner = ReferencePathPlanner(
+            lanelet_network=scenario.lanelet_network,
+            planning_problem=planning_problem,
+            routes=routes,
         )
-        route: "Route" = route_generator.retrieve_shortest_route()
+
+        referece_path: ReferencePath = ref_path_planner.plan_shortest_reference_path(
+            retrieve_shortest=True, consider_least_lance_changes=True
+        )
 
         # new planning problem
         new_is: InitialState = copy.copy(planning_problem.initial_state)
@@ -75,14 +79,22 @@ class UpdatePlanningProblemTest(unittest.TestCase):
             goal_region=new_goal
         )
 
-        new_rg: "RouteGenerator" = route_planner.update_planning_problem_and_plan_routes(
+        routes: List[LaneletSequence]  = route_planner.update_planning_problem_and_plan_routes(
             planning_problem=new_pp
         )
 
-        new_route: "Route" = new_rg.retrieve_shortest_route()
+        new_ref_path_planner: ReferencePathPlanner = ReferencePathPlanner(
+            lanelet_network=scenario.lanelet_network,
+            planning_problem=planning_problem,
+            routes=routes,
+        )
 
-        ids_old_pp: List[int] = scenario.lanelet_network.find_lanelet_by_position([route.reference_path[-5]])[0]
-        ids_new_pp: List[int] = scenario.lanelet_network.find_lanelet_by_position([new_route.reference_path[-5]])[0]
+        new_referece_path: ReferencePath = new_ref_path_planner.plan_shortest_reference_path(
+            retrieve_shortest=True, consider_least_lance_changes=True
+        )
+
+        ids_old_pp: List[int] = scenario.lanelet_network.find_lanelet_by_position([referece_path.reference_path[-5]])[0]
+        ids_new_pp: List[int] = scenario.lanelet_network.find_lanelet_by_position([new_referece_path.reference_path[-5]])[0]
 
         if 23 not in ids_old_pp:
             raise PointNotOnGoalLaneletException(
