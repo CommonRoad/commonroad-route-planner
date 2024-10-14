@@ -32,7 +32,7 @@ class LaneChangePositionHandler:
         logger: Logger = None,
     ) -> None:
         """
-        :param lanelet_id_sequence: sequence of lanelet ids for route for lanelet network
+        :param lanelet_id_sequence: sequence of lanelet ids for reference_path for lanelet network
         :param lanelet_network: lanelet network
         :param logger: logger
         """

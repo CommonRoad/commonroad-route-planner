@@ -10,7 +10,7 @@ from commonroad.planning.planning_problem import InitialState
 
 # own code base
 from commonroad_route_planner.utility.route_util import chaikins_corner_cutting
-from commonroad_route_planner.route import Route
+from commonroad_route_planner.reference_path import ReferencePath
 from commonroad_route_planner.route_sections.lanelet_section import LaneletSection
 from commonroad_route_planner.lane_changing.change_position import (
     LaneChangePositionHandler,
@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
 class DefaultGenerationStrategy(BaseGenerationStrategy):
     """
-    Default strategy to generate and update a route
+    Default strategy to generate and update a path
     """
 
     logger: logging.Logger = logging.Logger(__name__)
@@ -50,19 +50,19 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
         goal_region: GoalRegion,
         prohibited_lanelet_ids: List[int] = None,
         lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE,
-    ) -> Route:
+    ) -> ReferencePath:
         """
-        Generates a route from a list of lanelet ids and a lane change method
+        Generates a reference_path from a list of lanelet ids and a lane change method
 
         :param lanelet_network: lanelet network
-        :param lanelet_ids: ordered lanelet ids of route from start to finish
+        :param lanelet_ids: ordered lanelet ids of reference_path from start to finish
         :param initial_state: initital state
         :param goal_region: goal region
-        :param prohibited_lanelet_ids: prohibited lanelet ids of route
+        :param prohibited_lanelet_ids: prohibited lanelet ids of reference_path
         :param lane_change_method: lane change method
 
-        :return: route instance
-        :rtype Route
+        :return: reference_path instance
+        :rtype ReferencePath
         """
 
         sections: List[LaneletSection] = DefaultGenerationStrategy._calc_route_sections(
@@ -95,7 +95,7 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
             reference_path
         )
 
-        return Route(
+        return ReferencePath(
             lanelet_network=lanelet_network,
             initial_state=initial_state,
             goal_region=goal_region,
@@ -115,17 +115,17 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
 
     @staticmethod
     def update_route(
-        route: Route,
+        route: ReferencePath,
         reference_path: np.ndarray,
-    ) -> Route:
+    ) -> ReferencePath:
         """
-        Updates all route properties given a new reference path.
+        Updates all reference_path properties given a new reference path.
 
-        :param route: route instace to be updated
-        :param reference_path: (n,2) updated reference path from which route should be created
+        :param route: reference_path instace to be updated
+        :param reference_path: (n,2) updated reference path from which reference_path should be created
 
-        :return: updated route instance
-        :rtype Route
+        :return: updated reference_path instance
+        :rtype ReferencePath
         """
 
         resample_step: float = route.average_interpoint_distance
@@ -155,10 +155,10 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
         lanelet_network: LaneletNetwork,
     ) -> List[LaneletSection]:
         """
-        Calculates route _sections for lanelets in the route.
+        Calculates reference_path _sections for lanelets in the reference_path.
         A section is a list of lanelet ids that are adjacent to a given lanelet.
 
-        :param lanelet_ids: ordered lanelet ids of route from start to goal
+        :param lanelet_ids: ordered lanelet ids of reference_path from start to goal
         :param lanelet_network: lanelet network of scenrio
 
         :return: list of lanelet sections
@@ -185,7 +185,7 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
         """
         Computes reference path stair function given the list of portions of each lanelet
 
-        :param lanelet_ids: ordered lanelet ids of route from start to finish
+        :param lanelet_ids: ordered lanelet ids of reference_path from start to finish
         :param initial_state: initial state of planning problem
         :param goal_region: goal region of planning problem
         :param lane_change_method: method with which lane changes are performerd
@@ -287,7 +287,7 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
 
         :param lanelet_start: lanelet entering the lane change
         :param lanelet_section: lanelet section of the lane change
-        :param lanelet_ids: ordered lanelet ids of route from start to finish
+        :param lanelet_ids: ordered lanelet ids of reference_path from start to finish
         :param lanelet_network: lanelet network
 
         :return: Lanelet instance
@@ -305,7 +305,7 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
                 )
                 break
 
-        # if route ends in lane section of lane change
+        # if reference_path ends in lane section of lane change
         if lanelet_return is None:
             DefaultGenerationStrategy.logger.info("Encountered goal in lane change")
             lanelet_return: Lanelet = lanelet_network.find_lanelet_by_id(

@@ -1,7 +1,7 @@
-site_name: CommonRoad Route Planner
+site_name: CommonRoad ReferencePath Planner
 
 theme:
-  name: readthedocs
+  name: material
   logo: assets/commonroad_white150.png
 
 plugins:
@@ -20,20 +20,27 @@ nav:
     - "Introduction": index.md
 
   - Examples:
+    - "Fast API": fapi_usage.md
     - "Minimal Usage": minimal_example.md
     - "Overall Usage": example.md
     - "Planning in Frenet Frame": frenet_example.md
 
+
+  - Fast API Reference:
+      - "Fast API": fast_api.md
+
   - Basic API Reference:
       - "Route Planner": route_planner.md
-      - "Route Generator": route_generator.md
-      - "Route": route.md
+      - "Lanelet Sequence": lanelet_sequence.md
+      - "Reference Path Planner": reference_path_planner.md
+      - "Reference Path": reference_path.md
+
 
   - Frenet Frame Planning:
       - "Tools": frenet.md
 
-  - Route Generation:
-      - "Route Generation via Strategy Pattern": route_generation.md
+  - Path Generation:
+      - "Path Generation via Strategy Pattern": path_generation.md
 
   - Lane Changing:
       - "Lane Changing via Handlers and Methods": lane_changing.md

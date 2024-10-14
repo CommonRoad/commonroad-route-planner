@@ -9,15 +9,14 @@ from commonroad.common.file_reader import CommonRoadFileReader
 from commonroad_route_planner.route_planner import RoutePlanner
 from commonroad_route_planner.utility.visualization import visualize_route
 from commonroad_route_planner.frenet_tools.route_extendor import RouteExtendor
-from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import LaneChangeMethod
-from commonroad_route_planner.route_generation_strategies.default_generation_strategy import DefaultGenerationStrategy
+from commonroad_route_planner.lanelet_sequence import LaneletSequence
+from commonroad_route_planner.reference_path_planner import ReferencePathPlanner
+from commonroad_route_planner.reference_path import ReferencePath
+
 
 # typing
-from typing import TYPE_CHECKING
+from typing import List
 
-if TYPE_CHECKING:
-    from commonroad_route_planner.route import Route
-    from commonroad_route_planner.route_candidate_holder import RouteGenerator
 
 
 def main(path_to_xml: str, save_imgs: bool = False, save_path: str = ""):
@@ -27,42 +26,34 @@ def main(path_to_xml: str, save_imgs: bool = False, save_path: str = ""):
     ).open()
     # retrieve the first planning problem in the problem set
     planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
+    
 
-    # ========== route planning =========== #
-    # instantiate a route planner with the scenario and the planning problem
+    # ========== reference_path planning =========== #
+    # Instantiate reference path and plan reference_path as lanelet sequence
     route_planner = RoutePlanner(
-        lanelet_network=scenario.lanelet_network,
-        planning_problem=planning_problem,
-        extended_search=False,
+            lanelet_network=scenario.lanelet_network,
+            planning_problem=planning_problem,
     )
-    # plan routes, and save the routes in a route candidate holder
-    route_generator: "RouteGenerator" = route_planner.plan_routes(
-        lane_change_method=LaneChangeMethod.QUINTIC_SPLINE,
-        GenerationStrategy=DefaultGenerationStrategy
-    )
+    routes: List[LaneletSequence] = route_planner.plan_routes()
 
-    # ========== retrieving routes =========== #
-    # here we retrieve the shortest route that has the least amount of disjoint lane changes
-    route: "Route" = route_generator.retrieve_shortest_route(
-        retrieve_shortest=True,
-        consider_least_lance_changes=True
+    # Instantiate reference path planner and plan reference path
+    ref_path_planner: ReferencePathPlanner = ReferencePathPlanner(
+            lanelet_network=scenario.lanelet_network,
+            planning_problem=planning_problem,
+            routes=routes,
     )
-
-    # Init route extendor
-    route_extendor: RouteExtendor = RouteExtendor(route)
-    # Extend reference path at start and end
+    
+    reference_path: ReferencePath = ref_path_planner.plan_shortest_reference_path(
+            retrieve_shortest=True, consider_least_lance_changes=True
+    )
+    
+    # Extend route and reference path if necessary, for example for frenet frame
+    route_extendor: RouteExtendor = RouteExtendor(reference_path)
     route_extendor.extend_reference_path_at_start_and_end()
-
-    # This is unnecessary but shows that the route_extendor modified the route object
-    route: Route = route_extendor.get_route()
-
-    # option 2: retrieve all routes
-    list_routes, num_routes_retrieved = route_generator.retrieve_all_routes()
-    print(f"Number of routes retrieved: {num_routes_retrieved}")
-
+    
     # ========== visualization =========== #
     visualize_route(
-        route=route,
+        reference_path=reference_path,
         scenario=scenario,
         planning_problem=planning_problem,
         save_img=save_imgs,
