@@ -37,7 +37,7 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
 
     def find_routes(self, id_lanelet_start: int, id_lanelet_goal: int) -> List[int]:
         """
-        Finds a route along the lanelet network for survival scenarios.
+        Finds a reference_path along the lanelet network for survival scenarios.
 
         The planner advances in the order of forward, right, left whenever possible.
         Notes:
@@ -47,7 +47,7 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
 
         :param id_lanelet_start: the initial lanelet where we start from
         :param id_lanelet_goal: goal lanelet it
-        :return: route that consists of a list of lanelet IDs
+        :return: reference_path that consists of a list of lanelet IDs
         """
         route = list()
         id_lanelet_current = id_lanelet_start
@@ -97,7 +97,7 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
                     found_new_lanelet = True
 
             if not found_new_lanelet:
-                # no possible route to advance
+                # no possible reference_path to advance
                 break
             else:
                 # set lanelet
@@ -107,10 +107,10 @@ class NoGoalFoundRoutePlanner(BaseRoutePlanner):
 
         if len(route) == 0:
             self._logger.error(
-                "[CR Route Planner] No goal found Route planner could not find a Route"
+                "[CR ReferencePath Planner] No goal found ReferencePath planner could not find a ReferencePath"
             )
             raise ValueError(
-                "[CR Route Planner] No goal found Route planner could not find a Route"
+                "[CR ReferencePath Planner] No goal found ReferencePath planner could not find a ReferencePath"
             )
 
         return route

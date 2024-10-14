@@ -17,7 +17,7 @@ def main():
 
     """
     extract_root: str = "/home/tmasc/Downloads/CRMPC2023_Scenarios"
-    save_path: str = "/home/tmasc/route_planner/commonroad-route-planner/tutorial/commonroad_challenge_2023"
+    save_path: str = "/home/tmasc/route_planner/commonroad-reference_path-planner/tutorial/commonroad_challenge_2023"
 
     scenario_dirs: List[str] = os.listdir(extract_root)
 

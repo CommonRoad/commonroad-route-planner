@@ -1,14 +1,3 @@
-__author__ = (
-    "Tobias Mascetta, Daniel Tar, Peter Kocsis, Edmond Irani Liu, Luis Gressenbuch"
-)
-__copyright__ = "TUM Cyber-Physical Systems Group"
-__credits__ = [""]
-__version__ = "2024.2.0"
-__maintainer__ = "Tobias Mascetta"
-__email__ = "tobias.mascetta@tum.de"
-__status__ = "Release"
-
-
 import logging
 import numpy as np
 
@@ -27,18 +16,13 @@ from commonroad_route_planner.planners.networkx import (
 from commonroad_route_planner.planners.no_goal_found_planner import (
     NoGoalFoundRoutePlanner,
 )
-from commonroad_route_planner.route_candidate_holder import RouteGenerator
 from commonroad_route_planner.utility.route_util import (
     lanelet_orientation_at_position,
     relative_orientation,
 )
 from commonroad_route_planner.utility.overtake_init_state import OvertakeInitState
-from commonroad_route_planner.lane_changing.lane_change_methods.method_interface import (
-    LaneChangeMethod,
-)
-from commonroad_route_planner.route_generation_strategies.default_generation_strategy import (
-    DefaultGenerationStrategy,
-)
+from commonroad_route_planner.lanelet_sequence import LaneletSequence
+
 
 # typing
 from typing import List, Union
@@ -46,11 +30,7 @@ from typing import List, Union
 
 class RoutePlanner:
     """
-    Main class for planning routes in CommonRoad scenarios.
-
-    This is a high-level _planner that plans on the lanelet level. It returns the best routes for each pair
-    of start/goal lanelets, with each route in the form of an ordered list of lanelet IDs.
-    In survival scenarios (no goal lanelet), the _planner advances in the order of forward, right, left when possible.
+    This planner plans routes as sequences of lanelet ids in CommonRoad scenarios.
     """
 
     def __init__(
@@ -67,7 +47,7 @@ class RoutePlanner:
 
         :param lanelet_network: cr lanelet network
         :param planning_problem: cr planning problem
-        :param extended_search: necessary, if not the shortest route is searched, e.g.
+        :param extended_search: necessary, if not the shortest reference_path is searched, e.g.
             if a specific lanelet must be included
         :param prohibited_lanelet_ids: lanelets ids that must not be used
         :param logging_level: logging level, default to warning
@@ -96,16 +76,6 @@ class RoutePlanner:
         self._init_planner()
 
     @property
-    def scenario(self) -> Scenario:
-        """
-        :return: cr scenario
-        """
-        self._logger.warning(
-            "[Deprecation Warning] Will be removed in upcoming releases, lanelet_network attr. required"
-        )
-        return self._scenario
-
-    @property
     def lanelet_network(self) -> LaneletNetwork:
         """
         :return: lanelet network of scenario
@@ -131,16 +101,16 @@ class RoutePlanner:
         planning_problem: PlanningProblem,
         extended_search: bool = False,
         prohibited_lanelet_ids: List[int] = None,
-    ) -> RouteGenerator:
+    ) -> List[LaneletSequence]:
         """
         Updates planning problem and recomputes necessary parts.
-        Returns a new route selector.
+        Returns a new reference_path selector.
 
         :param planning_problem: planning problem to update
         :param extended_search: whether extended search should be used
-        :param prohibited_lanelet_ids: which lanelet ids must not be included in the route
+        :param prohibited_lanelet_ids: which lanelet ids must not be included in the reference_path
 
-        :return: route selector object
+        :return: list of lanelet id sequence from start to goal.
         """
         # Reset lists
         self._id_lanelets_start = list()
@@ -160,28 +130,23 @@ class RoutePlanner:
 
         return self.plan_routes()
 
-    def plan_routes(
-        self,
-        lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE,
-        GenerationStrategy: Union[
-            DefaultGenerationStrategy
-        ] = DefaultGenerationStrategy,
-    ) -> RouteGenerator:
+    def plan_routes(self) -> List[LaneletSequence]:
         """
-        Plans routes for every pair of start/goal lanelets. If no goal lanelet ID is given then return a survival route.
+        Plans routes for every pair of start/goal lanelets. If no goal lanelet ID is given then return a survival reference_path.
 
-        :param lane_change_method: Method for lane changes, e.g. quintic splines
-        :param GenerationStrategy: generation strategy for route
-
-        :return: list of lanelet ids from start to goal.
+        :return: list of lanelet id sequence from start to goal.
         """
-        routes: List[List[int]] = list()
+        routes: List[LaneletSequence] = []
 
         for id_lanelet_start in self._id_lanelets_start:
-            # if survival route _planner
+            # if survival reference_path _planner
             if len(self._ids_lanelets_goal) == 0:
                 routes.append(
-                    self._planner.find_routes(id_lanelet_start, id_lanelet_goal=None)
+                    LaneletSequence(
+                        self._planner.find_routes(
+                            id_lanelet_start, id_lanelet_goal=None
+                        )
+                    )
                 )
 
             else:
@@ -191,21 +156,16 @@ class RoutePlanner:
                         id_lanelet_start=id_lanelet_start,
                         id_lanelet_goal=id_lanelet_goal,
                     )
-                    routes.extend(ids_lanelets)
+                    routes.extend(
+                        [LaneletSequence(lanelet_ids) for lanelet_ids in ids_lanelets]
+                    )
 
         if len(routes) == 0:
-            raise ValueError(f"Planner {self._planner} could not find a single route")
+            raise ValueError(
+                f"Planner {self._planner} could not find a single reference_path"
+            )
 
-        return RouteGenerator(
-            lanelet_network=self._lanelet_network,
-            initial_state=self._planning_problem.initial_state,
-            goal_region=self._planning_problem.goal,
-            route_candidates=routes,
-            prohibited_lanelet_ids=self._prohibited_lanelet_ids,
-            logger=self._logger,
-            lane_change_method=lane_change_method,
-            GenerationStrategy=GenerationStrategy,
-        )
+        return routes
 
     def _get_filtered_ids(self, ids_lanelets_to_filter: List[int]) -> List[int]:
         """Filters lanelets with the list of ids of forbidden lanelets.
@@ -345,10 +305,10 @@ class RoutePlanner:
                 if hasattr(state.position, "center"):
                     goal_position: np.ndarray = state.position.center
                 else:
-                    # For uncertain position route planner takes first polygon
+                    # For uncertain position reference_path planner takes first polygon
                     self._logger.info(
                         "For goals with geometric shape as definition,"
-                        " CR route planner uses the center of the first shape"
+                        " CR reference_path planner uses the center of the first shape"
                     )
                     goal_position: np.ndarray = state.position.shapes[0].center
 

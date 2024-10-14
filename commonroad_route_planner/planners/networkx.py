@@ -32,7 +32,7 @@ class NetworkxRoutePlanner(BaseRoutePlanner):
         :param lanelet_network: cr lanelet network
         :param prohibited_lanelet_ids: ids of lanelets that must not be included
         :param overtake_states: if initial state is in an overtake situation
-        :param extended_search: necessary, if not the shortest but any route should be included
+        :param extended_search: necessary, if not the shortest but any reference_path should be included
         """
         super().__init__(
             lanelet_network=lanelet_network,

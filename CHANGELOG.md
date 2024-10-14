@@ -1,5 +1,12 @@
 # Changelog
 
+## [2025.0.1]
+### Changed
+- Rename route-generator to path_generator
+- Interface segregation of path_generator
+
+### Deleted
+- route_candidate_holder legacy interface
 
 
 ## [2024.2.1]
