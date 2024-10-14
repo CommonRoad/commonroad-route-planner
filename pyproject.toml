@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "commonroad-route-planner"
-version = "2024.2.1"
+version = "2025.0.1"
 description = "Route and reference path planning tool for CommonRoad scenarios"
 authors = ["Tobias Mascetta <commonroad@lists.lrz.de>"]
 license = "BSD"
