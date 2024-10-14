@@ -45,7 +45,7 @@ class LaneChangeHandler:
         :param lanelet_start: start lanelet of lane change in lane section
         :param lanelet_end: end lanelet of lane change
         :param lanelet_network: lanelet network of scenario
-        :param route_lanelet_ids: lanelet ids of entire route
+        :param route_lanelet_ids: lanelet ids of entire reference_path
         :param clcs_extension: how long the curvilinear coordinate system should be extended in
             longitudinal direction for lane changes
         :param logger: logger
@@ -176,7 +176,7 @@ class LaneChangeHandler:
                     0
                 ].position.center
             else:
-                # For uncertain position route planner takes first polygon
+                # For uncertain position reference_path planner takes first polygon
                 goal_mid_position: np.ndarray = (
                     goal_region.state_list[0].position.shapes[0].center
                 )

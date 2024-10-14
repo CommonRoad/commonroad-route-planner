@@ -17,7 +17,7 @@ import numpy as np
 from commonroad.scenario.lanelet import Lanelet
 
 # Own code base
-from commonroad_route_planner.route import Route
+from commonroad_route_planner.reference_path import ReferencePath
 import commonroad_route_planner.utility.polyline_operations.polyline_operations as pops
 from commonroad_route_planner.route_generation_strategies.default_generation_strategy import (
     DefaultGenerationStrategy,
@@ -31,18 +31,18 @@ from typing import List, Union
 
 class RouteExtendor:
     """
-    Extends a given route.
+    Extends a given reference_path.
     """
 
     def __init__(
         self,
-        route: Route,
+        reference_path: ReferencePath,
         extrapolation_length: float = 5.0,
         RouteGenerationMethod: Union[
             DefaultGenerationStrategy
         ] = DefaultGenerationStrategy,
     ) -> None:
-        self.route: Route = route
+        self.reference_path: ReferencePath = reference_path
         # additional_lenght_in_meters
         self.extrapolation_length: float = extrapolation_length
 
@@ -55,7 +55,7 @@ class RouteExtendor:
         Performs extension for no successor at end
         """
 
-        reference_path = copy.copy(self.route.reference_path)
+        reference_path = copy.copy(self.reference_path.reference_path)
 
         # get distance between first two points to know what the pseudo-uniform sampling would be
         point_0: np.ndarray = reference_path[-2, :]
@@ -72,8 +72,8 @@ class RouteExtendor:
             )
             reference_path: np.ndarray = np.vstack((reference_path, new_point))
 
-        self.route: Route = self.RouteGenerationMethod.update_route(
-            route=self.route, reference_path=reference_path
+        self.reference_path: ReferencePath = self.RouteGenerationMethod.update_route(
+            route=self.reference_path, reference_path=reference_path
         )
 
     def _perform_successor_extension(self, successor_ids: List[int]) -> None:
@@ -94,20 +94,20 @@ class RouteExtendor:
                 )
 
         successor_id = successor_ids[0]
-        successor_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(
-            successor_id
+        successor_lanelet: Lanelet = (
+            self.reference_path.lanelet_network.find_lanelet_by_id(successor_id)
         )
         centerline: np.ndarray = pops.sample_polyline(
             successor_lanelet.center_vertices,
-            step=self.route.average_interpoint_distance,
+            step=self.reference_path.average_interpoint_distance,
         )
         reference_path: np.ndarray = np.concatenate(
-            (self.route.reference_path, centerline), axis=0
+            (self.reference_path.reference_path, centerline), axis=0
         )
 
         # Resample polyline for better distance
-        self.route: Route = self.RouteGenerationMethod.update_route(
-            route=self.route, reference_path=reference_path
+        self.reference_path: ReferencePath = self.RouteGenerationMethod.update_route(
+            route=self.reference_path, reference_path=reference_path
         )
 
     def _perform_predecessor_extension(self, predecessor_ids: List[int]):
@@ -116,27 +116,27 @@ class RouteExtendor:
         """
         if len(predecessor_ids) > 1:
             warnings.warn("Current lane has more than one predecessor, choosing first")
-        predecessor_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(
-            predecessor_ids[0]
+        predecessor_lanelet: Lanelet = (
+            self.reference_path.lanelet_network.find_lanelet_by_id(predecessor_ids[0])
         )
         centerline: np.ndarray = pops.sample_polyline(
             predecessor_lanelet.center_vertices,
-            step=self.route.average_interpoint_distance,
+            step=self.reference_path.average_interpoint_distance,
         )
         reference_path: np.ndarray = np.concatenate(
-            (centerline, self.route.reference_path), axis=0
+            (centerline, self.reference_path.reference_path), axis=0
         )
 
         # Resample polyline for better distance
-        self.route: Route = self.RouteGenerationMethod.update_route(
-            route=self.route, reference_path=reference_path
+        self.reference_path: ReferencePath = self.RouteGenerationMethod.update_route(
+            route=self.reference_path, reference_path=reference_path
         )
 
     def _perform_no_predecessor_extension(self) -> None:
         """
         performs extension for no predecessor at start
         """
-        reference_path = copy.copy(self.route.reference_path)
+        reference_path = copy.copy(self.reference_path.reference_path)
         # get distance between first two points to know what the pseudo-uniform sampling would be
         point_0: np.ndarray = reference_path[0, :]
         point_1: np.ndarray = reference_path[1, :]
@@ -152,8 +152,8 @@ class RouteExtendor:
             )
             reference_path: np.ndarray = np.vstack((new_point, reference_path))
 
-        self.route: Route = self.RouteGenerationMethod.update_route(
-            route=self.route, reference_path=reference_path
+        self.reference_path: ReferencePath = self.RouteGenerationMethod.update_route(
+            route=self.reference_path, reference_path=reference_path
         )
 
     def extend_reference_path_at_end(self) -> None:
@@ -172,8 +172,8 @@ class RouteExtendor:
         """
 
         # check if there is a successor lane.
-        last_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(
-            self.route.lanelet_ids[-1]
+        last_lanelet: Lanelet = self.reference_path.lanelet_network.find_lanelet_by_id(
+            self.reference_path.lanelet_ids[-1]
         )
         successor_ids: List[int] = last_lanelet.successor
         if len(successor_ids) == 0:
@@ -186,12 +186,12 @@ class RouteExtendor:
 
     def extend_reference_path_at_start(self) -> None:
         """
-        Adds additional points at the beginning of the route
+        Adds additional points at the beginning of the reference_path
         """
 
         # check if there is a successor lane.
-        first_lanelet: Lanelet = self.route.lanelet_network.find_lanelet_by_id(
-            self.route.lanelet_ids[0]
+        first_lanelet: Lanelet = self.reference_path.lanelet_network.find_lanelet_by_id(
+            self.reference_path.lanelet_ids[0]
         )
         predecessor_ids: List[int] = first_lanelet.predecessor
         if len(predecessor_ids) == 0:
@@ -211,8 +211,8 @@ class RouteExtendor:
 
         self.extend_reference_path_at_start()
 
-    def get_route(self) -> Route:
+    def get_route(self) -> ReferencePath:
         """
         So students know that this is useful....
         """
-        return self.route
+        return self.reference_path
