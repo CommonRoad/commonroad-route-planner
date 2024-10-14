@@ -21,26 +21,26 @@ from commonroad_route_planner.lane_changing.lane_change_methods.method_interface
 from typing import List, Union
 
 
-class RouteType(Enum):
+class ReferencePathType(Enum):
     # Survival routes have no specific goal lanelet
     REGULAR = "regular"
     SURVIVAL = "survival"
 
 
 @dataclass
-class Route:
+class ReferencePath:
     """
-    A route in a commonroad scenario.
+    A reference_path in a commonroad scenario.
     """
 
     lanelet_network: LaneletNetwork
     initial_state: InitialState
     goal_region: GoalRegion
 
-    # a route is created given the list of lanelet ids from start to goal
+    # a reference_path is created given the list of lanelet ids from start to goal
     lanelet_ids: List[int]
 
-    # a section is a list of lanelet ids that are adjacent to a lanelet in the route
+    # a section is a list of lanelet ids that are adjacent to a lanelet in the reference_path
     sections: List[LaneletSection]
 
     prohibited_lanelet_ids: List[int]
@@ -74,7 +74,7 @@ class Route:
         :param distance_ahead_in_m: how long the path should continue in front of position
         :param distance_behind_in_m: how long the path should continue after position
 
-        :return: route slice
+        :return: reference_path slice
         """
         return RouteSlice(
             self,
@@ -93,6 +93,6 @@ class Route:
         :return: lanelet section or none
         """
         if lanelet_id not in self.lanelet_ids:
-            raise ValueError("Lanelet id not part of route")
+            raise ValueError("Lanelet id not part of reference_path")
 
         return LaneletSection.get_section_by_lanelet_id(lanelet_id)

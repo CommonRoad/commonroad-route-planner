@@ -12,32 +12,32 @@ from typing import List
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from commonroad_route_planner.route import Route
+    from commonroad_route_planner.reference_path import ReferencePath
 
 
 class RouteSlice:
     """
-    Slice of a route given a point
+    Slice of a reference_path given a point
     """
 
     def __init__(
         self,
-        route: "Route",
+        route: "ReferencePath",
         x: float,
         y: float,
         distance_ahead_in_m: float = 30.0,
         distance_behind_in_m: float = 7.0,
     ) -> None:
         """
-        :param route: route object the slice is from
+        :param route: reference_path object the slice is from
         :param x: x value of point slice is made from
         :param x: y value of point slice is made from
         :param distance_ahead_in_m: how many meters ahead of current vehicle position slice should end
         :param distance_behind_in_m: how many meters behind the vehicle the slice should end
         """
 
-        # original route
-        self._original_route: "Route" = route
+        # original reference_path
+        self._original_route: "ReferencePath" = route
 
         # query point
         self._x: float = x
@@ -80,9 +80,9 @@ class RouteSlice:
         )
 
     @property
-    def original_route(self) -> "Route":
+    def original_route(self) -> "ReferencePath":
         """
-        :return: original route the slice is based of
+        :return: original reference_path the slice is based of
         """
         return self._original_route
 
@@ -131,7 +131,7 @@ class RouteSlice:
     @property
     def average_interpoint_distance(self) -> float:
         """
-        :return: average interpoint distance of route
+        :return: average interpoint distance of reference_path
         """
         return self._average_interpoint_distance
 
@@ -198,7 +198,7 @@ class RouteSlice:
 
     def _init_lanelet_ids(self) -> None:
         """
-        Checks the value of first and last point of original route and adds all lanelet ids between them
+        Checks the value of first and last point of original reference_path and adds all lanelet ids between them
         """
 
         # Find index of first and last point of slice ref path and corresponding lanelet ids
@@ -215,8 +215,8 @@ class RouteSlice:
             )[0][0]
         )
 
-        # As the lanelet ids are ordered in the route class we know that every id between behind and front also
-        # has to be part of the route slice
+        # As the lanelet ids are ordered in the reference_path class we know that every id between behind and front also
+        # has to be part of the reference_path slice
         behind_idx: int = self.original_route.lanelet_ids.index(behind_lanelet_id)
         infront_idx: int = self.original_route.lanelet_ids.index(infront_lanelet_id)
 

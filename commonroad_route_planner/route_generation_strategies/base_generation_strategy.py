@@ -7,7 +7,7 @@ from commonroad.planning.planning_problem import InitialState
 from commonroad.scenario.lanelet import LaneletNetwork
 
 # own code base
-from commonroad_route_planner.route import Route
+from commonroad_route_planner.reference_path import ReferencePath
 
 # typing
 from typing import List
@@ -25,26 +25,26 @@ class BaseGenerationStrategy(ABC):
         lanelet_ids: List[int],
         initial_state: InitialState,
         goal_region: GoalRegion,
-    ) -> Route:
+    ) -> ReferencePath:
         """
-        Instantiates route
+        Instantiates reference_path
 
         :param reference_path: (n,2) reference path
 
-        :return: route object
-        :rtype Route
+        :return: reference_path object
+        :rtype ReferencePath
         """
         pass
 
     @staticmethod
     @abstractmethod
-    def update_route(route: Route, reference_path: np.ndarray) -> Route:
+    def update_route(route: ReferencePath, reference_path: np.ndarray) -> ReferencePath:
         """
-        updates route given a reference path
+        updates reference_path given a reference path
 
         :param reference_path: (n,2) reference path
 
-        :return: route object
-        :rtype Route
+        :return: reference_path object
+        :rtype ReferencePath
         """
         pass

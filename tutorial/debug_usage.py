@@ -14,8 +14,8 @@ from typing import List
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from commonroad_route_planner.route_candidate_holder import RouteGenerator
-    from commonroad_route_planner.route import Route
+    from commonroad_route_planner.route_candidate_holder import PathGenerator
+    from commonroad_route_planner.reference_path import ReferencePath
 
 
 def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
@@ -44,15 +44,15 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
         planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
 
         t_start = perf_counter()
-        # ========== route planning =========== #
-        # instantiate a route planner with the scenario and the planning problem
+        # ========== reference_path planning =========== #
+        # instantiate a reference_path planner with the scenario and the planning problem
         route_planner = RoutePlanner(scenario=scenario, planning_problem=planning_problem, extended_search=False)
-        # plan routes, and save the routes in a route candidate holder
-        route_selector: "RouteGenerator" = route_planner.plan_routes()
+        # plan routes, and save the routes in a reference_path candidate holder
+        route_selector: "ReferencePathPlanner" = route_planner.plan_routes()
 
         # ========== retrieving routes =========== #
-        # here we retrieve the first route in the list, this is equivalent to: route = list_routes[0]
-        route: "Route" = route_selector.retrieve_shortest_route()
+        # here we retrieve the first reference_path in the list, this is equivalent to: reference_path = list_routes[0]
+        route: "ReferencePath" = route_selector.retrieve_shortest_route()
         print(f"[Time] Retrieving first route took {perf_counter() - t_start}")
 
         # option 2: retrieve all routes
@@ -61,7 +61,7 @@ def main(save_imgs: bool = False, use_cr2023_challenge: bool = False):
 
         # ========== visualization =========== #
         visualize_route(
-            route=route,
+            reference_path=route,
             scenario=scenario,
             planning_problem=planning_problem,
             save_img=False,

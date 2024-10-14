@@ -13,6 +13,8 @@ from commonroad.common.file_reader import CommonRoadFileReader
 
 # Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
+from commonroad_route_planner.reference_path_planner import ReferencePathPlanner
+from commonroad_route_planner.lanelet_sequence import LaneletSequence
 
 # typing
 from typing import List
@@ -78,12 +80,20 @@ class TestPointsOutsideLaneletNetwork(unittest.TestCase):
         scenario, planning_problem_set = CommonRoadFileReader(f"{path_scenarios / id_scenario}.xml").open()
         planning_problem = list(planning_problem_set.planning_problem_dict.values())[0]
 
-        # Plan route
+        # Plan reference_path
         route_planner = RoutePlanner(scenario.lanelet_network, planning_problem)
-        route_selector = route_planner.plan_routes()
-        route = route_selector.retrieve_shortest_route(retrieve_shortest=True)
+        # find routing sequence as sequence of lanelet ids
+        route_candidates: List[LaneletSequence] = route_planner.plan_routes()
 
-        # Create shapely route
+        # generate reference paths
+        ref_path_generator: ReferencePathPlanner = ReferencePathPlanner(
+            lanelet_network=scenario.lanelet_network,
+            planning_problem=planning_problem,
+            routes=route_candidates,
+        )
+        route = ref_path_generator.plan_shortest_reference_path(retrieve_shortest=True)
+
+        # Create shapely reference_path
         shapely_route_line: ShapelyLineString = ShapelyLineString(route.reference_path)
 
         # Create scaled ab version of road compolement
