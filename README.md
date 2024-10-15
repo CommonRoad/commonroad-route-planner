@@ -18,7 +18,7 @@ We recommend to use PyCharm (Professional) as IDE.
 ### Usage in other projects
 We provide an PyPI package which can be installed with the following command
 ```shell
-pip install commonroad-reference_path-planner
+pip install commonroad-route-planner
 ```
 
 ### Development
