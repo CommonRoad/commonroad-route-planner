@@ -1,18 +1,21 @@
-[tool.poetry]
+[project]
 name = "commonroad-route-planner"
 version = "2025.0.1"
 description = "Route and reference path planning tool for CommonRoad scenarios"
-authors = ["Tobias Mascetta <commonroad@lists.lrz.de>"]
+authors = [{name = "Tobias Mascetta", email= "<commonroad@lists.lrz.de>"}]
 license = "BSD"
 readme = "README.md"
 
 homepage = "https://commonroad.in.tum.de"
 keywords= ["autonomous", "automated", "vehicles", "driving", "motion", "planning", "prediction"]
 classifiers = [
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.8",
     "License :: OSI Approved :: BSD License",
     "Operating System :: POSIX :: Linux",
 ]
+
+requires-python = "^3.8"
+dynamic = ["dependencies"]
 
 packages = [{include = "commonroad_route_planner"}]
 
@@ -40,7 +43,7 @@ jupyter = "^1.0.0"
 optional = true
 
 [tool.poetry.group.test.dependencies]
-coverage = "^6.5.0"
+coverage = {version = "^7.1.0", extras = ["toml"] }
 
 # docs
 [tool.poetry.group.docs]
