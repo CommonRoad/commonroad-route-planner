@@ -13,8 +13,8 @@ stages:
 before_script:
   - pip install poetry
   - poetry config virtualenvs.in-project true
-  - poetry install --with test,docs,mapmatching
   - poetry update
+  - poetry install --with test,docs,mapmatching
   - source .venv/bin/activate
 
 
