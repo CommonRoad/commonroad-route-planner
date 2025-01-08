@@ -15,7 +15,6 @@ before_script:
   - poetry config virtualenvs.in-project true
   - poetry update
   - poetry install --with test,docs,mapmatching
-  - poetry update
   - source .venv/bin/activate
 
 
