@@ -43,7 +43,7 @@ jupyter = "^1.0.0"
 optional = true
 
 [tool.poetry.group.test.dependencies]
-coverage = "^6.5.0"
+coverage = {version = "^7.1.0", extras = ["toml"] }
 
 # docs
 [tool.poetry.group.docs]
