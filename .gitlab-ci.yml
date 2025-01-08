@@ -13,6 +13,7 @@ stages:
 before_script:
   - pip install poetry
   - poetry config virtualenvs.in-project true
+  - poetry update
   - poetry install --with test,docs,mapmatching
   - poetry update
   - source .venv/bin/activate
@@ -102,6 +103,7 @@ deploy_master:
     - master
   except:
     - tags
+  when: manual
 
 # Deploy to gitlab pages
 pages:
@@ -109,6 +111,7 @@ pages:
   publish: site
   only:
     - master
+  when: manual
   script:
     - mkdocs build
   artifacts:
