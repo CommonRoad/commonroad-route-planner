@@ -102,6 +102,7 @@ deploy_master:
     - master
   except:
     - tags
+  when: manual
 
 # Deploy to gitlab pages
 pages:
@@ -109,6 +110,7 @@ pages:
   publish: site
   only:
     - master
+  when: manual
   script:
     - mkdocs build
   artifacts:
