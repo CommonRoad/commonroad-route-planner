@@ -9,7 +9,7 @@ import numpy as np
 from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.planning.goal import GoalRegion
 from commonroad.planning.planning_problem import InitialState
-from commonroad_dc.pycrccosy import CurvilinearCoordinateSystem
+from commonroad_clcs.pycrccosy import CurvilinearCoordinateSystem
 
 # own code base
 from commonroad_route_planner.utility.route_util import chaikins_corner_cutting
