@@ -1,6 +1,6 @@
 [project]
 name = "commonroad-route-planner"
-version = "2025.0.1"
+version = "2025.1.0"
 description = "Route and reference path planning tool for CommonRoad scenarios"
 authors = [{name = "Tobias Mascetta", email= "<commonroad@lists.lrz.de>"}]
 license = "BSD"
@@ -22,13 +22,13 @@ packages = [{include = "commonroad_route_planner"}]
 # dependencies
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = ">=3.9,<3.12"
 commonroad-io = ">=2022.2"
 networkx = ">=2.4"
-numpy = ">=1.17.4,<2.0"
+numpy = ">=1.17.4"
 shapely = ">=1.6.4.post2"
-matplotlib = ">=3.1.2,<3.9"
-commonroad-drivability-checker = ">=2023.1"
+matplotlib = ">=3.1.2"
+commonroad-clcs = "^2025.1.0"
 
 # tutorial
 [tool.poetry.group.tutorial]
