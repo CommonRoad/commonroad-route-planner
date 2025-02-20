@@ -14,7 +14,7 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
 ]
 
-requires-python = "^3.9"
+requires-python = ">=3.9, <3.12"
 dynamic = ["dependencies"]
 
 packages = [{include = "commonroad_route_planner"}]
