@@ -9,12 +9,12 @@ readme = "README.md"
 homepage = "https://commonroad.in.tum.de"
 keywords= ["autonomous", "automated", "vehicles", "driving", "motion", "planning", "prediction"]
 classifiers = [
-    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
     "License :: OSI Approved :: BSD License",
     "Operating System :: POSIX :: Linux",
 ]
 
-requires-python = "^3.8"
+requires-python = "^3.9"
 dynamic = ["dependencies"]
 
 packages = [{include = "commonroad_route_planner"}]
