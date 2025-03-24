@@ -39,6 +39,8 @@ class LaneChangeHandler:
         lanelet_network: LaneletNetwork,
         route_lanelet_ids: List[int],
         clcs_extension: float = 50.0,
+        path_trough_initial_state: bool = True,
+        path_through_goal_state: bool = True,
         logger: Logger = None,
     ) -> None:
         """
@@ -63,6 +65,10 @@ class LaneChangeHandler:
         self._clcs: CurvilinearCoordinateSystem = None
         self._clcs_extension: float = clcs_extension
         self._init_clcs()
+
+        # if path should go trough initial state and goal state
+        self._path_trough_initial_state: bool = path_trough_initial_state
+        self._path_through_goal_state: bool = path_through_goal_state
 
         self._method_interface: MethodInterface = MethodInterface(logger=self._logger)
 
@@ -107,6 +113,21 @@ class LaneChangeHandler:
         :return: method interface for lane change
         """
         return self._method_interface
+
+    @property
+    def path_through_initial_state(self) -> bool:
+        """
+        :return: True if path goes through initial state
+        """
+        return self._path_trough_initial_state
+
+    @property
+    def path_through_goal_state(self) -> bool:
+        """
+        :return: True if path goes through goal state
+        """
+        return self._path_through_goal_state
+
 
     def compute_lane_change(
         self,
@@ -170,7 +191,7 @@ class LaneChangeHandler:
         :return: (2,) np array as end point of lane change in curvilinear coords
         """
 
-        if goal_region is not None:
+        if goal_region is not None and self._path_through_goal_state:
             if hasattr(goal_region.state_list[0].position, "center"):
                 goal_mid_position: np.ndarray = goal_region.state_list[
                     0
@@ -214,7 +235,7 @@ class LaneChangeHandler:
         :return: (2,) np array as start point of lane change in curvilinear coords
         """
 
-        if initial_state is not None:
+        if initial_state is not None and self._path_trough_initial_state:
             initial_state_ids: List[int] = (
                 self._lanelet_network.find_lanelet_by_position(
                     [initial_state.position]

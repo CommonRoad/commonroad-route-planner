@@ -41,6 +41,8 @@ class ReferencePathPlanner:
             DefaultGenerationStrategy
         ] = DefaultGenerationStrategy,
         logging_level: int = logging.WARNING,
+        path_trough_initial_state: bool = True,
+        path_through_goal_state: bool = True
     ) -> None:
         """
         :param lanelet_network: cr lanelet network,
@@ -76,6 +78,8 @@ class ReferencePathPlanner:
                 goal_region=self._planning_problem.goal,
                 prohibited_lanelet_ids=prohibited_lanelet_ids,
                 lane_change_method=lane_change_method,
+                path_through_initial_state=path_trough_initial_state,
+                path_through_goal_state=path_through_goal_state
             )
             for lanelet_sequence in routes
             if lanelet_sequence.lanelet_ids
