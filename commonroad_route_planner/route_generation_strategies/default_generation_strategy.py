@@ -51,7 +51,7 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
         prohibited_lanelet_ids: List[int] = None,
         lane_change_method: LaneChangeMethod = LaneChangeMethod.QUINTIC_SPLINE,
         path_through_initial_state: bool = True,
-        path_through_goal_state: bool = True
+        path_through_goal_state: bool = True,
     ) -> ReferencePath:
         """
         Generates a reference_path from a list of lanelet ids and a lane change method
@@ -79,7 +79,7 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
                 goal_region=goal_region,
                 lane_change_method=lane_change_method,
                 path_through_initial_state=path_through_initial_state,
-                path_through_goal_state=path_through_goal_state
+                path_through_goal_state=path_through_goal_state,
             )
         )
 
@@ -186,7 +186,7 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
         lane_change_method: LaneChangeMethod,
         step_resample: float = 1.0,
         path_through_initial_state: bool = True,
-        path_through_goal_state: bool = True
+        path_through_goal_state: bool = True,
     ) -> Tuple[np.ndarray, int]:
         """
         Computes reference path stair function given the list of portions of each lanelet
@@ -254,7 +254,7 @@ class DefaultGenerationStrategy(BaseGenerationStrategy):
                     lanelet_network=lanelet_network,
                     route_lanelet_ids=lanelet_ids,
                     path_trough_initial_state=path_through_initial_state,
-                    path_through_goal_state=path_through_goal_state
+                    path_through_goal_state=path_through_goal_state,
                 )
 
                 num_lane_change_action += 1

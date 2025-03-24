@@ -128,7 +128,6 @@ class LaneChangeHandler:
         """
         return self._path_through_goal_state
 
-
     def compute_lane_change(
         self,
         sample_step_size: float = 1.0,
