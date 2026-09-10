@@ -173,24 +173,28 @@ class RouteSlice:
 
         running_distance: float = 0
         self._point_idx_ahead: int = point_idx
-        for idx in range(
-            point_idx + 1, self._original_route.reference_path.shape[0] - 1
+        while (
+            self._point_idx_ahead < len(self._original_route.reference_path) - 1
+            and running_distance < self._distance_ahead_in_m
         ):
-            running_distance += abs(self._original_route.interpoint_distances[idx])
-            self._point_idx_ahead = idx
-            if running_distance >= self._distance_ahead_in_m:
-                break
+            self._point_idx_ahead += 1
+            running_distance += abs(
+                self._original_route.interpoint_distances[self._point_idx_ahead]
+            )
 
         running_distance = 0
         self._point_idx_behind = point_idx
-        for idx in reversed(range(0, point_idx - 1)):
-            running_distance += abs(self._original_route.interpoint_distances[idx])
-            self._point_idx_behind = idx
-            if running_distance >= self._distance_behind_in_m:
-                break
+        while (
+            self._point_idx_behind > 0 and running_distance < self._distance_behind_in_m
+        ):
+            # Distance at index i connects vertices i - 1 and i.
+            running_distance += abs(
+                self._original_route.interpoint_distances[self._point_idx_behind]
+            )
+            self._point_idx_behind -= 1
 
         self._reference_path = self._original_route.reference_path[
-            self._point_idx_behind : self._point_idx_ahead, :
+            self._point_idx_behind : self._point_idx_ahead + 1, :
         ]
 
         if self._reference_path is None or len(self._reference_path) == 0:
