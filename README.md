@@ -18,6 +18,19 @@ with the same compiler version.
 The [source code](https://github.com/CommonRoad/commonroad-route-planner) is mirrored to our [CommmonRoad github](https://github.com/CommonRoad).
 You can contribute via pull requests. 
 
+## 📖 Citation
+
+If you use this toolbox, please cite:
+
+```bibtex
+@inproceedings{mascetta2025commonroad,
+  author    = {Mascetta, Tobias and Northoff, Kilian and Althoff, Matthias},
+  title     = {{CommonRoad} Global Planner: A Toolbox for Global Motion Planning on Roads},
+  booktitle = {IEEE Intelligent Vehicles Symposium (IV)},
+  year      = {2025},
+  pages     = {626--631},
+}
+```
 
 ## Authors
 Responsible: Tobias Mascetta, tobias.mascetta[at]tum.de
