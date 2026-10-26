@@ -124,7 +124,7 @@ class ReferencePathPlanner:
         retrieve_shortest: bool = True,
         consider_least_lance_changes: bool = True,
         included_lanelet_ids: List[int] = None,
-        show_debug_plot: bool = False
+        show_debug_plot: bool = False,
     ) -> ReferencePath:
         """
         Retrieves shortest reference_path object.
@@ -141,18 +141,21 @@ class ReferencePathPlanner:
         if consider_least_lance_changes:
             return self.plan_shortetest_reference_path_with_least_lane_changes(
                 included_lanelet_ids=included_lanelet_ids,
-                show_debug_plot=show_debug_plot
+                show_debug_plot=show_debug_plot,
             )
 
         else:
             return self.plan_first_reference_path(
                 retrieve_shortest=retrieve_shortest,
                 included_lanelet_ids=included_lanelet_ids,
-                show_debug_plot=show_debug_plot
+                show_debug_plot=show_debug_plot,
             )
 
     def plan_first_reference_path(
-        self, retrieve_shortest: bool = True, included_lanelet_ids: List[int] = None, show_debug_plot: bool = False
+        self,
+        retrieve_shortest: bool = True,
+        included_lanelet_ids: List[int] = None,
+        show_debug_plot: bool = False,
     ) -> ReferencePath:
         """
         Retrieves the first ReferencePath object.
