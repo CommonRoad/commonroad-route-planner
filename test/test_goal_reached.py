@@ -8,7 +8,7 @@ from shapely import Polygon as ShapelyPolygon
 
 # commonrad
 from commonroad.common.file_reader import CommonRoadFileReader
-from commonroad.geometry.shape import ShapeGroup as CRShapeGroup
+from commonroad.geometry.occupancy.occupancy_group import OccupancyGroup as CROccupancyGroup
 
 # Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
@@ -119,10 +119,10 @@ class TestGoalReached(unittest.TestCase):
                 goal_shape = state.position
                 if hasattr(goal_shape, "shapely_object"):
                     shapely_goal_polygons.append(goal_shape.shapely_object)
-                elif isinstance(goal_shape, CRShapeGroup):
-                    shapely_goal_polygons.extend([shape.shapely_object for shape in goal_shape.shapes])
+                elif isinstance(goal_shape, CROccupancyGroup):
+                    shapely_goal_polygons.extend([shape.shapely_object for shape in goal_shape.occupancies])
                 else:
-                    shapely_goal_polygons.append(goal_shape.shapes.shapely_object)
+                    shapely_goal_polygons.append(goal_shape.occupancies.shapely_object)
 
             # Check if the linestring of the start intersects with at least one polyon of the goal
             flag_success = False

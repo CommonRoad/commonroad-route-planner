@@ -2,11 +2,13 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+from shapely.geometry import Point
 
 # commonrodad
 from commonroad.scenario.scenario import Scenario
 from commonroad.planning.planning_problem import PlanningProblem
-from commonroad.geometry.shape import Circle, Rectangle
+from commonroad.geometry.occupancy.circle_occupancy import CircleOccupancy
+from commonroad.geometry.occupancy.rect_occupancy import RectOccupancy
 from commonroad.scenario.lanelet import LaneletNetwork
 from commonroad.scenario.state import InitialState
 from commonroad.visualization.mp_renderer import MPRenderer
@@ -103,9 +105,11 @@ def visualize_route(
         renderer.draw_params.shape.facecolor = "#ff477e"
         for idx, position in enumerate(reference_path.reference_path):
             if abs(reference_path.path_curvature[idx]) > curvature_threshold:
-                occ_pos = Circle(radius=0.3 * size_factor_curvature, center=position)
+                occ_pos = CircleOccupancy(
+                    radius=0.3 * size_factor_curvature, circle_center=Point(position)
+                )
             else:
-                occ_pos = Circle(radius=0.3, center=position)
+                occ_pos = CircleOccupancy(radius=0.3, circle_center=Point(position))
             occ_pos.draw(renderer)
 
     planning_problem.draw(renderer)
@@ -149,7 +153,7 @@ def debug_visualize(
     # draw reference path with dots
     for route in route_list:
         for position in route.reference_path:
-            occ_pos = Circle(radius=0.3, center=position)
+            occ_pos = CircleOccupancy(radius=0.3, circle_center=Point(position))
             renderer.draw_params.shape.facecolor = "#ff477e"
             occ_pos.draw(renderer)
 
@@ -173,7 +177,7 @@ def plot_clcs_line_with_projection_domain(clcs_line: np.ndarray, clcs):
     rnd.render()
 
     for idx in range(clcs_line.shape[0]):
-        occ_pos = Circle(radius=0.3, center=clcs_line[idx, :])
+        occ_pos = CircleOccupancy(radius=0.3, circle_center=Point(clcs_line[idx, :]))
         occ_pos.draw(rnd, draw_param)
 
     proj_domain_border = np.asarray(clcs.projection_domain())
@@ -191,7 +195,12 @@ def draw_state(renderer: MPRenderer, state: InitialState, color="#ee6c4d") -> No
     :param state: initial state
     :param color: color of points
     """
-    occ_state = Rectangle(4.0, 2.0, state.position, state.orientation)
+    occ_state = RectOccupancy(
+        rect_center=Point(state.position),
+        width=2.0,
+        length=4.0,
+        orientation=state.orientation,
+    )
     renderer.draw_params.shape.facecolor = color
     occ_state.draw(renderer)
 

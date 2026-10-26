@@ -192,13 +192,13 @@ class LaneChangeHandler:
 
         if goal_region is not None and self._path_through_goal_state:
             if hasattr(goal_region.state_list[0].position, "center"):
-                goal_mid_position: np.ndarray = goal_region.state_list[
-                    0
-                ].position.center
+                goal_mid_position: np.ndarray = np.asarray(
+                    goal_region.state_list[0].position.center.coords[0]
+                )
             else:
                 # For uncertain position reference_path planner takes first polygon
-                goal_mid_position: np.ndarray = (
-                    goal_region.state_list[0].position.shapes[0].center
+                goal_mid_position: np.ndarray = np.asarray(
+                    goal_region.state_list[0].position.occupancies[0].center.coords[0]
                 )
 
             goal_lanelet_ids: List[int] = (

@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026.1.0]
+### Fixes
+- updated to cr-io 2026
+- fixed bug that showed a debug plot blocking in some non-headless modes
+
 ## [2025.0.1]
 ### Changed
 - Rename route-generator to path_generator

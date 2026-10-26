@@ -1,9 +1,13 @@
 import warnings
 import numpy as np
+from shapely.geometry import Point
 
 
 # commonroad
-from commonroad.geometry.shape import Rectangle, Shape
+from commonroad.geometry.occupancy.occupancy import Occupancy
+from commonroad.geometry.occupancy.rect_occupancy import RectOccupancy
+
+
 from commonroad.planning.goal import GoalRegion
 from commonroad.scenario.lanelet import Lanelet, LaneletNetwork
 
@@ -158,15 +162,17 @@ def sort_lanelet_ids_by_goal(
             )
 
         if hasattr(goal_state, "position"):
-            goal_shape: Shape = goal_state.position
+            goal_shape: Occupancy = goal_state.position
 
         else:
-            goal_shape: Shape = Rectangle(length=0.01, width=0.01)
+            goal_shape: Occupancy = RectOccupancy(
+                rect_center=Point(0.0, 0.0), width=0.01, length=0.01, orientation=0.0
+            )
 
         # the goal shape has always a shapley object -> because it is a rectangle
         # noinspection PyUnresolvedReferences
         return sort_lanelet_ids_by_orientation(
-            lanelet_network.find_lanelet_by_shape(goal_shape),
+            lanelet_network.find_lanelet_by_occupancy(goal_shape),
             goal_orientation,
             goal_shape.shapely_object.centroid.coords,
             lanelet_network,
