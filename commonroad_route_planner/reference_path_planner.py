@@ -124,6 +124,7 @@ class ReferencePathPlanner:
         retrieve_shortest: bool = True,
         consider_least_lance_changes: bool = True,
         included_lanelet_ids: List[int] = None,
+        show_debug_plot: bool = False
     ) -> ReferencePath:
         """
         Retrieves shortest reference_path object.
@@ -132,23 +133,26 @@ class ReferencePathPlanner:
         :param retrieve_shortest: if True, will only find shortest distance routes,
         :param consider_least_lance_changes: considers least amount of disjoint lane changes, if possible
         :param included_lanelet_ids: forces planner to go throug lanelets, if possible. Will ignore retrieve_shortest
+        :param show_debug_plot: If true shows debug plot if now route was found. Note that this is blocking
 
         :return: reference_path instance
         """
 
         if consider_least_lance_changes:
             return self.plan_shortetest_reference_path_with_least_lane_changes(
-                included_lanelet_ids=included_lanelet_ids
+                included_lanelet_ids=included_lanelet_ids,
+                show_debug_plot=show_debug_plot
             )
 
         else:
             return self.plan_first_reference_path(
                 retrieve_shortest=retrieve_shortest,
                 included_lanelet_ids=included_lanelet_ids,
+                show_debug_plot=show_debug_plot
             )
 
     def plan_first_reference_path(
-        self, retrieve_shortest: bool = True, included_lanelet_ids: List[int] = None
+        self, retrieve_shortest: bool = True, included_lanelet_ids: List[int] = None, show_debug_plot: bool = False
     ) -> ReferencePath:
         """
         Retrieves the first ReferencePath object.
@@ -156,6 +160,7 @@ class ReferencePathPlanner:
 
         :param retrieve_shortest: if True, only checks shortest distance routes
         :param included_lanelet_ids: forces planner to go through lanelets if possible. Ignores shortest reference_path
+        :param show_debug_plot: If true shows debug plot if now route was found. Note that this is blocking
 
         :return: reference_path object
         """
@@ -192,7 +197,8 @@ class ReferencePathPlanner:
                         selected_route = route
                         break
             else:
-                debug_visualize(self._route_candidates, self._lanelet_network)
+                if show_debug_plot:
+                    debug_visualize(self._route_candidates, self._lanelet_network)
                 self._logger.error(
                     "could not find a well oriented reference_path. Perhaps increase distance threshold, "
                     "returning first reference_path"
@@ -202,12 +208,13 @@ class ReferencePathPlanner:
         return selected_route
 
     def plan_shortetest_reference_path_with_least_lane_changes(
-        self, included_lanelet_ids: List[int] = None
+        self, included_lanelet_ids: List[int] = None, show_debug_plot: bool = False
     ) -> ReferencePath:
         """
         Retrieves reference_path with least lane changes. Tie break is length of reference path
 
         :param included_lanelet_ids: forces planner to go throug lanelets, if possible. Will ignore retrieve_shortest
+        :param show_debug_plot: If true shows debug plot if now route was found. Note that this is blocking
 
         :return: reference_path instance
         """
@@ -257,7 +264,8 @@ class ReferencePathPlanner:
                         selected_route = route
                         break
             else:
-                debug_visualize(self._route_candidates, self._lanelet_network)
+                if show_debug_plot:
+                    debug_visualize(self._route_candidates, self._lanelet_network)
                 self._logger.error(
                     "could not find a well oriented reference_path. Perhaps increase distance threshold, "
                     "returning first reference_path"

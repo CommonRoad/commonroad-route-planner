@@ -5,11 +5,12 @@ import unittest
 
 
 import numpy as np
+from shapely.geometry import Point
 # commonrad
 from commonroad.common.file_reader import CommonRoadFileReader
 from commonroad.planning.planning_problem import GoalRegion, PlanningProblem
 from commonroad.scenario.state import CustomState, InitialState
-from commonroad.geometry.shape import Rectangle
+from commonroad.geometry.occupancy.rect_occupancy import RectOccupancy
 
 # Own Code base
 from commonroad_route_planner.route_planner import RoutePlanner
@@ -56,10 +57,10 @@ class UpdatePlanningProblemTest(unittest.TestCase):
 
         # new planning problem
         new_is: InitialState = copy.copy(planning_problem.initial_state)
-        region = Rectangle(
+        region = RectOccupancy(
             length=2,
             width=2,
-            center=np.asarray([-66, 276]),
+            rect_center=Point(np.asarray([-66, 276])),
             orientation=0,
         )
 

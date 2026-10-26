@@ -303,14 +303,18 @@ class RoutePlanner:
 
                 # set goal position, which can either be defined by center for regions or by position
                 if hasattr(state.position, "center"):
-                    goal_position: np.ndarray = state.position.center
+                    goal_position: np.ndarray = np.asarray(
+                        state.position.center.coords[0]
+                    )
                 else:
                     # For uncertain position reference_path planner takes first polygon
                     self._logger.info(
                         "For goals with geometric shape as definition,"
                         " CR reference_path planner uses the center of the first shape"
                     )
-                    goal_position: np.ndarray = state.position.shapes[0].center
+                    goal_position: np.ndarray = np.asarray(
+                        state.position.occupancies[0].center.coords[0]
+                    )
 
                 for lanelet_id_list in self.lanelet_network.find_lanelet_by_position(
                     [goal_position]
